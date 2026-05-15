@@ -1,8 +1,9 @@
 import type { RecipeBook } from '@mixer/contracts';
 import type { RecipeBookDoc } from '../../db/types.js';
 
-export function toRecipeBook(doc: RecipeBookDoc): RecipeBook {
+export function toRecipeBook(doc: RecipeBookDoc, opts: { isFavorite?: boolean } = {}): RecipeBook {
   return {
+    ...(opts.isFavorite !== undefined ? { isFavorite: opts.isFavorite } : {}),
     id: doc._id.toString(),
     ownerId: doc.ownerId.toString(),
     name: doc.name,

@@ -14,6 +14,7 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { usersRoutes } from './modules/users/users.routes.js';
 import { recipesRoutes } from './modules/recipes/recipes.routes.js';
 import { recipeBooksRoutes } from './modules/recipe-books/recipe-books.routes.js';
+import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -31,6 +32,16 @@ export async function buildApp(): Promise<FastifyInstance> {
         title: 'Mixer API',
         version: '0.0.0',
       },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
+      security: [{ bearerAuth: [] }],
     },
     transform: jsonSchemaTransform,
   });
@@ -47,6 +58,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(usersRoutes);
   await app.register(recipesRoutes);
   await app.register(recipeBooksRoutes);
+  await app.register(favoritesRoutes);
 
   return app;
 }

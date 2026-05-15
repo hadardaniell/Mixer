@@ -1,12 +1,79 @@
 import { randomBytes, createHash } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
+import { OAuth2Client } from 'google-auth-library';
 import { config } from '../../config.js';
 import type { Collections } from '../../plugins/mongo.js';
 import { signAccessToken } from '../../plugins/auth.js';
 import type { UserDoc } from '../../db/types.js';
 import { toPublicUser } from '../users/users.mapper.js';
 import type { AuthResponse } from '@mixer/contracts';
+
+const googleClient = new OAuth2Client(config.googleClientId);
+
+export type GoogleProfile = {
+  sub: string;
+  email: string;
+  name?: string;
+  picture?: string;
+};
+
+export async function verifyGoogleIdToken(idToken: string): Promise<GoogleProfile> {
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: config.googleClientId,
+  });
+  const payload = ticket.getPayload();
+  if (!payload || !payload.sub || !payload.email) {
+    throw new Error('invalid Google id token');
+  }
+  return {
+    sub: payload.sub,
+    email: payload.email,
+    name: payload.name,
+    picture: payload.picture,
+  };
+}
+
+export async function findOrCreateGoogleUser(
+  collections: Collections,
+  profile: GoogleProfile,
+): Promise<UserDoc> {
+  const bySub = await collections.users.findOne({ 'providers.google.sub': profile.sub });
+  if (bySub) return bySub;
+
+  const byEmail = await collections.users.findOne({ email: profile.email });
+  if (byEmail) {
+    await collections.users.updateOne(
+      { _id: byEmail._id },
+      {
+        $set: {
+          'providers.google': { sub: profile.sub, email: profile.email },
+          emailVerifiedAt: byEmail.emailVerifiedAt ?? new Date(),
+          updatedAt: new Date(),
+        },
+      },
+    );
+    return (await collections.users.findOne({ _id: byEmail._id }))!;
+  }
+
+  const now = new Date();
+  const doc: UserDoc = {
+    _id: new ObjectId(),
+    email: profile.email,
+    passwordHash: null,
+    displayName: profile.name ?? profile.email.split('@')[0]!,
+    avatarUrl: profile.picture,
+    locale: 'en',
+    role: 'user',
+    providers: { google: { sub: profile.sub, email: profile.email } },
+    emailVerifiedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await collections.users.insertOne(doc);
+  return doc;
+}
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, config.bcryptCost);

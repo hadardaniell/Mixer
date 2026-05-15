@@ -7,4 +7,5 @@ export const config = {
   accessTtlSeconds: Number(process.env.ACCESS_TTL_SECONDS ?? 15 * 60),
   refreshTtlSeconds: Number(process.env.REFRESH_TTL_SECONDS ?? 30 * 24 * 60 * 60),
   bcryptCost: Number(process.env.BCRYPT_COST ?? 12),
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
 };

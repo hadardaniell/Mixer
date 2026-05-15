@@ -77,6 +77,14 @@ export type RecipeBookMember = {
   invitedBy?: ObjectId;
 };
 
+export type FavoriteDoc = {
+  _id: ObjectId;
+  userId: ObjectId;
+  kind: 'recipe' | 'book';
+  targetId: ObjectId;
+  createdAt: Date;
+};
+
 export type RecipeBookDoc = {
   _id: ObjectId;
   ownerId: ObjectId;

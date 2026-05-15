@@ -2,10 +2,12 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import {
+  CreateUserAsAdminInputSchema,
   UpdateOwnUserSchema,
   UpdateUserAsAdminSchema,
 } from '@mixer/contracts';
 import { toPublicUser } from './users.mapper.js';
+import { hashPassword } from '../auth/auth.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 const ListQuery = z.object({
@@ -54,6 +56,32 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
         app.collections.users.countDocuments({}),
       ]);
       return { items: items.map(toPublicUser), total };
+    },
+  );
+
+  app.post(
+    '/users',
+    {
+      onRequest: [app.authenticate, app.requireAdmin],
+      schema: { body: CreateUserAsAdminInputSchema, tags: ['users'] },
+    },
+    async (req, reply) => {
+      const { email, displayName, locale, role, password } = req.body;
+      const existing = await app.collections.users.findOne({ email });
+      if (existing) return reply.code(409).send({ error: 'email already registered' });
+      const now = new Date();
+      const doc = {
+        _id: new ObjectId(),
+        email,
+        passwordHash: password ? await hashPassword(password) : null,
+        displayName,
+        locale,
+        role,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await app.collections.users.insertOne(doc);
+      return reply.code(201).send(toPublicUser(doc));
     },
   );
 

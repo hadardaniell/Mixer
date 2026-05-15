@@ -8,6 +8,7 @@ import {
 } from '@mixer/contracts';
 import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
+import { favoritedIds } from '../favorites/favorites.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -92,7 +93,15 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         cursor.toArray(),
         app.collections.recipes.countDocuments(filter),
       ]);
-      return { items: items.map(toRecipe), total };
+      const favSet = req.user
+        ? await favoritedIds(app.collections, req.user.id, 'recipe', items.map((r) => r._id))
+        : null;
+      return {
+        items: items.map((r) =>
+          favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
+        ),
+        total,
+      };
     },
   );
 
@@ -103,7 +112,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const doc = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
       if (!doc) return reply.code(404).send({ error: 'recipe not found' });
       if (!canRead(req, doc)) return reply.code(403).send({ error: 'forbidden' });
-      return toRecipe(doc);
+      if (!req.user) return toRecipe(doc);
+      const favSet = await favoritedIds(app.collections, req.user.id, 'recipe', [doc._id]);
+      return toRecipe(doc, { isFavorite: favSet.has(doc._id.toString()) });
     },
   );
 
@@ -120,9 +131,19 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (existing.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'not the owner' });
       }
+      const { source, ...rest } = req.body;
+      const $set: Partial<RecipeDoc> & { updatedAt: Date } = { ...rest, updatedAt: new Date() };
+      if (source) {
+        $set.source = {
+          type: source.type,
+          url: source.url,
+          platform: source.platform,
+          importTaskId: source.importTaskId ? new ObjectId(source.importTaskId) : undefined,
+        };
+      }
       const updated = await app.collections.recipes.findOneAndUpdate(
         { _id },
-        { $set: { ...req.body, updatedAt: new Date() } },
+        { $set },
         { returnDocument: 'after' },
       );
       return toRecipe(updated!);

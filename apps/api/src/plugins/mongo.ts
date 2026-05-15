@@ -6,6 +6,7 @@ import type {
   RefreshTokenDoc,
   RecipeDoc,
   RecipeBookDoc,
+  FavoriteDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -13,6 +14,7 @@ export type Collections = {
   refreshTokens: Collection<RefreshTokenDoc>;
   recipes: Collection<RecipeDoc>;
   recipeBooks: Collection<RecipeBookDoc>;
+  favorites: Collection<FavoriteDoc>;
 };
 
 declare module 'fastify' {
@@ -33,6 +35,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     refreshTokens: db.collection<RefreshTokenDoc>('refresh_tokens'),
     recipes: db.collection<RecipeDoc>('recipes'),
     recipeBooks: db.collection<RecipeBookDoc>('recipe_books'),
+    favorites: db.collection<FavoriteDoc>('favorites'),
   };
 
   app.decorate('mongo', client);

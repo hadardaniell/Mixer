@@ -58,6 +58,20 @@ export const RegisterInputSchema = z.object({
 });
 export type RegisterInput = z.infer<typeof RegisterInputSchema>;
 
+export const GoogleLoginInputSchema = z.object({
+  idToken: z.string().min(1),
+});
+export type GoogleLoginInput = z.infer<typeof GoogleLoginInputSchema>;
+
+export const CreateUserAsAdminInputSchema = z.object({
+  email: z.string().email(),
+  displayName: z.string().min(1).max(80),
+  locale: LocaleSchema.default('en'),
+  role: UserRoleSchema.default('user'),
+  password: z.string().min(8).max(200).optional(),
+});
+export type CreateUserAsAdminInput = z.infer<typeof CreateUserAsAdminInputSchema>;
+
 export const LoginInputSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -121,6 +135,7 @@ export const RecipeSchema = z.object({
   forkedAt: IsoDate.optional(),
   createdAt: IsoDate,
   updatedAt: IsoDate,
+  isFavorite: z.boolean().optional(),
 });
 export type Recipe = z.infer<typeof RecipeSchema>;
 
@@ -178,8 +193,12 @@ export const RecipeBookSchema = z.object({
   tags: z.array(z.string()),
   createdAt: IsoDate,
   updatedAt: IsoDate,
+  isFavorite: z.boolean().optional(),
 });
 export type RecipeBook = z.infer<typeof RecipeBookSchema>;
+
+export const FavoriteKindSchema = z.enum(['recipe', 'book']);
+export type FavoriteKind = z.infer<typeof FavoriteKindSchema>;
 
 export const CreateRecipeBookInputSchema = z.object({
   name: z.string().min(1).max(120),

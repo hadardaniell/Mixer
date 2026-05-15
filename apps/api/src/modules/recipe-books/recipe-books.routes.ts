@@ -1,15 +1,15 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import {
   AddBookMemberInputSchema,
   CreateRecipeBookInputSchema,
-  RecipeBookSchema,
   UpdateBookMemberInputSchema,
   UpdateRecipeBookInputSchema,
 } from '@mixer/contracts';
 import type { RecipeBookDoc } from '../../db/types.js';
 import { toRecipeBook } from './recipe-books.mapper.js';
+import { favoritedIds } from '../favorites/favorites.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 const IdAndUserParam = z.object({
@@ -27,13 +27,12 @@ function memberRole(book: RecipeBookDoc, userId: string): 'owner' | 'editor' | '
   return m?.role ?? null;
 }
 
-export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
-  // Create
+export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/recipe-books',
     {
       onRequest: [app.authenticate],
-      schema: { body: CreateRecipeBookInputSchema, response: { 201: RecipeBookSchema } },
+      schema: { body: CreateRecipeBookInputSchema, tags: ['recipe-books'] },
     },
     async (req, reply) => {
       const ownerId = new ObjectId(req.user.id);
@@ -56,30 +55,25 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // List mine + ones I'm a member of
   app.get(
     '/recipe-books',
-    {
-      onRequest: [app.authenticate],
-      schema: { response: { 200: z.object({ items: z.array(RecipeBookSchema) }) } },
-    },
+    { onRequest: [app.authenticate], schema: { tags: ['recipe-books'] } },
     async (req) => {
       const userId = new ObjectId(req.user.id);
       const items = await app.collections.recipeBooks
         .find({ $or: [{ ownerId: userId }, { 'members.userId': userId }] })
         .sort({ createdAt: -1 })
         .toArray();
-      return { items: items.map(toRecipeBook) };
+      const favSet = await favoritedIds(app.collections, req.user.id, 'book', items.map((b) => b._id));
+      return {
+        items: items.map((b) => toRecipeBook(b, { isFavorite: favSet.has(b._id.toString()) })),
+      };
     },
   );
 
-  // Get by id (must be a member)
   app.get(
     '/recipe-books/:id',
-    {
-      onRequest: [app.authenticate],
-      schema: { params: IdParam, response: { 200: RecipeBookSchema } },
-    },
+    { onRequest: [app.authenticate], schema: { params: IdParam, tags: ['recipe-books'] } },
     async (req, reply) => {
       const book = await app.collections.recipeBooks.findOne({
         _id: new ObjectId(req.params.id),
@@ -88,20 +82,16 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
       if (!memberRole(book, req.user.id)) {
         return reply.code(403).send({ error: 'not a member' });
       }
-      return toRecipeBook(book);
+      const favSet = await favoritedIds(app.collections, req.user.id, 'book', [book._id]);
+      return toRecipeBook(book, { isFavorite: favSet.has(book._id.toString()) });
     },
   );
 
-  // Update (owner or editor)
   app.patch(
     '/recipe-books/:id',
     {
       onRequest: [app.authenticate],
-      schema: {
-        params: IdParam,
-        body: UpdateRecipeBookInputSchema,
-        response: { 200: RecipeBookSchema },
-      },
+      schema: { params: IdParam, body: UpdateRecipeBookInputSchema, tags: ['recipe-books'] },
     },
     async (req, reply) => {
       const _id = new ObjectId(req.params.id);
@@ -120,12 +110,11 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // Delete (owner only)
   app.delete(
     '/recipe-books/:id',
     {
       onRequest: [app.authenticate],
-      schema: { params: IdParam, response: { 204: z.null() } },
+      schema: { params: IdParam, tags: ['recipe-books'] },
     },
     async (req, reply) => {
       const _id = new ObjectId(req.params.id);
@@ -139,12 +128,11 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // Add a recipe to the book (owner or editor)
   app.post(
     '/recipe-books/:id/recipes/:recipeId',
     {
       onRequest: [app.authenticate],
-      schema: { params: IdAndRecipeParam, response: { 200: RecipeBookSchema } },
+      schema: { params: IdAndRecipeParam, tags: ['recipe-books'] },
     },
     async (req, reply) => {
       const _id = new ObjectId(req.params.id);
@@ -164,12 +152,11 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // Remove a recipe from the book (owner or editor)
   app.delete(
     '/recipe-books/:id/recipes/:recipeId',
     {
       onRequest: [app.authenticate],
-      schema: { params: IdAndRecipeParam, response: { 200: RecipeBookSchema } },
+      schema: { params: IdAndRecipeParam, tags: ['recipe-books'] },
     },
     async (req, reply) => {
       const _id = new ObjectId(req.params.id);
@@ -189,16 +176,11 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // Add member (owner only)
   app.post(
     '/recipe-books/:id/members',
     {
       onRequest: [app.authenticate],
-      schema: {
-        params: IdParam,
-        body: AddBookMemberInputSchema,
-        response: { 200: RecipeBookSchema },
-      },
+      schema: { params: IdParam, body: AddBookMemberInputSchema, tags: ['recipe-books'] },
     },
     async (req, reply) => {
       const _id = new ObjectId(req.params.id);
@@ -213,7 +195,6 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
         addedAt: new Date(),
         invitedBy: new ObjectId(req.user.id),
       };
-      // ensure we don't duplicate
       await app.collections.recipeBooks.updateOne(
         { _id, 'members.userId': { $ne: member.userId } },
         { $push: { members: member }, $set: { updatedAt: new Date() } },
@@ -223,7 +204,6 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // Change a member's role (owner only)
   app.patch(
     '/recipe-books/:id/members/:userId',
     {
@@ -231,7 +211,7 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         params: IdAndUserParam,
         body: UpdateBookMemberInputSchema,
-        response: { 200: RecipeBookSchema },
+        tags: ['recipe-books'],
       },
     },
     async (req, reply) => {
@@ -252,12 +232,11 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  // Remove a member (owner only)
   app.delete(
     '/recipe-books/:id/members/:userId',
     {
       onRequest: [app.authenticate],
-      schema: { params: IdAndUserParam, response: { 200: RecipeBookSchema } },
+      schema: { params: IdAndUserParam, tags: ['recipe-books'] },
     },
     async (req, reply) => {
       const _id = new ObjectId(req.params.id);
@@ -275,4 +254,4 @@ export async function recipeBooksRoutes(app: FastifyInstance): Promise<void> {
       return toRecipeBook(updated!);
     },
   );
-}
+};

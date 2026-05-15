@@ -1,15 +1,19 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import {
+  GoogleLoginInputSchema,
   LoginInputSchema,
   RefreshInputSchema,
   RegisterInputSchema,
 } from '@mixer/contracts';
+import { config } from '../../config.js';
 import {
+  findOrCreateGoogleUser,
   hashPassword,
   issueTokens,
   revokeRefreshToken,
   rotateRefreshToken,
+  verifyGoogleIdToken,
   verifyPassword,
 } from './auth.service.js';
 import { toPublicUser } from '../users/users.mapper.js';
@@ -57,6 +61,27 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       const ok = await verifyPassword(password, user.passwordHash);
       if (!ok) return reply.code(401).send({ error: 'invalid credentials' });
 
+      return issueTokens(app.collections, user, {
+        userAgent: req.headers['user-agent'],
+        ipAddress: req.ip,
+      });
+    },
+  );
+
+  app.post(
+    '/auth/google',
+    { schema: { body: GoogleLoginInputSchema, tags: ['auth'] } },
+    async (req, reply) => {
+      if (!config.googleClientId) {
+        return reply.code(503).send({ error: 'google sign-in not configured' });
+      }
+      let profile;
+      try {
+        profile = await verifyGoogleIdToken(req.body.idToken);
+      } catch {
+        return reply.code(401).send({ error: 'invalid Google id token' });
+      }
+      const user = await findOrCreateGoogleUser(app.collections, profile);
       return issueTokens(app.collections, user, {
         userAgent: req.headers['user-agent'],
         ipAddress: req.ip,
