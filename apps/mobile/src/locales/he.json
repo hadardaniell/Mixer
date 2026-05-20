@@ -1,0 +1,54 @@
+{
+  "common": {
+    "save": "שמור",
+    "cancel": "בטל",
+    "close": "סגור",
+    "all": "הכל",
+    "search": "חפש"
+  },
+  "home": {
+    "greeting": "שלום, {{name}}",
+    "searchPlaceholder": "חפשי מתכון, ספר או רכיב...",
+    "recentlyViewed": "צפיתי לאחרונה",
+    "recentlyImported": "יובאו לאחרונה",
+    "linked": "מקושר"
+  },
+  "add": {
+    "title": "מה נוסיף?",
+    "newRecipe": "מתכון חדש",
+    "newRecipeDesc": "מקישור, צילום, ידני או קובץ",
+    "newBook": "ספר מתכונים",
+    "newBookDesc": "אסוף מתכונים לפי נושא, שתף עם חברים",
+    "mealBuilder": "בניית ארוחה",
+    "mealBuilderDesc": "צ'אט חכם שמרכיב לך תפריט"
+  },
+  "import": {
+    "title": "איך נוסיף את המתכון?",
+    "fromLink": "מקישור",
+    "fromLinkDesc": "הדבק כתובת — ה-AI יחלץ את המתכון",
+    "fromPhoto": "מצילום",
+    "fromPhotoDesc": "צלם מתכון מספר או מסך",
+    "manual": "בכתיבה ידנית",
+    "manualDesc": "הקלד הכל בעצמך — מסך נקי לכתיבה",
+    "fromFile": "מקובץ",
+    "fromFileDesc": "PDF, DOCX או טקסט"
+  },
+  "profile": {
+    "stats": {
+      "books": "ספרים",
+      "recipes": "מתכונים",
+      "friends": "חברים"
+    }
+  },
+  "settings": {
+    "title": "הגדרות",
+    "language": "שפה",
+    "languageHe": "עברית",
+    "languageEn": "English",
+    "restartRequired": "השפה השתנתה. האפליקציה תופעל מחדש."
+  },
+  "auth": {
+    "login": "התחבר",
+    "logout": "התנתק"
+  }
+}

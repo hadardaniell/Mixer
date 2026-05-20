@@ -10,7 +10,10 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   ios: {
     bundleIdentifier: 'com.hadardaniell.mixer',
-    supportsTablet: false
+    supportsTablet: false,
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
   },
   android: {
     package: 'com.hadardaniell.mixer',
@@ -21,11 +24,14 @@ const config: ExpoConfig = {
   web: {
     bundler: 'metro',
   },
-  plugins: ['expo-router'],
+  plugins: ['expo-router', 'expo-localization'],
   experiments: {
-    typedRoutes: true,
+    typedRoutes: false,
   },
   extra: {
+    eas: {
+      projectId: '1c7c5a58-6fb3-4e80-b006-6044f3744a3f',
+    },
     apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000',
     aiBaseUrl: process.env.EXPO_PUBLIC_AI_BASE_URL ?? 'http://localhost:3001',
     googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
