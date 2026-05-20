@@ -29,6 +29,9 @@ export default function RootLayout() {
           const style = document.createElement('style');
           style.id = styleId;
           style.textContent = `
+            html, body, #root, #__next {
+              background-color: #EFEFED;
+            }
             html[dir="rtl"] input,
             html[dir="rtl"] textarea {
               direction: rtl;
@@ -51,7 +54,7 @@ export default function RootLayout() {
   }, [initial.language]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFEFED' }}>
       <SafeAreaProvider>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <QueryClientProvider client={queryClient}>
