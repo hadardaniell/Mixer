@@ -1,0 +1,54 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "all": "All",
+    "search": "Search"
+  },
+  "home": {
+    "greeting": "Hello, {{name}}",
+    "searchPlaceholder": "Search a recipe, book or ingredient...",
+    "recentlyViewed": "Recently viewed",
+    "recentlyImported": "Recently imported",
+    "linked": "Linked"
+  },
+  "add": {
+    "title": "What would you like to add?",
+    "newRecipe": "New recipe",
+    "newRecipeDesc": "From a link, photo, manually or a file",
+    "newBook": "Recipe book",
+    "newBookDesc": "Collect recipes by topic, share with friends",
+    "mealBuilder": "Meal builder",
+    "mealBuilderDesc": "A smart chat that builds your menu"
+  },
+  "import": {
+    "title": "How should we add the recipe?",
+    "fromLink": "From a link",
+    "fromLinkDesc": "Paste a URL — the AI extracts the recipe",
+    "fromPhoto": "From a photo",
+    "fromPhotoDesc": "Snap a recipe from a book or screen",
+    "manual": "Manual entry",
+    "manualDesc": "Type everything yourself — a clean editor",
+    "fromFile": "From a file",
+    "fromFileDesc": "PDF, DOCX or plain text"
+  },
+  "profile": {
+    "stats": {
+      "books": "books",
+      "recipes": "recipes",
+      "friends": "friends"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHe": "עברית",
+    "languageEn": "English",
+    "restartRequired": "Language changed. The app will reload."
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out"
+  }
+}
