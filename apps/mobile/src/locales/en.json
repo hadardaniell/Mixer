@@ -62,6 +62,9 @@
     "passwordTooShort": "Password must be at least 8 characters",
     "networkError": "Couldn't reach the server. Try again.",
     "noAccountSignUp": "No account? Sign up",
-    "haveAccountSignIn": "Already have an account? Sign in"
+    "haveAccountSignIn": "Already have an account? Sign in",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "linkRequiresPassword": "An account with this email already exists. Sign in with your password, then link Google from settings."
   }
 }

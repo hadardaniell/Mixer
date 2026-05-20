@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import { H1, Input, Text, XStack, YStack } from 'tamagui';
 
+import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
@@ -62,6 +63,12 @@ export function RegisterScreen() {
       <H1>{t('auth.signUp')}</H1>
 
       <YStack width="100%" maxWidth={360} gap="$3">
+        <GoogleSignInButton onError={(msg) => setError(msg || null)} />
+
+        <Text textAlign="center" color="$gray10" fontSize="$2">
+          {t('auth.or')}
+        </Text>
+
         <XStack gap="$2" justifyContent="center">
           {languageOptions.map((opt) => {
             const selected = language === opt.code;
