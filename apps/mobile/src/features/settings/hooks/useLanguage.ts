@@ -1,4 +1,4 @@
-import { I18nManager } from 'react-native';
+import { I18nManager, Platform } from 'react-native';
 import * as Updates from 'expo-updates';
 
 import { useSettingsContext } from '@/features/settings/context/SettingsContext';
@@ -13,13 +13,22 @@ export function useLanguage() {
     i18n.changeLanguage(next);
 
     const shouldBeRTL = isRTL(next);
+
+    if (Platform.OS === 'web') {
+      if (typeof document !== 'undefined') {
+        document.documentElement.dir = shouldBeRTL ? 'rtl' : 'ltr';
+        document.documentElement.lang = next;
+      }
+      return;
+    }
+
     if (I18nManager.isRTL !== shouldBeRTL) {
       I18nManager.allowRTL(shouldBeRTL);
       I18nManager.forceRTL(shouldBeRTL);
       try {
         await Updates.reloadAsync();
       } catch {
-        // dev client / web: caller falls back to a manual restart prompt
+        // dev client: caller falls back to a manual restart prompt
       }
     }
   };

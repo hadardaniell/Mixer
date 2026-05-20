@@ -2,17 +2,18 @@ import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
-import { H1, Input, Text, YStack } from 'tamagui';
+import { H1, Input, Text, XStack, YStack } from 'tamagui';
 
-import { useSettings } from '@/features/settings/hooks/useSettings';
+import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import { HttpError } from '@/shared/lib/httpClient';
+import type { Language } from '@/shared/lib/i18n';
 
 export function RegisterScreen() {
   const { t } = useTranslation();
   const { signIn } = useAuth();
-  const { language } = useSettings();
+  const { language, changeLanguage } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -51,11 +52,40 @@ export function RegisterScreen() {
     }
   };
 
+  const languageOptions: { code: Language; label: string }[] = [
+    { code: 'he', label: t('settings.languageHe') },
+    { code: 'en', label: t('settings.languageEn') },
+  ];
+
   return (
     <YStack flex={1} alignItems="center" justifyContent="center" padding="$4" gap="$3">
       <H1>{t('auth.signUp')}</H1>
 
       <YStack width="100%" maxWidth={360} gap="$3">
+        <XStack gap="$2" justifyContent="center">
+          {languageOptions.map((opt) => {
+            const selected = language === opt.code;
+            return (
+              <Pressable
+                key={opt.code}
+                onPress={() => changeLanguage(opt.code)}
+                style={({ pressed }) => ({
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: selected ? '#111' : '#ccc',
+                  backgroundColor: selected ? '#111' : pressed ? '#eee' : 'transparent',
+                })}
+              >
+                <Text color={selected ? 'white' : '$color'} fontSize="$3" fontWeight="600">
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </XStack>
+
         <Input
           placeholder={t('auth.displayName')}
           autoCapitalize="words"
