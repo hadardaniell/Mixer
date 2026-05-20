@@ -49,6 +49,19 @@
   },
   "auth": {
     "login": "התחבר",
-    "logout": "התנתק"
+    "logout": "התנתק",
+    "signUp": "הרשמה",
+    "signingIn": "מתחבר…",
+    "signingUp": "נרשם…",
+    "email": "אימייל",
+    "password": "סיסמה",
+    "displayName": "שם תצוגה",
+    "invalidCredentials": "אימייל או סיסמה שגויים",
+    "emailAlreadyRegistered": "האימייל הזה כבר רשום",
+    "invalidInput": "בדוק את השדות ונסה שוב",
+    "passwordTooShort": "הסיסמה חייבת להכיל לפחות 8 תווים",
+    "networkError": "לא הצלחנו להתחבר לשרת. נסה שוב.",
+    "noAccountSignUp": "אין לך חשבון? הירשם",
+    "haveAccountSignIn": "יש לך חשבון? התחבר"
   }
 }

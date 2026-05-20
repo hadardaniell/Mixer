@@ -17,10 +17,10 @@ export default function ProfileScreen() {
         alignItems="center"
         justifyContent="center"
       >
-        <H1 color="white">{user?.name?.[0] ?? '?'}</H1>
+        <H1 color="white">{user?.displayName?.[0] ?? '?'}</H1>
       </YStack>
 
-      <H1>{user?.name}</H1>
+      <H1>{user?.displayName}</H1>
 
       <XStack gap="$5">
         <Stat value={6} label={t('profile.stats.books')} />

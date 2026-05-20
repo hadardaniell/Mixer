@@ -49,6 +49,19 @@
   },
   "auth": {
     "login": "Sign in",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "signUp": "Sign up",
+    "signingIn": "Signing in…",
+    "signingUp": "Signing up…",
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display name",
+    "invalidCredentials": "Wrong email or password",
+    "emailAlreadyRegistered": "This email is already registered",
+    "invalidInput": "Please check the fields and try again",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "networkError": "Couldn't reach the server. Try again.",
+    "noAccountSignUp": "No account? Sign up",
+    "haveAccountSignIn": "Already have an account? Sign in"
   }
 }

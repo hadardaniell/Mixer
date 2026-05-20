@@ -1,19 +1,23 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import type { AuthResponse, PublicUser } from '@mixer/contracts';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
-import { storage, StorageKeys } from '@/shared/config/storage';
-
-interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-}
+import { authApi } from '@/features/auth/services/authApi';
+import { tokens } from '@/features/auth/services/tokens';
 
 interface AuthContextValue {
-  token: string | null;
-  user: AuthUser | null;
+  accessToken: string | null;
+  user: PublicUser | null;
   isAuthenticated: boolean;
-  signIn: (token: string, user: AuthUser) => void;
-  signOut: () => void;
+  signIn: (response: AuthResponse) => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -22,37 +26,43 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setToken] = useState<string | null>(
-    () => storage.getString(StorageKeys.authToken) ?? null,
-  );
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    const raw = storage.getString(StorageKeys.authUser);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as AuthUser;
-    } catch {
-      return null;
-    }
-  });
+function snapshot() {
+  return {
+    accessToken: tokens.getAccessToken(),
+    user: tokens.getUser(),
+  };
+}
 
-  const signIn = useCallback((nextToken: string, nextUser: AuthUser) => {
-    storage.set(StorageKeys.authToken, nextToken);
-    storage.set(StorageKeys.authUser, JSON.stringify(nextUser));
-    setToken(nextToken);
-    setUser(nextUser);
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [state, setState] = useState(snapshot);
+
+  useEffect(() => tokens.subscribe(() => setState(snapshot())), []);
+
+  const signIn = useCallback((response: AuthResponse) => {
+    tokens.setSession(response.accessToken, response.refreshToken, response.user);
   }, []);
 
-  const signOut = useCallback(() => {
-    storage.delete(StorageKeys.authToken);
-    storage.delete(StorageKeys.authUser);
-    setToken(null);
-    setUser(null);
+  const signOut = useCallback(async () => {
+    const refreshToken = tokens.getRefreshToken();
+    tokens.clear();
+    if (refreshToken) {
+      try {
+        await authApi.logout(refreshToken);
+      } catch {
+        // best-effort; local session is already cleared
+      }
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ token, user, isAuthenticated: token !== null, signIn, signOut }),
-    [token, user, signIn, signOut],
+    () => ({
+      accessToken: state.accessToken,
+      user: state.user,
+      isAuthenticated: state.accessToken !== null,
+      signIn,
+      signOut,
+    }),
+    [state, signIn, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
