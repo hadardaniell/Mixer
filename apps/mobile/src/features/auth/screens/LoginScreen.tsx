@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import { H1, Input, Text, YStack } from 'tamagui';
 
+import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import { HttpError } from '@/shared/lib/httpClient';
@@ -40,6 +41,12 @@ export function LoginScreen() {
       <H1>Mixer</H1>
 
       <YStack width="100%" maxWidth={360} gap="$3">
+        <GoogleSignInButton onError={(msg) => setError(msg || null)} />
+
+        <Text textAlign="center" color="$gray10" fontSize="$2">
+          {t('auth.or')}
+        </Text>
+
         <Input
           placeholder={t('auth.email')}
           autoCapitalize="none"

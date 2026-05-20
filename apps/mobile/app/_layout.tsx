@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TamaguiProvider } from 'tamagui';
 
+import { GoogleProvider } from '@/features/auth/components/GoogleProvider';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { readInitialSettings, SettingsProvider } from '@/features/settings/context/SettingsContext';
 import { queryClient } from '@/shared/lib/queryClient';
@@ -56,11 +57,13 @@ export default function RootLayout() {
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <QueryClientProvider client={queryClient}>
             <SettingsProvider initial={initial}>
-              <AuthProvider>
-                <SplashGate isReady={ready}>
-                  <Slot />
-                </SplashGate>
-              </AuthProvider>
+              <GoogleProvider>
+                <AuthProvider>
+                  <SplashGate isReady={ready}>
+                    <Slot />
+                  </SplashGate>
+                </AuthProvider>
+              </GoogleProvider>
             </SettingsProvider>
           </QueryClientProvider>
         </TamaguiProvider>

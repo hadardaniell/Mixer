@@ -38,6 +38,8 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     favorites: db.collection<FavoriteDoc>('favorites'),
   };
 
+  await ensureIndexes(collections);
+
   app.decorate('mongo', client);
   app.decorate('db', db);
   app.decorate('collections', collections);
@@ -45,4 +47,25 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
   app.addHook('onClose', async () => {
     await client.close();
   });
+}
+
+async function ensureIndexes(collections: Collections): Promise<void> {
+  const desiredEmail = {
+    key: { email: 1 } as const,
+    options: { unique: true, collation: { locale: 'en', strength: 2 } } as const,
+  };
+
+  const existing = await collections.users.indexes();
+  const emailIdx = existing.find((i) => i.name === 'email_1');
+  const hasCaseInsensitive =
+    emailIdx?.collation?.locale === 'en' && emailIdx?.collation?.strength === 2;
+  if (emailIdx && !hasCaseInsensitive) {
+    await collections.users.dropIndex('email_1');
+  }
+  await collections.users.createIndex(desiredEmail.key, desiredEmail.options);
+
+  await collections.users.createIndex(
+    { 'providers.google.sub': 1 },
+    { unique: true, sparse: true },
+  );
 }

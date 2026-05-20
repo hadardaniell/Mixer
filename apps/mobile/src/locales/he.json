@@ -62,6 +62,9 @@
     "passwordTooShort": "הסיסמה חייבת להכיל לפחות 8 תווים",
     "networkError": "לא הצלחנו להתחבר לשרת. נסה שוב.",
     "noAccountSignUp": "אין לך חשבון? הירשם",
-    "haveAccountSignIn": "יש לך חשבון? התחבר"
+    "haveAccountSignIn": "יש לך חשבון? התחבר",
+    "continueWithGoogle": "המשך עם Google",
+    "or": "או",
+    "linkRequiresPassword": "כבר קיים חשבון עם האימייל הזה. התחבר עם הסיסמה ואז קשר את Google דרך ההגדרות."
   }
 }

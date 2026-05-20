@@ -1,10 +1,23 @@
-import type { AuthResponse, LoginInput, PublicUser, RegisterInput } from '@mixer/contracts';
+import type {
+  AuthResponse,
+  GoogleLoginInput,
+  LoginInput,
+  PublicUser,
+  RegisterInput,
+} from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';
 
 export const authApi = {
   login: (body: LoginInput) =>
     http<AuthResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      skipAuth: true,
+    }),
+
+  loginWithGoogle: (body: GoogleLoginInput) =>
+    http<AuthResponse>('/auth/google', {
       method: 'POST',
       body: JSON.stringify(body),
       skipAuth: true,

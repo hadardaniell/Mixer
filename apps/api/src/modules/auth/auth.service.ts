@@ -14,9 +14,17 @@ const googleClient = new OAuth2Client(config.googleClientId);
 export type GoogleProfile = {
   sub: string;
   email: string;
+  emailVerified: boolean;
   name?: string;
   picture?: string;
 };
+
+export class GoogleLinkRequiresPasswordError extends Error {
+  constructor() {
+    super('link_requires_password');
+    this.name = 'GoogleLinkRequiresPasswordError';
+  }
+}
 
 export async function verifyGoogleIdToken(idToken: string): Promise<GoogleProfile> {
   const ticket = await googleClient.verifyIdToken({
@@ -29,7 +37,8 @@ export async function verifyGoogleIdToken(idToken: string): Promise<GoogleProfil
   }
   return {
     sub: payload.sub,
-    email: payload.email,
+    email: payload.email.toLowerCase(),
+    emailVerified: payload.email_verified === true,
     name: payload.name,
     picture: payload.picture,
   };
@@ -44,13 +53,17 @@ export async function findOrCreateGoogleUser(
 
   const byEmail = await collections.users.findOne({ email: profile.email });
   if (byEmail) {
+    if (!profile.emailVerified) {
+      throw new GoogleLinkRequiresPasswordError();
+    }
+    const now = new Date();
     await collections.users.updateOne(
       { _id: byEmail._id },
       {
         $set: {
-          'providers.google': { sub: profile.sub, email: profile.email },
-          emailVerifiedAt: byEmail.emailVerifiedAt ?? new Date(),
-          updatedAt: new Date(),
+          'providers.google': { sub: profile.sub, email: profile.email, linkedAt: now },
+          emailVerifiedAt: byEmail.emailVerifiedAt ?? now,
+          updatedAt: now,
         },
       },
     );
@@ -66,7 +79,7 @@ export async function findOrCreateGoogleUser(
     avatarUrl: profile.picture,
     locale: 'en',
     role: 'user',
-    providers: { google: { sub: profile.sub, email: profile.email } },
+    providers: { google: { sub: profile.sub, email: profile.email, linkedAt: now } },
     emailVerifiedAt: now,
     createdAt: now,
     updatedAt: now,
