@@ -24,6 +24,24 @@ export default function RootLayout() {
       if (typeof document !== 'undefined') {
         document.documentElement.dir = shouldBeRTL ? 'rtl' : 'ltr';
         document.documentElement.lang = initial.language;
+        const styleId = 'app-rtl-overrides';
+        if (!document.getElementById(styleId)) {
+          const style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = `
+            html[dir="rtl"] input,
+            html[dir="rtl"] textarea {
+              direction: rtl;
+              text-align: right;
+            }
+            html[dir="ltr"] input,
+            html[dir="ltr"] textarea {
+              direction: ltr;
+              text-align: left;
+            }
+          `;
+          document.head.appendChild(style);
+        }
       }
     } else if (I18nManager.isRTL !== shouldBeRTL) {
       I18nManager.allowRTL(shouldBeRTL);
