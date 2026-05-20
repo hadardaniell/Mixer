@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { I18nManager } from 'react-native';
+import { I18nManager, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TamaguiProvider } from 'tamagui';
@@ -20,7 +20,12 @@ export default function RootLayout() {
   useEffect(() => {
     initI18n(initial.language);
     const shouldBeRTL = isRTL(initial.language);
-    if (I18nManager.isRTL !== shouldBeRTL) {
+    if (Platform.OS === 'web') {
+      if (typeof document !== 'undefined') {
+        document.documentElement.dir = shouldBeRTL ? 'rtl' : 'ltr';
+        document.documentElement.lang = initial.language;
+      }
+    } else if (I18nManager.isRTL !== shouldBeRTL) {
       I18nManager.allowRTL(shouldBeRTL);
       I18nManager.forceRTL(shouldBeRTL);
     }

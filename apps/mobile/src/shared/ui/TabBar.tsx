@@ -26,6 +26,8 @@ export function TabBar({ state, navigation, onAddPress }: CustomTabBarProps) {
       backgroundColor="white"
       alignItems="center"
       justifyContent="space-around"
+      flexDirection="row"
+      style={{ direction: 'ltr' }}
       shadowColor="black"
       shadowOpacity={0.15}
       shadowOffset={{ width: 0, height: 4 }}
