@@ -49,7 +49,8 @@ function pickStorage(): KVStorage {
 export const storage: KVStorage = pickStorage();
 
 export const StorageKeys = {
-  authToken: 'auth.token',
+  authAccessToken: 'auth.accessToken',
+  authRefreshToken: 'auth.refreshToken',
   authUser: 'auth.user',
   language: 'settings.language',
   theme: 'settings.theme',

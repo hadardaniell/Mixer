@@ -11,7 +11,7 @@ export default function HomeScreen() {
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic">
       <YStack padding="$4" gap="$4">
-        <H1>{t('home.greeting', { name: user?.name ?? '' })}</H1>
+        <H1>{t('home.greeting', { name: user?.displayName ?? '' })}</H1>
         <Input placeholder={t('home.searchPlaceholder')} />
 
         <XStack justifyContent="space-between">
