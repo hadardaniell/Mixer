@@ -9,6 +9,7 @@ import {
 import { config } from '../../config.js';
 import {
   findOrCreateGoogleUser,
+  GoogleLinkRequiresPasswordError,
   hashPassword,
   issueTokens,
   revokeRefreshToken,
@@ -23,7 +24,8 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     '/auth/register',
     { schema: { body: RegisterInputSchema, tags: ['auth'] } },
     async (req, reply) => {
-      const { email, password, displayName, locale } = req.body;
+      const { password, displayName, locale } = req.body;
+      const email = req.body.email.toLowerCase();
 
       const existing = await app.collections.users.findOne({ email });
       if (existing) return reply.code(409).send({ error: 'email already registered' });
@@ -53,7 +55,8 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     '/auth/login',
     { schema: { body: LoginInputSchema, tags: ['auth'] } },
     async (req, reply) => {
-      const { email, password } = req.body;
+      const { password } = req.body;
+      const email = req.body.email.toLowerCase();
       const user = await app.collections.users.findOne({ email });
       if (!user || !user.passwordHash) {
         return reply.code(401).send({ error: 'invalid credentials' });
@@ -81,7 +84,15 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       } catch {
         return reply.code(401).send({ error: 'invalid Google id token' });
       }
-      const user = await findOrCreateGoogleUser(app.collections, profile);
+      let user;
+      try {
+        user = await findOrCreateGoogleUser(app.collections, profile);
+      } catch (e) {
+        if (e instanceof GoogleLinkRequiresPasswordError) {
+          return reply.code(409).send({ error: 'link_requires_password' });
+        }
+        throw e;
+      }
       return issueTokens(app.collections, user, {
         userAgent: req.headers['user-agent'],
         ipAddress: req.ip,

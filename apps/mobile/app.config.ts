@@ -1,5 +1,15 @@
 import type { ExpoConfig } from 'expo/config';
 
+const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
+const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '';
+const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
+
+// Google Sign-In iOS URL scheme is the reversed iOS client ID:
+// "636101330680-abc.apps.googleusercontent.com" → "com.googleusercontent.apps.636101330680-abc"
+const iosUrlScheme = googleIosClientId
+  ? `com.googleusercontent.apps.${googleIosClientId.replace('.apps.googleusercontent.com', '')}`
+  : undefined;
+
 const config: ExpoConfig = {
   name: 'Mixer',
   slug: 'mixer',
@@ -10,7 +20,10 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   ios: {
     bundleIdentifier: 'com.hadardaniell.mixer',
-    supportsTablet: false
+    supportsTablet: false,
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
   },
   android: {
     package: 'com.hadardaniell.mixer',
@@ -21,16 +34,26 @@ const config: ExpoConfig = {
   web: {
     bundler: 'metro',
   },
-  plugins: ['expo-router'],
+  plugins: [
+    'expo-router',
+    'expo-localization',
+    [
+      '@react-native-google-signin/google-signin',
+      iosUrlScheme ? { iosUrlScheme } : {},
+    ],
+  ],
   experiments: {
-    typedRoutes: true,
+    typedRoutes: false,
   },
   extra: {
+    eas: {
+      projectId: '1c7c5a58-6fb3-4e80-b006-6044f3744a3f',
+    },
     apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000',
     aiBaseUrl: process.env.EXPO_PUBLIC_AI_BASE_URL ?? 'http://localhost:3001',
-    googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
-    googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '',
-    googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
+    googleIosClientId,
+    googleAndroidClientId,
+    googleWebClientId,
   },
 };
 

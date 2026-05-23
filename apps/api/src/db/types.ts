@@ -9,7 +9,7 @@ export type UserDoc = {
   locale: 'he' | 'en';
   role: 'user' | 'admin';
   providers?: {
-    google?: { sub: string; email: string };
+    google?: { sub: string; email: string; linkedAt: Date };
   };
   emailVerifiedAt?: Date;
   createdAt: Date;
