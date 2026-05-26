@@ -83,7 +83,7 @@ export function RegisterScreen() {
           alignItems="flex-end"
           flexDirection={isRtl ? 'row' : 'row-reverse'}
           gap="$3"
-          justifyContent="space-between"
+          justifyContent="center"
           width="100%"
         >
           <Text
@@ -97,7 +97,7 @@ export function RegisterScreen() {
             lineHeight={36}
             numberOfLines={1}
             paddingTop="0.5em"
-            textAlign={isRtl ? 'right' : 'left'}
+            textAlign="center"
           >
             {t('auth.registerTitle')}
           </Text>

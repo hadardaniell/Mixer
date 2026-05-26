@@ -64,8 +64,8 @@ export function LoginScreen() {
       <YStack width="100%" maxWidth={420} gap="$5" paddingTop="5em">
         <XStack
           alignItems="flex-end"
+          justifyContent="center"
           flexDirection={isRtl ? 'row' : 'row-reverse'}
-          justifyContent="space-between"
         >
           <Text
             color="#242424"
@@ -74,7 +74,7 @@ export function LoginScreen() {
             fontWeight="700"
             letterSpacing={-0.4}
             lineHeight={36}
-            textAlign={isRtl ? 'right' : 'left'}
+            textAlign="center"
           >
             {t('auth.welcomeTitle')}
           </Text>
