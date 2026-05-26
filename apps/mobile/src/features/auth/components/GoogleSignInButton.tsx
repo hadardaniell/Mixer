@@ -14,9 +14,10 @@ import { HttpError } from '@/shared/lib/httpClient';
 
 interface GoogleSignInButtonProps {
   onError: (message: string) => void;
+  variant?: 'pill' | 'card';
 }
 
-export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ onError, variant = 'pill' }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
   const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -53,9 +54,9 @@ export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
       disabled={loading}
       style={({ pressed }) => ({
         backgroundColor: pressed ? '#f5f5f5' : 'white',
-        borderColor: '#ddd',
-        borderWidth: 1,
-        paddingVertical: 12,
+        borderColor: variant === 'card' ? '#6F8286' : '#ddd',
+        borderWidth: variant === 'card' ? 1.5 : 1,
+        paddingVertical: variant === 'card' ? 14 : 12,
         paddingHorizontal: 24,
         borderRadius: 999,
         alignItems: 'center',
@@ -66,7 +67,14 @@ export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
         <Text fontSize="$5" fontWeight="700" color="#4285F4">
           G
         </Text>
-        <Text fontSize="$4" fontWeight="600" color="#111">
+        <Text
+          color="#111"
+          flexGrow={1}
+          fontFamily="Heebo"
+          fontSize={14}
+          fontWeight="500"
+          numberOfLines={1}
+        >
           {t('auth.continueWithGoogle')}
         </Text>
       </XStack>

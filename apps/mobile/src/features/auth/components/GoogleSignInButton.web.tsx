@@ -11,9 +11,10 @@ import { HttpError } from '@/shared/lib/httpClient';
 
 interface GoogleSignInButtonProps {
   onError: (message: string) => void;
+  variant?: 'pill' | 'card';
 }
 
-export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ onError, variant = 'pill' }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
   const { signIn } = useAuth();
   const [busy, setBusy] = useState(false);
