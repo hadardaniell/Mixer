@@ -9,6 +9,7 @@ import { TamaguiProvider } from 'tamagui';
 
 import { GoogleProvider } from '@/features/auth/components/GoogleProvider';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
+import { AUTH_FONT_FAMILY } from '@/features/auth/authFonts';
 import { readInitialSettings, SettingsProvider } from '@/features/settings/context/SettingsContext';
 import { queryClient } from '@/shared/lib/queryClient';
 import { initI18n, isRTL } from '@/shared/lib/i18n';
@@ -33,8 +34,8 @@ export default function RootLayout() {
         if (typeof document !== 'undefined') {
           document.documentElement.dir = shouldBeRTL ? 'rtl' : 'ltr';
           document.documentElement.lang = initial.language;
-          document.documentElement.style.backgroundColor = '#FFFFFF';
-          document.body.style.backgroundColor = '#FFFFFF';
+          document.documentElement.style.backgroundColor = '#f9f9f9';
+          document.body.style.backgroundColor = '#f9f9f9';
           document.body.style.margin = '0';
           document.body.style.minHeight = '100%';
           let themeColor = document.querySelector('meta[name="theme-color"]');
@@ -43,7 +44,7 @@ export default function RootLayout() {
             themeColor.setAttribute('name', 'theme-color');
             document.head.appendChild(themeColor);
           }
-          themeColor.setAttribute('content', '#FFFFFF');
+          themeColor.setAttribute('content', '#f9f9f9');
           const styleId = 'app-rtl-overrides';
           let style = document.getElementById(styleId);
           if (!style) {
@@ -67,13 +68,13 @@ export default function RootLayout() {
               min-height: 100%;
               height: 100%;
               margin: 0;
-              background: #FFFFFF !important;
+              background: #f9f9f9 !important;
               -webkit-text-size-adjust: 100%;
               text-size-adjust: 100%;
             }
             body > div:first-child {
               min-height: 100%;
-              background: #FFFFFF !important;
+              background: #f9f9f9 !important;
             }
             html[dir="rtl"] input,
             html[dir="rtl"] textarea {
@@ -88,7 +89,7 @@ export default function RootLayout() {
             .nsm7Bb-HzV7m-LgbsSe,
             .nsm7Bb-HzV7m-LgbsSe *,
             .nsm7Bb-HzV7m-LgbsSe-BPrWId {
-              font-family: 'Heebo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+              font-family: ${AUTH_FONT_FAMILY}, sans-serif !important;
             }
             .nsm7Bb-HzV7m-LgbsSe-BPrWId {
               -webkit-box-flex: 1;
@@ -116,8 +117,8 @@ export default function RootLayout() {
   }, [initial.language]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f9f9f9' }}>
+      <SafeAreaProvider style={{ backgroundColor: '#f9f9f9' }}>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <QueryClientProvider client={queryClient}>
             <SettingsProvider initial={initial}>

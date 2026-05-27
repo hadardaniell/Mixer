@@ -165,7 +165,7 @@ const statusDark = {
 // ─── Surfaces ───────────────────────────────────────────────────────────────
 
 const surfacesLight = {
-  background: '#FFFFFF', // dark teal app bg
+  background: '#f9f9f9',
   surface: '#FFFFFF', // cards, inputs, sheets (kept light so inputs stay readable)
   surfaceElevated: '#FFFFFF', // modals, menus
   overlay: 'rgba(8, 36, 33, 0.55)', // modal/sheet scrim

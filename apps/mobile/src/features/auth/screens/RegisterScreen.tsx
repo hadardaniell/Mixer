@@ -7,6 +7,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 
 import { AuthLanguageToggle } from '@/features/auth/components/AuthLanguageToggle';
 import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
+import { AUTH_FONT_FAMILY, AUTH_USES_SYSTEM_FONT } from '@/features/auth/authFonts';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
@@ -65,7 +66,7 @@ export function RegisterScreen() {
       justifyContent="space-between"
       padding="2em"
       width="100%"
-      backgroundColor="#FFFFFF"
+      backgroundColor="$background"
       style={
         {
           boxSizing: 'border-box',
@@ -87,11 +88,11 @@ export function RegisterScreen() {
           width="100%"
         >
           <Text
-            color="#16181F"
+            color="#3D2314"
             flex={1}
             flexShrink={1}
-            fontFamily="Heebo"
-            fontSize={30}
+            fontFamily={AUTH_FONT_FAMILY}
+            fontSize={26}
             fontWeight="700"
             letterSpacing={-0.4}
             lineHeight={36}
@@ -110,7 +111,14 @@ export function RegisterScreen() {
             autoCapitalize="words"
             value={displayName}
             onChangeText={setDisplayName}
-            style={{ borderColor: '#6F8286', borderRadius: 8, borderWidth: 1.5 }}
+            fontFamily={AUTH_FONT_FAMILY}
+            useSystemFont={AUTH_USES_SYSTEM_FONT}
+            style={{
+              backgroundColor: 'transparent',
+              borderColor: '#6F8286',
+              borderRadius: 8,
+              borderWidth: 1.5,
+            }}
           />
           <OutlinedInput
             label={t('auth.email')}
@@ -121,7 +129,14 @@ export function RegisterScreen() {
             textContentType="emailAddress"
             value={email}
             onChangeText={setEmail}
-            style={{ borderColor: '#6F8286', borderRadius: 8, borderWidth: 1.5 }}
+            fontFamily={AUTH_FONT_FAMILY}
+            useSystemFont={AUTH_USES_SYSTEM_FONT}
+            style={{
+              backgroundColor: 'transparent',
+              borderColor: '#6F8286',
+              borderRadius: 8,
+              borderWidth: 1.5,
+            }}
           />
           <OutlinedInput
             label={t('auth.password')}
@@ -130,7 +145,14 @@ export function RegisterScreen() {
             textContentType="newPassword"
             value={password}
             onChangeText={setPassword}
-            style={{ borderColor: '#6F8286', borderRadius: 8, borderWidth: 1.5 }}
+            fontFamily={AUTH_FONT_FAMILY}
+            useSystemFont={AUTH_USES_SYSTEM_FONT}
+            style={{
+              backgroundColor: 'transparent',
+              borderColor: '#6F8286',
+              borderRadius: 8,
+              borderWidth: 1.5,
+            }}
             endAdornment={
               <Pressable
                 accessibilityRole="button"
@@ -148,7 +170,7 @@ export function RegisterScreen() {
         </YStack>
 
         {error ? (
-          <Text color="$dangerText" fontSize="$3">
+          <Text color="$dangerText" fontFamily={AUTH_FONT_FAMILY} fontSize="$3">
             {error}
           </Text>
         ) : null}
@@ -158,7 +180,7 @@ export function RegisterScreen() {
           disabled={loading || !email || !password || !displayName}
           style={({ pressed }) => ({
             alignItems: 'center',
-            backgroundColor: pressed ? '#B9EA13E6' : '#C8FA15E6',
+            backgroundColor: pressed ? '#ffd7e7' : 'rgb(246, 235, 97)',
             borderRadius: 999,
             height: 55,
             justifyContent: 'center',
@@ -166,14 +188,14 @@ export function RegisterScreen() {
             width: '100%',
           })}
         >
-          <Text color="#1f3d00" fontFamily="Heebo" fontSize={21} fontWeight="800">
+          <Text color="#2B1B10" fontFamily={AUTH_FONT_FAMILY} fontSize={21} fontWeight="800">
             {loading ? t('auth.signingUp') : t('auth.signUp')}
           </Text>
         </Pressable>
 
         <XStack alignItems="center" gap="$4">
           <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
-          <Text color="#16181F" fontSize="$5">
+          <Text color="#16181F" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
             {t('auth.or')}
           </Text>
           <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
@@ -192,10 +214,10 @@ export function RegisterScreen() {
           }}
         >
           <XStack alignItems="center" gap="0.3em">
-            <Text color="#16181F" fontFamily="Heebo" fontSize="$5">
+            <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
               {t('auth.haveAccount')}
             </Text>
-            <Text color="#1f3d00" fontFamily="Heebo" fontSize="$5" fontWeight="800">
+            <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5" fontWeight="800">
               {t('auth.login')}
             </Text>
           </XStack>

@@ -16,9 +16,12 @@ import {
   Animated,
   Platform,
   Pressable,
+  type StyleProp,
   StyleSheet,
   TextInput,
+  type TextStyle,
   type TextInputProps,
+  type ViewStyle,
   View,
 } from 'react-native';
 import { useTheme } from 'tamagui';
@@ -29,6 +32,8 @@ type Props = Omit<TextInputProps, 'placeholder'> & {
   error?: boolean;
   endAdornment?: ReactNode;
   floatingLabel?: boolean;
+  fontFamily?: TextStyle['fontFamily'];
+  useSystemFont?: boolean;
 };
 
 const HEIGHT = 56;
@@ -39,7 +44,19 @@ const LABEL_FLOAT_SCALE = 0.75;
 const ANIM_MS = 160;
 
 export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput(
-  { label, error, value, onFocus, onBlur, style, endAdornment, floatingLabel = true, ...rest },
+  {
+    label,
+    error,
+    value,
+    onFocus,
+    onBlur,
+    style,
+    endAdornment,
+    floatingLabel = true,
+    fontFamily,
+    useSystemFont = false,
+    ...rest
+  },
   ref,
 ) {
   const theme = useTheme();
@@ -60,12 +77,18 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
   }, [floated, anim]);
 
   // Resolve theme colors (Tamagui returns Variable objects with .val).
-  const bg = (theme.inputBg?.val as string) ?? '#FFFFFF';
+  const flattenedWrapperStyle = StyleSheet.flatten(style as StyleProp<ViewStyle>);
+  const wrapperBg = flattenedWrapperStyle?.backgroundColor;
+  const bg =
+    typeof wrapperBg === 'string' && wrapperBg.length > 0
+      ? wrapperBg
+      : ((theme.inputBg?.val as string) ?? '#FFFFFF');
   const borderIdle = (theme.inputBorder?.val as string) ?? '#CCCCCC';
   const borderFocus = (theme.inputBorderFocus?.val as string) ?? '#3D7FB8';
   const dangerCol = (theme.danger?.val as string) ?? '#C8453B';
   const textCol = (theme.gray12?.val as string) ?? '#111111';
   const labelIdle = (theme.gray10?.val as string) ?? '#888888';
+  const resolvedFontFamily = useSystemFont ? undefined : (fontFamily ?? 'Heebo');
 
   const borderColor = error ? dangerCol : focused ? borderFocus : borderIdle;
   const borderWidth = focused || error ? 2 : 1;
@@ -132,7 +155,7 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
             backgroundColor: bg,
             borderRadius: RADIUS,
             direction: isRtl ? 'rtl' : 'ltr',
-            fontFamily: 'Heebo',
+            fontFamily: resolvedFontFamily,
             textAlign: isRtl ? 'right' : 'left',
             // Compensate when wrapper border thickens, so content doesn't jump.
             paddingLeft: (isRtl && endAdornment ? 52 : PAD_X) - (borderWidth - 1),
@@ -174,7 +197,7 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
           <Animated.Text
             style={{
               fontSize: 16,
-              fontFamily: 'Heebo',
+              fontFamily: resolvedFontFamily,
               color: error ? dangerCol : focused ? borderFocus : labelIdle,
               includeFontPadding: false,
             }}

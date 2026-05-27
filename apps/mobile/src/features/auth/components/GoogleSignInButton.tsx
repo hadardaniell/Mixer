@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import { Text, XStack } from 'tamagui';
 
+import { AUTH_FONT_FAMILY } from '@/features/auth/authFonts';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import {
@@ -70,7 +71,7 @@ export function GoogleSignInButton({ onError, variant = 'pill' }: GoogleSignInBu
         <Text
           color="#111"
           flexGrow={1}
-          fontFamily="Heebo"
+          fontFamily={AUTH_FONT_FAMILY}
           fontSize={14}
           fontWeight="500"
           numberOfLines={1}
