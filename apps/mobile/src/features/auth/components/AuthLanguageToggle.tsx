@@ -2,6 +2,7 @@ import { Pressable } from 'react-native';
 import { Text, XStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 
+import { AUTH_FONT_FAMILY } from '@/features/auth/authFonts';
 import { isRTL, type Language } from '@/shared/lib/i18n';
 
 interface AuthLanguageToggleProps {
@@ -37,15 +38,15 @@ export function AuthLanguageToggle({ language, onChangeLanguage }: AuthLanguageT
               void onChangeLanguage(option.code);
             }}
             style={({ pressed }) => ({
-              backgroundColor: selected ? '#C8FA15E6' : pressed ? '#F5FFD6' : '#FFFFFF',
+              backgroundColor: selected ? '#2B1B10' : pressed ? '#ffd7e7' : '#FFFFFF',
               flex: 1,
               paddingHorizontal: 14,
               paddingVertical: 8,
             })}
           >
             <Text
-              color={selected ? '#1f3d00' : '#16181F'}
-              fontFamily="Heebo"
+              color={selected ? 'rgb(246, 235, 97)' : '#16181F'}
+              fontFamily={AUTH_FONT_FAMILY}
               fontSize={15}
               fontWeight={selected ? '800' : '600'}
               textAlign="center"

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Text, YStack } from 'tamagui';
 
+import { AUTH_FONT_FAMILY } from '@/features/auth/authFonts';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import { env } from '@/shared/config/env';
@@ -21,7 +22,7 @@ export function GoogleSignInButton({ onError, variant = 'pill' }: GoogleSignInBu
 
   if (!env.googleWebClientId) {
     return (
-      <Text textAlign="center" color="$gray10" fontSize="$2">
+      <Text textAlign="center" color="$gray10" fontFamily={AUTH_FONT_FAMILY} fontSize="$2">
         Google sign-in not configured
       </Text>
     );

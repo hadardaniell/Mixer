@@ -6,6 +6,7 @@ import { Text, XStack, YStack } from 'tamagui';
 import { Eye, EyeOff } from 'lucide-react-native';
 
 import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
+import { AUTH_FONT_FAMILY, AUTH_USES_SYSTEM_FONT } from '@/features/auth/authFonts';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
@@ -50,7 +51,7 @@ export function LoginScreen() {
       justifyContent="space-between"
       padding="2em"
       width="100%"
-      backgroundColor="#FFFFFF"
+      backgroundColor="$background"
       style={
         {
           boxSizing: 'border-box',
@@ -68,9 +69,9 @@ export function LoginScreen() {
           flexDirection={isRtl ? 'row' : 'row-reverse'}
         >
           <Text
-            color="#242424"
-            fontFamily="Heebo"
-            fontSize={30}
+            color="#3D2314"
+            fontFamily={AUTH_FONT_FAMILY}
+            fontSize={26}
             fontWeight="700"
             letterSpacing={-0.4}
             lineHeight={36}
@@ -90,7 +91,14 @@ export function LoginScreen() {
             textContentType="emailAddress"
             value={email}
             onChangeText={setEmail}
-            style={{ borderColor: '#6F8286', borderRadius: 8, borderWidth: 1.5 }}
+            fontFamily={AUTH_FONT_FAMILY}
+            useSystemFont={AUTH_USES_SYSTEM_FONT}
+            style={{
+              backgroundColor: 'transparent',
+              borderColor: '#6F8286',
+              borderRadius: 8,
+              borderWidth: 1.5,
+            }}
           />
           <OutlinedInput
             label={t('auth.password')}
@@ -99,7 +107,14 @@ export function LoginScreen() {
             textContentType="password"
             value={password}
             onChangeText={setPassword}
-            style={{ borderColor: '#6F8286', borderRadius: 8, borderWidth: 1.5 }}
+            fontFamily={AUTH_FONT_FAMILY}
+            useSystemFont={AUTH_USES_SYSTEM_FONT}
+            style={{
+              backgroundColor: 'transparent',
+              borderColor: '#6F8286',
+              borderRadius: 8,
+              borderWidth: 1.5,
+            }}
             endAdornment={
               <Pressable
                 accessibilityRole="button"
@@ -117,7 +132,7 @@ export function LoginScreen() {
         </YStack>
 
         {error ? (
-          <Text color="$dangerText" fontSize="$3">
+          <Text color="$dangerText" fontFamily={AUTH_FONT_FAMILY} fontSize="$3">
             {error}
           </Text>
         ) : null}
@@ -127,7 +142,7 @@ export function LoginScreen() {
           disabled={loading || !email || !password}
           style={({ pressed }) => ({
             alignItems: 'center',
-            backgroundColor: pressed ? '#B9EA13E6' : '#C8FA15E6',
+            backgroundColor: pressed ? '' : 'rgb(246, 235, 97)',
             borderRadius: 999,
             height: 55,
             justifyContent: 'center',
@@ -135,7 +150,7 @@ export function LoginScreen() {
             width: '100%',
           })}
         >
-          <Text color="#1f3d00" fontFamily="Heebo" fontSize={21} fontWeight="800">
+          <Text color="#32330c" fontFamily={AUTH_FONT_FAMILY} fontSize={21} fontWeight="800">
             {loading ? t('auth.signingIn') : t('auth.login')}
           </Text>
         </Pressable>
@@ -146,14 +161,14 @@ export function LoginScreen() {
           hitSlop={8}
           style={{ alignItems: 'center' }}
         >
-          <Text color="#16181F" fontSize="$5">
+          <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
             {t('auth.forgotPassword')}
           </Text>
         </Pressable>
 
         <XStack alignItems="center" gap="$4">
           <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
-          <Text color="#16181F" fontSize="$5">
+          <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
             {t('auth.or')}
           </Text>
           <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
@@ -172,10 +187,10 @@ export function LoginScreen() {
           }}
         >
           <XStack alignItems="center" gap="0.3em">
-            <Text color="#16181F" fontFamily="Heebo" fontSize="$5">
+            <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
               {t('auth.dontHaveAccount')}
             </Text>
-            <Text color="#1f3d00" fontFamily="Heebo" fontSize="$5" fontWeight="800">
+            <Text color="#3D2314  " fontFamily={AUTH_FONT_FAMILY} fontSize="$5" fontWeight="800">
               {t('auth.signUp')}
             </Text>
           </XStack>
