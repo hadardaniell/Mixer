@@ -1,4 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import * as Font from 'expo-font';
 import { Slot } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { I18nManager, Platform } from 'react-native';
@@ -8,6 +9,7 @@ import { TamaguiProvider } from 'tamagui';
 
 import { GoogleProvider } from '@/features/auth/components/GoogleProvider';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
+import { AUTH_FONT_FAMILY } from '@/features/auth/authFonts';
 import { readInitialSettings, SettingsProvider } from '@/features/settings/context/SettingsContext';
 import { queryClient } from '@/shared/lib/queryClient';
 import { initI18n, isRTL } from '@/shared/lib/i18n';
@@ -19,17 +21,61 @@ export default function RootLayout() {
   const [initial] = useState(readInitialSettings);
 
   useEffect(() => {
-    initI18n(initial.language);
-    const shouldBeRTL = isRTL(initial.language);
-    if (Platform.OS === 'web') {
-      if (typeof document !== 'undefined') {
-        document.documentElement.dir = shouldBeRTL ? 'rtl' : 'ltr';
-        document.documentElement.lang = initial.language;
-        const styleId = 'app-rtl-overrides';
-        if (!document.getElementById(styleId)) {
-          const style = document.createElement('style');
-          style.id = styleId;
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      await Font.loadAsync({
+        Heebo: require('../src/assets/fonts/Heebo-wght.ttf'),
+      });
+
+      initI18n(initial.language);
+      const shouldBeRTL = isRTL(initial.language);
+      if (Platform.OS === 'web') {
+        if (typeof document !== 'undefined') {
+          document.documentElement.dir = shouldBeRTL ? 'rtl' : 'ltr';
+          document.documentElement.lang = initial.language;
+          document.documentElement.style.backgroundColor = '#f9f9f9';
+          document.body.style.backgroundColor = '#f9f9f9';
+          document.body.style.margin = '0';
+          document.body.style.minHeight = '100%';
+          let themeColor = document.querySelector('meta[name="theme-color"]');
+          if (!themeColor) {
+            themeColor = document.createElement('meta');
+            themeColor.setAttribute('name', 'theme-color');
+            document.head.appendChild(themeColor);
+          }
+          themeColor.setAttribute('content', '#f9f9f9');
+          const styleId = 'app-rtl-overrides';
+          let style = document.getElementById(styleId);
+          if (!style) {
+            style = document.createElement('style');
+            style.id = styleId;
+            document.head.appendChild(style);
+          }
           style.textContent = `
+            @font-face {
+              font-family: 'Heebo';
+              src: url(${require('../src/assets/fonts/Heebo-wght.ttf')}) format('truetype');
+              font-weight: 100 900;
+              font-style: normal;
+              font-display: swap;
+            }
+            html,
+            body,
+            #root,
+            #__next {
+              width: 100%;
+              min-height: 100%;
+              height: 100%;
+              margin: 0;
+              background: #f9f9f9 !important;
+              -webkit-text-size-adjust: 100%;
+              text-size-adjust: 100%;
+            }
+            body > div:first-child {
+              min-height: 100%;
+              background: #f9f9f9 !important;
+            }
             html[dir="rtl"] input,
             html[dir="rtl"] textarea {
               direction: rtl;
@@ -40,20 +86,39 @@ export default function RootLayout() {
               direction: ltr;
               text-align: left;
             }
+            .nsm7Bb-HzV7m-LgbsSe,
+            .nsm7Bb-HzV7m-LgbsSe *,
+            .nsm7Bb-HzV7m-LgbsSe-BPrWId {
+              font-family: ${AUTH_FONT_FAMILY}, sans-serif !important;
+            }
+            .nsm7Bb-HzV7m-LgbsSe-BPrWId {
+              -webkit-box-flex: 1;
+              flex-grow: 1;
+              font-weight: 500 !important;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              vertical-align: top;
+              font-size: 14px !important;
+            }
           `;
-          document.head.appendChild(style);
         }
+      } else if (I18nManager.isRTL !== shouldBeRTL) {
+        I18nManager.allowRTL(shouldBeRTL);
+        I18nManager.forceRTL(shouldBeRTL);
       }
-    } else if (I18nManager.isRTL !== shouldBeRTL) {
-      I18nManager.allowRTL(shouldBeRTL);
-      I18nManager.forceRTL(shouldBeRTL);
-    }
-    setReady(true);
+      if (!cancelled) setReady(true);
+    };
+
+    void bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
   }, [initial.language]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f9f9f9' }}>
+      <SafeAreaProvider style={{ backgroundColor: '#f9f9f9' }}>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <QueryClientProvider client={queryClient}>
             <SettingsProvider initial={initial}>

@@ -9,8 +9,8 @@ export default function HomeScreen() {
   const { user } = useAuth();
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic">
-      <YStack padding="$4" gap="$4">
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: '#f9f9f9' }}>
+      <YStack minHeight="100%" padding="$4" gap="$4" backgroundColor="$background">
         <H1>{t('home.greeting', { name: user?.displayName ?? '' })}</H1>
         <Input placeholder={t('home.searchPlaceholder')} />
 
