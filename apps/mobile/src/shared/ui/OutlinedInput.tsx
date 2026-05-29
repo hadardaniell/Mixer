@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 type Props = Omit<TextInputProps, 'placeholder'> & {
   label: string;
   error?: boolean;
+  startAdornment?: ReactNode;
   endAdornment?: ReactNode;
   floatingLabel?: boolean;
   fontFamily?: TextStyle['fontFamily'];
@@ -51,6 +52,7 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
     onFocus,
     onBlur,
     style,
+    startAdornment,
     endAdornment,
     floatingLabel = true,
     fontFamily,
@@ -78,6 +80,9 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
 
   // Resolve theme colors (Tamagui returns Variable objects with .val).
   const flattenedWrapperStyle = StyleSheet.flatten(style as StyleProp<ViewStyle>);
+  // Honor a caller-provided radius so the inner input matches the wrapper's
+  // rounded corners (otherwise the input bg paints over the border curve).
+  const radius = (flattenedWrapperStyle?.borderRadius as number | undefined) ?? RADIUS;
   const wrapperBg = flattenedWrapperStyle?.backgroundColor;
   const bg =
     typeof wrapperBg === 'string' && wrapperBg.length > 0
@@ -128,7 +133,7 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
           borderColor,
           borderWidth,
           backgroundColor: bg,
-          borderRadius: RADIUS,
+          borderRadius: radius,
           direction: isRtl ? 'rtl' : 'ltr',
         } as never,
         style,
@@ -153,13 +158,14 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
           {
             color: textCol,
             backgroundColor: bg,
-            borderRadius: RADIUS,
+            borderRadius: radius,
             direction: isRtl ? 'rtl' : 'ltr',
             fontFamily: resolvedFontFamily,
             textAlign: isRtl ? 'right' : 'left',
+            // Reserve room on whichever physical side each adornment sits.
             // Compensate when wrapper border thickens, so content doesn't jump.
-            paddingLeft: (isRtl && endAdornment ? 52 : PAD_X) - (borderWidth - 1),
-            paddingRight: (!isRtl && endAdornment ? 52 : PAD_X) - (borderWidth - 1),
+            paddingLeft: ((isRtl ? endAdornment : startAdornment) ? 52 : PAD_X) - (borderWidth - 1),
+            paddingRight: ((isRtl ? startAdornment : endAdornment) ? 52 : PAD_X) - (borderWidth - 1),
           },
           webAutofillBg,
         ]}
@@ -173,6 +179,17 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
           ]}
         >
           {endAdornment}
+        </View>
+      ) : null}
+
+      {startAdornment ? (
+        <View
+          style={[
+            styles.adornment,
+            isRtl ? { right: 14 } : { left: 14 },
+          ]}
+        >
+          {startAdornment}
         </View>
       ) : null}
 

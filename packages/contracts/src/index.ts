@@ -24,10 +24,17 @@ export type HealthResponse = z.infer<typeof HealthResponseSchema>;
 export const LocaleSchema = z.enum(['he', 'en']);
 export const UserRoleSchema = z.enum(['user', 'admin']);
 
+// Lenient E.164-ish phone: optional leading +, then 7–20 digits/spaces/dashes/parens.
+const PhoneNumber = z
+  .string()
+  .trim()
+  .regex(/^\+?[\d\s\-()]{7,20}$/, 'invalid phone number');
+
 export const PublicUserSchema = z.object({
   id: ObjectIdString,
   email: z.string().email(),
   displayName: z.string(),
+  phoneNumber: PhoneNumber.optional(),
   avatarUrl: z.string().url().optional(),
   locale: LocaleSchema,
   role: UserRoleSchema,
@@ -59,6 +66,7 @@ export const RegisterInputSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(200),
   displayName: z.string().min(1).max(80),
+  phoneNumber: PhoneNumber, // required — used for contacts-based friend discovery
   locale: LocaleSchema.default('en'),
 });
 export type RegisterInput = z.infer<typeof RegisterInputSchema>;
@@ -77,10 +85,17 @@ export const CreateUserAsAdminInputSchema = z.object({
 });
 export type CreateUserAsAdminInput = z.infer<typeof CreateUserAsAdminInputSchema>;
 
-export const LoginInputSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
+// Login accepts exactly one identifier — email or phone — plus the password.
+// The client detects which the user typed and sends the matching field.
+export const LoginInputSchema = z
+  .object({
+    email: z.string().email().optional(),
+    phoneNumber: PhoneNumber.optional(),
+    password: z.string().min(1),
+  })
+  .refine((d) => (d.email ? 1 : 0) + (d.phoneNumber ? 1 : 0) === 1, {
+    message: 'provide exactly one of email or phoneNumber',
+  });
 export type LoginInput = z.infer<typeof LoginInputSchema>;
 
 export const RefreshInputSchema = z.object({ refreshToken: z.string().min(1) });
