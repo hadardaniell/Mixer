@@ -20,12 +20,13 @@ export function AuthLanguageToggle({ language, onChangeLanguage }: AuthLanguageT
   return (
     <XStack
       alignSelf="center"
+      backgroundColor="$surface"
       borderColor="$border"
       borderRadius={999}
       borderWidth={1}
+      padding={3}
+      gap={2}
       flexDirection={isRtl ? 'row' : 'row-reverse'}
-      overflow="hidden"
-      width={220}
     >
       {options.map((option) => {
         const selected = language === option.code;
@@ -36,21 +37,19 @@ export function AuthLanguageToggle({ language, onChangeLanguage }: AuthLanguageT
             onPress={() => {
               void onChangeLanguage(option.code);
             }}
-            style={{ flex: 1 }}
           >
             <View
               alignItems="center"
               justifyContent="center"
-              paddingVertical={9}
-              paddingHorizontal={14}
-              backgroundColor={selected ? '$accentLimeBright' : '$surface'}
-              pressStyle={{
-                backgroundColor: selected ? '$buttonSecondaryBgHover' : '$bgSubtle',
-              }}
+              paddingVertical={6}
+              paddingHorizontal={20}
+              borderRadius={999}
+              backgroundColor={selected ? '$accentLavender' : 'transparent'}
+              pressStyle={{ backgroundColor: selected ? '$accentLavender' : '$bgSubtle' }}
             >
               <Text
-                color={selected ? '$textOnSecondary' : '$textMuted'}
-                fontSize={15}
+                color={selected ? '$primary' : '$text'}
+                fontSize={14}
                 fontWeight={selected ? '700' : '600'}
                 textAlign="center"
               >
