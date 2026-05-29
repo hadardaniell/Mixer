@@ -1,31 +1,41 @@
 import { Link, router } from 'expo-router';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable } from 'react-native';
-import { Text, XStack, YStack } from 'tamagui';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { Platform, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { AuthLanguageToggle } from '@/features/auth/components/AuthLanguageToggle';
 import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
-import { AUTH_FONT_FAMILY, AUTH_USES_SYSTEM_FONT } from '@/features/auth/authFonts';
-import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
+import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
 import { OutlinedInput } from '@/shared/ui/OutlinedInput';
 
+// Raw RN inputs need a concrete family name per platform (web @font-face is
+// "Rubik"; native loads weight-specific families).
+const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
+
 export function RegisterScreen() {
   const { t } = useTranslation();
+  const theme = useTheme();
   const { signIn } = useAuth();
   const { language, changeLanguage } = useLanguage();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+
   const isRtl = isRTL(language);
+  const muted = theme.textMuted?.val as string;
+  const disabled = loading || !email || !password || !displayName || !phoneNumber;
 
   const handleSubmit = async () => {
     if (loading) return;
@@ -42,6 +52,7 @@ export function RegisterScreen() {
         email: email.trim(),
         password,
         displayName: displayName.trim(),
+        phoneNumber: phoneNumber.trim(),
         locale: language,
       });
       signIn(res);
@@ -62,62 +73,27 @@ export function RegisterScreen() {
   return (
     <YStack
       flex={1}
+      backgroundColor="$bg"
       alignItems="center"
       justifyContent="space-between"
-      padding="2em"
+      paddingHorizontal="$5"
+      paddingTop={insets.top + 50}
+      paddingBottom={insets.bottom + 20}
       width="100%"
-      style={
-        {
-          boxSizing: 'border-box',
-          direction: isRtl ? 'rtl' : 'ltr',
-          minHeight: '100dvh',
-          overflowX: 'hidden',
-          position: 'relative',
-        } as never
-      }
+      style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
     >
-      <YStack width="100%" maxWidth={360} minWidth={0} gap="$4" paddingTop="1.5em">
+      <YStack width="100%" maxWidth={420} gap="$4">
         <AuthLanguageToggle language={language} onChangeLanguage={changeLanguage} />
 
-        <XStack
-          alignItems="flex-end"
-          flexDirection={isRtl ? 'row' : 'row-reverse'}
-          gap="$3"
-          justifyContent="center"
-          width="100%"
-        >
-          <Text
-            color="#3D2314"
-            flex={1}
-            flexShrink={1}
-            fontFamily={AUTH_FONT_FAMILY}
-            fontSize={26}
-            fontWeight="700"
-            letterSpacing={-0.4}
-            lineHeight={36}
-            numberOfLines={1}
-            paddingTop="0.5em"
-            textAlign="center"
-          >
-            {t('auth.registerTitle')}
-          </Text>
-        </XStack>
-
-        <YStack gap={22}>
+        <YStack gap={16}>
           <OutlinedInput
             label={t('auth.displayName')}
             floatingLabel={false}
             autoCapitalize="words"
             value={displayName}
             onChangeText={setDisplayName}
-            fontFamily={AUTH_FONT_FAMILY}
-            useSystemFont={AUTH_USES_SYSTEM_FONT}
-            style={{
-              backgroundColor: 'transparent',
-              borderColor: '#6F8286',
-              borderRadius: 8,
-              borderWidth: 1.5,
-            }}
+            fontFamily={INPUT_FONT}
+            style={{ borderRadius: 14 }}
           />
           <OutlinedInput
             label={t('auth.email')}
@@ -128,14 +104,20 @@ export function RegisterScreen() {
             textContentType="emailAddress"
             value={email}
             onChangeText={setEmail}
-            fontFamily={AUTH_FONT_FAMILY}
-            useSystemFont={AUTH_USES_SYSTEM_FONT}
-            style={{
-              backgroundColor: 'transparent',
-              borderColor: '#6F8286',
-              borderRadius: 8,
-              borderWidth: 1.5,
-            }}
+            fontFamily={INPUT_FONT}
+            style={{ borderRadius: 14 }}
+          />
+          <OutlinedInput
+            label={t('auth.phoneNumber')}
+            floatingLabel={false}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="phone-pad"
+            textContentType="telephoneNumber"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            fontFamily={INPUT_FONT}
+            style={{ borderRadius: 14 }}
           />
           <OutlinedInput
             label={t('auth.password')}
@@ -144,24 +126,18 @@ export function RegisterScreen() {
             textContentType="newPassword"
             value={password}
             onChangeText={setPassword}
-            fontFamily={AUTH_FONT_FAMILY}
-            useSystemFont={AUTH_USES_SYSTEM_FONT}
-            style={{
-              backgroundColor: 'transparent',
-              borderColor: '#6F8286',
-              borderRadius: 8,
-              borderWidth: 1.5,
-            }}
+            fontFamily={INPUT_FONT}
+            style={{ borderRadius: 14 }}
             endAdornment={
               <Pressable
                 accessibilityRole="button"
-                onPress={() => setPasswordVisible((current) => !current)}
+                onPress={() => setPasswordVisible((v) => !v)}
                 hitSlop={10}
               >
                 {passwordVisible ? (
-                  <Eye color="#6F8286" size={26} />
+                  <Eye color={muted} size={24} />
                 ) : (
-                  <EyeOff color="#6F8286" size={26} />
+                  <EyeOff color={muted} size={24} />
                 )}
               </Pressable>
             }
@@ -169,54 +145,51 @@ export function RegisterScreen() {
         </YStack>
 
         {error ? (
-          <Text color="$dangerText" fontFamily={AUTH_FONT_FAMILY} fontSize="$3">
+          <Text color="$dangerText" fontSize="$3" textAlign={isRtl ? 'right' : 'left'}>
             {error}
           </Text>
         ) : null}
 
-        <Pressable
-          onPress={handleSubmit}
-          disabled={loading || !email || !password || !displayName}
-          style={({ pressed }) => ({
-            alignItems: 'center',
-            backgroundColor: pressed ? '#ffd7e7' : 'rgb(246, 235, 97)',
-            borderRadius: 999,
-            height: 55,
-            justifyContent: 'center',
-            opacity: loading ? 0.65 : 1,
-            width: '100%',
-          })}
-        >
-          <Text color="#2B1B10" fontFamily={AUTH_FONT_FAMILY} fontSize={21} fontWeight="800">
-            {loading ? t('auth.signingUp') : t('auth.signUp')}
-          </Text>
+        <Pressable onPress={handleSubmit} disabled={disabled} style={{ width: '100%' }}>
+          <YStack
+            width="100%"
+            height={54}
+            borderRadius={20}
+            alignItems="center"
+            justifyContent="center"
+            backgroundColor="$buttonPrimaryBg"
+            opacity={disabled ? 0.55 : 1}
+            shadowColor="$primary"
+            shadowOpacity={0.35}
+            shadowOffset={{ width: 0, height: 8 }}
+            shadowRadius={16}
+            elevation={6}
+            pressStyle={{ backgroundColor: '$buttonPrimaryBgHover' }}
+          >
+            <Text color="$textOnPrimary" fontSize={18} fontWeight="700">
+              {loading ? t('auth.signingUp') : t('auth.signUp')}
+            </Text>
+          </YStack>
         </Pressable>
 
-        <XStack alignItems="center" gap="$4">
-          <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
-          <Text color="#16181F" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
+        <XStack alignItems="center" gap="$3">
+          <YStack flex={1} height={1} backgroundColor="$border" />
+          <Text color="$textMuted" fontSize={14}>
             {t('auth.or')}
           </Text>
-          <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
+          <YStack flex={1} height={1} backgroundColor="$border" />
         </XStack>
 
         <GoogleSignInButton variant="card" onError={(msg) => setError(msg || null)} />
       </YStack>
 
       <Link href={'/login' as never} asChild>
-        <Pressable
-          hitSlop={8}
-          style={{
-            alignSelf: 'center',
-            bottom: 32,
-            position: 'absolute',
-          }}
-        >
-          <XStack alignItems="center" gap="0.3em">
-            <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
+        <Pressable hitSlop={8} style={{ alignItems: 'center' }}>
+          <XStack alignItems="center" gap={5}>
+            <Text color="$textMuted" fontSize={15}>
               {t('auth.haveAccount')}
             </Text>
-            <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5" fontWeight="800">
+            <Text color="$primary" fontSize={15} fontWeight="700">
               {t('auth.login')}
             </Text>
           </XStack>

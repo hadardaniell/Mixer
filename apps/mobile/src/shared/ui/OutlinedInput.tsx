@@ -78,6 +78,9 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
 
   // Resolve theme colors (Tamagui returns Variable objects with .val).
   const flattenedWrapperStyle = StyleSheet.flatten(style as StyleProp<ViewStyle>);
+  // Honor a caller-provided radius so the inner input matches the wrapper's
+  // rounded corners (otherwise the input bg paints over the border curve).
+  const radius = (flattenedWrapperStyle?.borderRadius as number | undefined) ?? RADIUS;
   const wrapperBg = flattenedWrapperStyle?.backgroundColor;
   const bg =
     typeof wrapperBg === 'string' && wrapperBg.length > 0
@@ -128,7 +131,7 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
           borderColor,
           borderWidth,
           backgroundColor: bg,
-          borderRadius: RADIUS,
+          borderRadius: radius,
           direction: isRtl ? 'rtl' : 'ltr',
         } as never,
         style,
@@ -153,7 +156,7 @@ export const OutlinedInput = forwardRef<TextInput, Props>(function OutlinedInput
           {
             color: textCol,
             backgroundColor: bg,
-            borderRadius: RADIUS,
+            borderRadius: radius,
             direction: isRtl ? 'rtl' : 'ltr',
             fontFamily: resolvedFontFamily,
             textAlign: isRtl ? 'right' : 'left',
