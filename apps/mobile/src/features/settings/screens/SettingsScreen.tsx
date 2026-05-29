@@ -8,7 +8,7 @@ export function SettingsScreen() {
   const { language, changeLanguage } = useLanguage();
 
   return (
-    <YStack flex={1} padding="$4" gap="$4" backgroundColor="$background">
+    <YStack flex={1} padding="$4" gap="$4">
       <H2>{t('settings.title')}</H2>
 
       <YStack gap="$2">

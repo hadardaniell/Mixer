@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { I18nManager, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TamaguiProvider } from 'tamagui';
+import { TamaguiProvider, YStack } from 'tamagui';
 
 import { GoogleProvider } from '@/features/auth/components/GoogleProvider';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
@@ -14,6 +14,7 @@ import { readInitialSettings, SettingsProvider } from '@/features/settings/conte
 import { queryClient } from '@/shared/lib/queryClient';
 import { initI18n, isRTL } from '@/shared/lib/i18n';
 import { SplashGate } from '@/shared/ui/SplashGate';
+import { APP_BACKGROUND_COLOR } from '@/theme/palette';
 import { tamaguiConfig } from '@/theme/tamagui.config';
 
 export default function RootLayout() {
@@ -26,6 +27,9 @@ export default function RootLayout() {
     const bootstrap = async () => {
       await Font.loadAsync({
         Heebo: require('../src/assets/fonts/Heebo-wght.ttf'),
+        Rubik_400Regular: require('../src/assets/fonts/Rubik_400Regular.ttf'),
+        Rubik_500Medium: require('../src/assets/fonts/Rubik_500Medium.ttf'),
+        Rubik_700Bold: require('../src/assets/fonts/Rubik_700Bold.ttf'),
       });
 
       initI18n(initial.language);
@@ -34,8 +38,8 @@ export default function RootLayout() {
         if (typeof document !== 'undefined') {
           document.documentElement.dir = shouldBeRTL ? 'rtl' : 'ltr';
           document.documentElement.lang = initial.language;
-          document.documentElement.style.backgroundColor = '#f9f9f9';
-          document.body.style.backgroundColor = '#f9f9f9';
+          document.documentElement.style.backgroundColor = APP_BACKGROUND_COLOR;
+          document.body.style.backgroundColor = APP_BACKGROUND_COLOR;
           document.body.style.margin = '0';
           document.body.style.minHeight = '100%';
           let themeColor = document.querySelector('meta[name="theme-color"]');
@@ -44,7 +48,7 @@ export default function RootLayout() {
             themeColor.setAttribute('name', 'theme-color');
             document.head.appendChild(themeColor);
           }
-          themeColor.setAttribute('content', '#f9f9f9');
+          themeColor.setAttribute('content', APP_BACKGROUND_COLOR);
           const styleId = 'app-rtl-overrides';
           let style = document.getElementById(styleId);
           if (!style) {
@@ -60,6 +64,27 @@ export default function RootLayout() {
               font-style: normal;
               font-display: swap;
             }
+            @font-face {
+              font-family: 'Rubik';
+              src: url(${require('../src/assets/fonts/Rubik_400Regular.ttf')}) format('truetype');
+              font-weight: 400;
+              font-style: normal;
+              font-display: swap;
+            }
+            @font-face {
+              font-family: 'Rubik';
+              src: url(${require('../src/assets/fonts/Rubik_500Medium.ttf')}) format('truetype');
+              font-weight: 500 600;
+              font-style: normal;
+              font-display: swap;
+            }
+            @font-face {
+              font-family: 'Rubik';
+              src: url(${require('../src/assets/fonts/Rubik_700Bold.ttf')}) format('truetype');
+              font-weight: 700 900;
+              font-style: normal;
+              font-display: swap;
+            }
             html,
             body,
             #root,
@@ -68,13 +93,13 @@ export default function RootLayout() {
               min-height: 100%;
               height: 100%;
               margin: 0;
-              background: #f9f9f9 !important;
+              background: ${APP_BACKGROUND_COLOR} !important;
               -webkit-text-size-adjust: 100%;
               text-size-adjust: 100%;
             }
             body > div:first-child {
               min-height: 100%;
-              background: #f9f9f9 !important;
+              background: ${APP_BACKGROUND_COLOR} !important;
             }
             html[dir="rtl"] input,
             html[dir="rtl"] textarea {
@@ -117,15 +142,17 @@ export default function RootLayout() {
   }, [initial.language]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f9f9f9' }}>
-      <SafeAreaProvider style={{ backgroundColor: '#f9f9f9' }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: APP_BACKGROUND_COLOR }}>
+      <SafeAreaProvider style={{ backgroundColor: APP_BACKGROUND_COLOR }}>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
           <QueryClientProvider client={queryClient}>
             <SettingsProvider initial={initial}>
               <GoogleProvider>
                 <AuthProvider>
                   <SplashGate isReady={ready}>
-                    <Slot />
+                    <YStack flex={1} backgroundColor="$background">
+                      <Slot />
+                    </YStack>
                   </SplashGate>
                 </AuthProvider>
               </GoogleProvider>

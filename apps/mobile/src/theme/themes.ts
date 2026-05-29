@@ -36,12 +36,35 @@ type ThemeShape = {
   buttonPrimaryBgHover: string;
   buttonPrimaryBgPress: string;
 
-  // Brand — secondary
+  // Brand — secondary (lime / action)
   secondary: string;
   secondaryHover: string;
   secondarySubtle: string;
   buttonSecondaryBg: string;
   buttonSecondaryBgHover: string;
+
+  // Floating action button (center nav). Lime fill, dark ink on top.
+  fab: string;
+  fabHover: string;
+  fabText: string;
+
+  // Accents — soft named swatches (icon blobs, chips). Direct hues.
+  accentLavender: string;
+  accentPeach: string;
+  accentPink: string;
+  accentMint: string;
+  accentLime: string;
+  accentTeal: string;
+  accentBlue: string;
+  accentCoral: string;
+  accentYellow: string;
+  accentOrange: string;
+  accentSeafoam: string;
+  accentGreen: string;
+  accentIndigo: string;
+  accentPurple: string;
+  accentBrown: string;
+  accentBlueGray: string;
 
   // Inputs
   inputBg: string;
@@ -98,7 +121,7 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     textMuted: c[k('onBackgroundMuted')],
     textSubtle: c[k('onBackgroundSubtle')],
     textOnPrimary: '#FFFFFF',
-    textOnSecondary: '#FFFFFF',
+    textOnSecondary: c[k('gray12')], // dark ink on lime
 
     // Borders
     border: c[k('gray6')],
@@ -119,6 +142,29 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     secondarySubtle: c[k('secondary3')],
     buttonSecondaryBg: c[k('secondary9')],
     buttonSecondaryBgHover: c[k('secondary10')],
+
+    // FAB
+    fab: c[k('secondary9')],
+    fabHover: c[k('secondary10')],
+    fabText: c[k('gray12')],
+
+    // Accents
+    accentLavender: c[k('lavender')],
+    accentPeach: c[k('peach')],
+    accentPink: c[k('pink')],
+    accentMint: c[k('mint')],
+    accentLime: c[k('lime')],
+    accentTeal: c[k('teal')],
+    accentBlue: c[k('blue')],
+    accentCoral: c[k('coral')],
+    accentYellow: c[k('yellow')],
+    accentOrange: c[k('orange')],
+    accentSeafoam: c[k('seafoam')],
+    accentGreen: c[k('green')],
+    accentIndigo: c[k('indigo')],
+    accentPurple: c[k('purple')],
+    accentBrown: c[k('brown')],
+    accentBlueGray: c[k('blueGray')],
 
     // Inputs
     inputBg: c[k('surface')],

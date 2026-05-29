@@ -8,7 +8,7 @@ export default function ProfileScreen() {
   const { user } = useAuth();
 
   return (
-    <YStack flex={1} padding="$4" gap="$4" alignItems="center" backgroundColor="$background">
+    <YStack flex={1} padding="$4" gap="$4" alignItems="center">
       <YStack
         width={88}
         height={88}

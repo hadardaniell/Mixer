@@ -42,6 +42,7 @@ function modeColors(mode: 'light' | 'dark') {
     ...spread('secondary', p.secondary),
     ...spread('gray', p.gray),
     ...p.status,
+    ...p.accents,
     ...p.surfaces,
   };
 }
