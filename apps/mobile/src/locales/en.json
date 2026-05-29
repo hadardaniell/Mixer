@@ -6,12 +6,27 @@
     "all": "All",
     "search": "Search"
   },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "profile": "Profile"
+  },
+  "start": {
+    "tagline": "Everything you cook, in one place",
+    "login": "Log in",
+    "register": "Sign up"
+  },
   "home": {
     "greeting": "Hello, {{name}}",
     "searchPlaceholder": "Search a recipe, book or ingredient...",
     "recentlyViewed": "Recently viewed",
     "recentlyImported": "Recently imported",
-    "linked": "Linked"
+    "linked": "Linked",
+    "booksWithFriends": "Books with friends",
+    "sharedWithMe": "Shared with me",
+    "favorites": "Favorites",
+    "seeMore": "See more",
+    "emptySection": "Nothing here yet"
   },
   "add": {
     "title": "What would you like to add?",

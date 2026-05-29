@@ -6,12 +6,27 @@
     "all": "הכל",
     "search": "חפש"
   },
+  "nav": {
+    "home": "בית",
+    "search": "חיפוש",
+    "profile": "פרופיל"
+  },
+  "start": {
+    "tagline": "כל מה שאתם מבשלים, במקום אחד",
+    "login": "התחברות",
+    "register": "הרשמה"
+  },
   "home": {
     "greeting": "שלום, {{name}}",
     "searchPlaceholder": "חפשי מתכון, ספר או רכיב...",
     "recentlyViewed": "צפיתי לאחרונה",
     "recentlyImported": "יובאו לאחרונה",
-    "linked": "מקושר"
+    "linked": "מקושר",
+    "booksWithFriends": "ספרים עם חברים",
+    "sharedWithMe": "שותף איתי",
+    "favorites": "מועדפים",
+    "seeMore": "ראו עוד",
+    "emptySection": "אין מה להציג עדיין"
   },
   "add": {
     "title": "מה נוסיף?",

@@ -37,6 +37,11 @@ export const PublicUserSchema = z.object({
 });
 export type PublicUser = z.infer<typeof PublicUserSchema>;
 
+export const UsersByIdsInputSchema = z.object({
+  ids: z.array(ObjectIdString).min(1).max(100),
+});
+export type UsersByIdsInput = z.infer<typeof UsersByIdsInputSchema>;
+
 export const UpdateOwnUserSchema = z.object({
   displayName: z.string().min(1).max(80).optional(),
   avatarUrl: z.string().url().optional(),

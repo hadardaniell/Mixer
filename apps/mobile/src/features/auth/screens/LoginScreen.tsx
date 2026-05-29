@@ -51,7 +51,6 @@ export function LoginScreen() {
       justifyContent="space-between"
       padding="2em"
       width="100%"
-      backgroundColor="$background"
       style={
         {
           boxSizing: 'border-box',

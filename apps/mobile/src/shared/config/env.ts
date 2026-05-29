@@ -12,7 +12,7 @@ function resolveHost(url: string): string {
 }
 
 export const env = {
-  apiUrl: resolveHost(extra.apiBaseUrl ?? 'http://localhost:3000'),
+  apiUrl: resolveHost(extra.apiBaseUrl ?? 'http://192.168.1.185:3000'),
   aiUrl: resolveHost(extra.aiBaseUrl ?? 'http://localhost:3001'),
   googleIosClientId: extra.googleIosClientId ?? '',
   googleAndroidClientId: extra.googleAndroidClientId ?? '',

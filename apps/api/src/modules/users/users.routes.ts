@@ -5,6 +5,7 @@ import {
   CreateUserAsAdminInputSchema,
   UpdateOwnUserSchema,
   UpdateUserAsAdminSchema,
+  UsersByIdsInputSchema,
 } from '@mixer/contracts';
 import { toPublicUser } from './users.mapper.js';
 import { hashPassword } from '../auth/auth.service.js';
@@ -40,6 +41,19 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
       );
       if (!updated) return reply.code(404).send({ error: 'user not found' });
       return toPublicUser(updated);
+    },
+  );
+
+  app.post(
+    '/users/by-ids',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: UsersByIdsInputSchema, tags: ['users'] },
+    },
+    async (req) => {
+      const oids = req.body.ids.map((id) => new ObjectId(id));
+      const items = await app.collections.users.find({ _id: { $in: oids } }).toArray();
+      return { items: items.map(toPublicUser) };
     },
   );
 
