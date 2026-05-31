@@ -40,6 +40,13 @@ export const tokens = {
     emit();
   },
 
+  /** Refresh just the cached user (e.g. after a profile update). */
+  setUser(nextUser: PublicUser) {
+    storage.set(StorageKeys.authUser, JSON.stringify(nextUser));
+    user = nextUser;
+    emit();
+  },
+
   clear() {
     storage.delete(StorageKeys.authAccessToken);
     storage.delete(StorageKeys.authRefreshToken);
