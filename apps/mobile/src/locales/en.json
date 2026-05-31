@@ -1,0 +1,109 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "all": "All",
+    "search": "Search"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "profile": "Profile"
+  },
+  "start": {
+    "tagline": "Everything you cook, in one place",
+    "login": "Log in",
+    "register": "Sign up"
+  },
+  "home": {
+    "greeting": "Hello, {{name}}",
+    "searchPlaceholder": "Search a recipe, book or ingredient...",
+    "recentlyViewed": "Recently viewed",
+    "recentlyImported": "Recently imported",
+    "linked": "Linked",
+    "booksWithFriends": "Books with friends",
+    "sharedWithMe": "Shared with me",
+    "favorites": "Favorites",
+    "seeMore": "See more",
+    "emptySection": "Nothing here yet"
+  },
+  "add": {
+    "title": "What would you like to add?",
+    "newRecipe": "New recipe",
+    "newRecipeDesc": "From a link, photo, manually or a file",
+    "newBook": "Recipe book",
+    "newBookDesc": "Collect recipes by topic, share with friends",
+    "mealBuilder": "Meal builder",
+    "mealBuilderDesc": "A smart chat that builds your menu"
+  },
+  "import": {
+    "title": "How should we add the recipe?",
+    "fromLink": "From a link",
+    "fromLinkDesc": "Paste a URL — the AI extracts the recipe",
+    "fromPhoto": "From a photo",
+    "fromPhotoDesc": "Snap a recipe from a book or screen",
+    "manual": "Manual entry",
+    "manualDesc": "Type everything yourself — a clean editor",
+    "fromFile": "From a file",
+    "fromFileDesc": "PDF, DOCX or plain text"
+  },
+  "profile": {
+    "stats": {
+      "books": "books",
+      "recipes": "recipes",
+      "friends": "friends"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHe": "עברית",
+    "languageEn": "English",
+    "restartRequired": "Language changed. The app will reload."
+  },
+  "auth": {
+    "login": "Sign in",
+    "logout": "Sign out",
+    "signUp": "Sign up",
+    "welcomeTitle": "Welcome",
+    "registerTitle": "Create account",
+    "loginSubtitle": "Please log in using the form below",
+    "registerSubtitle": "Save all your recipes, favorites and inspiration in one place",
+    "registerStep2Title": "Almost done",
+    "registerStep2Subtitle": "One moment and your account is ready",
+    "stepIndicator": "Step {{current}} of {{total}}",
+    "continue": "Continue",
+    "createAccount": "Create account",
+    "backToPrevious": "Back to previous step",
+    "confirmPassword": "Confirm password",
+    "passwordMinHint": "At least 8 characters",
+    "passwordsDontMatch": "Passwords don't match",
+    "agreePrefix": "I agree to the",
+    "termsOfUse": "Terms of Use",
+    "agreeConnector": " and ",
+    "privacyPolicy": "Privacy Policy",
+    "mustAcceptTerms": "Please accept the terms to continue",
+    "signingIn": "Signing in…",
+    "signingUp": "Signing up…",
+    "email": "Email",
+    "emailOrPhone": "Email or phone",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordUnavailable": "Password reset isn't supported yet.",
+    "displayName": "Full name",
+    "phoneNumber": "Phone number",
+    "invalidCredentials": "Wrong email or password",
+    "emailAlreadyRegistered": "This email is already registered",
+    "invalidInput": "Please check the fields and try again",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "networkError": "Couldn't reach the server. Try again.",
+    "dontHaveAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "noAccountSignUp": "No account? Sign up",
+    "haveAccountSignIn": "Already have an account? Sign in",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "linkRequiresPassword": "An account with this email already exists. Sign in with your password, then link Google from settings."
+  }
+}
