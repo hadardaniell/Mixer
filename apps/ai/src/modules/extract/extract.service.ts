@@ -19,7 +19,8 @@ Extract the recipe and return it as valid JSON matching this structure:
   "tags": string[] (optional)
 }
 Return ONLY the JSON object, no explanation, no markdown, no code blocks.
-If a field cannot be determined from the text, omit it.`;
+If a field cannot be determined from the text, omit it.
+Important: the input text may be in any language (including Hebrew). Keep title, description, ingredients, and steps in the same language as the input. However, the "difficulty" field must always be one of: "easy", "medium", "hard" — in English, regardless of input language.`;
 
 export async function extractRecipeFromText(text: string): Promise<ExtractFromTextResult> {
   const completion = await groq.chat.completions.create({
