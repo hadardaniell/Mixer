@@ -9,6 +9,7 @@ export const extractRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         body: ExtractFromTextInputSchema,
         response: { 200: ExtractFromTextResultSchema },
+        tags: ['extract'],
       },
     },
     async (req) => {

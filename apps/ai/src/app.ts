@@ -1,5 +1,8 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import {
+  jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
@@ -17,6 +20,20 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   app.addHook('onSend', async (_req, reply) => {
     reply.header('access-control-allow-origin', '*');
+  });
+
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Mixer AI Service',
+        version: '0.0.0',
+      },
+    },
+    transform: jsonSchemaTransform,
+  });
+
+  await app.register(swaggerUi, {
+    routePrefix: '/docs',
   });
 
   await app.register(healthRoute);

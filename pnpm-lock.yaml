@@ -20,6 +20,12 @@ importers:
 
   apps/ai:
     dependencies:
+      '@fastify/swagger':
+        specifier: ^9.7.0
+        version: 9.7.0
+      '@fastify/swagger-ui':
+        specifier: ^5.2.6
+        version: 5.2.6
       '@mixer/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
