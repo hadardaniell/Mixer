@@ -8,4 +8,5 @@ export const config = {
   refreshTtlSeconds: Number(process.env.REFRESH_TTL_SECONDS ?? 30 * 24 * 60 * 60),
   bcryptCost: Number(process.env.BCRYPT_COST ?? 12),
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  aiBaseUrl: process.env.AI_BASE_URL ?? 'http://localhost:3001',
 };

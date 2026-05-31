@@ -242,3 +242,31 @@ export const UpdateBookMemberInputSchema = z.object({
   role: z.enum(['editor', 'viewer']),
 });
 export type UpdateBookMemberInput = z.infer<typeof UpdateBookMemberInputSchema>;
+
+// --- AI extraction ---
+export const ExtractFromTextInputSchema = z.object({
+  text: z.string().min(1).max(10000),
+});
+export type ExtractFromTextInput = z.infer<typeof ExtractFromTextInputSchema>;
+
+export const ExtractFromTextResultSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  ingredients: z.array(z.object({
+    name: z.string(),
+    amount: z.number().optional(),
+    unit: z.string().optional(),
+  })).optional(),
+  steps: z.array(z.object({
+    order: z.number(),
+    text: z.string(),
+    durationMinutes: z.number().optional(),
+  })).optional(),
+  servings: z.number().optional(),
+  prepTimeMinutes: z.number().optional(),
+  cookTimeMinutes: z.number().optional(),
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  cuisine: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+export type ExtractFromTextResult = z.infer<typeof ExtractFromTextResultSchema>;
