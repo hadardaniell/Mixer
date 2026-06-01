@@ -1,7 +1,7 @@
-﻿import { Search } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
-import { Text, XStack } from 'tamagui';
+import { Text, useTheme, XStack } from 'tamagui';
 
 interface SearchInputProps {
   onPress: () => void;
@@ -10,25 +10,31 @@ interface SearchInputProps {
 
 export function SearchInput({ onPress, placeholder }: SearchInputProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const label = placeholder ?? t('home.searchPlaceholder');
+  const muted = theme.textMuted?.val as string;
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="search">
+    <Pressable onPress={onPress} accessibilityRole="search" style={{ width: '100%' }}>
       <XStack
+        width="100%"
         alignItems="center"
         gap="$3"
         paddingHorizontal="$4"
-        height={48}
-        borderRadius={24}
-        backgroundColor="white"
-        shadowColor="#000"
-        shadowOpacity={0.05}
-        shadowRadius={18}
-        shadowOffset={{ width: 0, height: 8 }}
-        elevation={2}
+        height={56}
+        borderRadius={28}
+        backgroundColor="$surface"
+        borderWidth={1}
+        borderColor="$border"
+        shadowColor="black"
+        shadowOpacity={0.04}
+        shadowRadius={12}
+        shadowOffset={{ width: 0, height: 4 }}
+        elevation={1}
+        pressStyle={{ backgroundColor: '$bgSubtle' }}
       >
-        <Search size={20} color="#9ca3af" />
-        <Text flex={1} color="$gray10" fontSize="$3" numberOfLines={1}>
+        <Search size={20} color={muted} />
+        <Text flex={1} color="$textMuted" fontSize={15} numberOfLines={1}>
           {label}
         </Text>
       </XStack>

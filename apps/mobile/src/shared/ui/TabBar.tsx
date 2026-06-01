@@ -61,16 +61,6 @@ export function TabBar({ state, navigation, onAddPress }: CustomTabBarProps) {
           >
             {(color) => <Home size={24} color={color} />}
           </TabItem>
-          <TabItem
-            label={t('nav.search')}
-            active={false}
-            activeColor={active}
-            inactiveColor={inactive}
-            pillColor={pill}
-            onPress={() => router.push('/search')}
-          >
-            {(color) => <Search size={24} color={color} />}
-          </TabItem>
         </XStack>
 
         {/* Center FAB */}
