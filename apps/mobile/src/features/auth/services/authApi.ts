@@ -4,10 +4,7 @@ import type {
   LoginInput,
   PublicUser,
   RegisterInput,
-<<<<<<< HEAD
-=======
   UpdateOwnUserInput,
->>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
 } from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';
@@ -42,13 +39,10 @@ export const authApi = {
     }),
 
   me: () => http<PublicUser>('/auth/me'),
-<<<<<<< HEAD
-=======
 
   updateMe: (body: UpdateOwnUserInput) =>
     http<PublicUser>('/users/me', {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
->>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
 };
