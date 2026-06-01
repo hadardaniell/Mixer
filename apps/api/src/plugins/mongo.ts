@@ -55,7 +55,12 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     options: { unique: true, collation: { locale: 'en', strength: 2 } } as const,
   };
 
-  const existing = await collections.users.indexes();
+  let existing: Awaited<ReturnType<typeof collections.users.indexes>> = [];
+  try {
+    existing = await collections.users.indexes();
+  } catch (e: any) {
+    if (e.code !== 26) throw e;
+  }
   const emailIdx = existing.find((i) => i.name === 'email_1');
   const hasCaseInsensitive =
     emailIdx?.collation?.locale === 'en' && emailIdx?.collation?.strength === 2;
