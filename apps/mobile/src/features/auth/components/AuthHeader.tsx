@@ -8,6 +8,8 @@ import { useLanguage } from '@/features/settings/hooks/useLanguage';
 interface AuthHeaderProps {
   /** When provided, renders a back button on the right edge. */
   onBack?: () => void;
+  /** Hide the globe + language toggle when the screen doesn't need them. */
+  showLanguageControls?: boolean;
 }
 
 /**
@@ -16,7 +18,7 @@ interface AuthHeaderProps {
  * Layout is forced LTR so the language controls stay pinned on the left and
  * the back button on the right regardless of the app's UI direction.
  */
-export function AuthHeader({ onBack }: AuthHeaderProps) {
+export function AuthHeader({ onBack, showLanguageControls = true }: AuthHeaderProps) {
   const theme = useTheme();
   const { language, changeLanguage } = useLanguage();
   const ink = theme.text?.val as string;
@@ -30,12 +32,16 @@ export function AuthHeader({ onBack }: AuthHeaderProps) {
       justifyContent="space-between"
       style={{ direction: 'ltr' } as never}
     >
-      <XStack alignItems="center" gap="$2">
-        <CircleButton onPress={toggleLanguage}>
-          <Globe size={22} color={ink} />
-        </CircleButton>
-        <AuthLanguageToggle language={language} onChangeLanguage={changeLanguage} />
-      </XStack>
+      {showLanguageControls ? (
+        <XStack alignItems="center" gap="$2">
+          <CircleButton onPress={toggleLanguage}>
+            <Globe size={22} color={ink} />
+          </CircleButton>
+          <AuthLanguageToggle language={language} onChangeLanguage={changeLanguage} />
+        </XStack>
+      ) : (
+        <View />
+      )}
 
       {onBack ? (
         <Pressable accessibilityRole="button" onPress={onBack} hitSlop={8}>
