@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Link, router } from 'expo-router';
 import {
   ArrowRight,
@@ -19,14 +20,29 @@ import { Text, useTheme, View, XStack, YStack } from 'tamagui';
 
 import { AuthLanguageToggle } from '@/features/auth/components/AuthLanguageToggle';
 import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
+=======
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Image, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { YStack } from 'tamagui';
+
+import { AuthHeader } from '@/features/auth/components/AuthHeader';
+import { RegisterStep1 } from '@/features/auth/components/RegisterStep1';
+import { RegisterStep2 } from '@/features/auth/components/RegisterStep2';
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
+<<<<<<< HEAD
 import { OutlinedInput } from '@/shared/ui/OutlinedInput';
 
 const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
+=======
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
 
 const HERO = {
   1: require('../../../assets/images/register step 1.png'),
@@ -35,9 +51,14 @@ const HERO = {
 
 export function RegisterScreen() {
   const { t } = useTranslation();
+<<<<<<< HEAD
   const theme = useTheme();
   const { signIn } = useAuth();
   const { language, changeLanguage } = useLanguage();
+=======
+  const { signIn } = useAuth();
+  const { language } = useLanguage();
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
   const insets = useSafeAreaInsets();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -53,6 +74,7 @@ export function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
   const isRtl = isRTL(language);
+<<<<<<< HEAD
   const ink = theme.text?.val as string;
   const muted = theme.textMuted?.val as string;
   const success = theme.success?.val as string;
@@ -60,6 +82,10 @@ export function RegisterScreen() {
   const passwordValid = password.length >= 8;
   const step1Ready = !!displayName && !!email && !!phoneNumber;
   const step2Ready = passwordValid && !!confirmPassword && agreed;
+=======
+
+  const step1Ready = !!displayName && !!email && !!phoneNumber;
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
 
   const goToStep2 = () => {
     if (!step1Ready) return;
@@ -85,7 +111,11 @@ export function RegisterScreen() {
     if (loading) return;
     setError(null);
 
+<<<<<<< HEAD
     if (!passwordValid) {
+=======
+    if (password.length < 8) {
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
       setError(t('auth.passwordTooShort'));
       return;
     }
@@ -111,7 +141,17 @@ export function RegisterScreen() {
       router.replace('/home' as never);
     } catch (e) {
       if (e instanceof HttpError && e.status === 409) {
+<<<<<<< HEAD
         setError(t('auth.emailAlreadyRegistered'));
+=======
+        // Backend returns { error: 'email_already_registered' | 'phone_already_registered' }
+        const code = (e.body as { error?: string } | undefined)?.error;
+        if (code === 'phone_already_registered') {
+          setError(t('auth.phoneAlreadyRegistered'));
+        } else {
+          setError(t('auth.emailAlreadyRegistered'));
+        }
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
       } else if (e instanceof HttpError && e.status === 400) {
         setError(t('auth.invalidInput'));
       } else {
@@ -122,8 +162,11 @@ export function RegisterScreen() {
     }
   };
 
+<<<<<<< HEAD
   const toggleLanguage = () => changeLanguage(language === 'he' ? 'en' : 'he');
 
+=======
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
   return (
     <YStack flex={1} backgroundColor="$bg">
       <ScrollView
@@ -141,6 +184,7 @@ export function RegisterScreen() {
           maxWidth={440}
           alignSelf="center"
           justifyContent="space-between"
+<<<<<<< HEAD
           gap="$4"
           style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
         >
@@ -379,11 +423,64 @@ export function RegisterScreen() {
               </Pressable>
             </Link>
           </YStack>
+=======
+          style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
+        >
+          <YStack flex={1}>
+            <AuthHeader onBack={handleBack} />
+
+            {/* 1em (16px) gap between the header and the hero image.
+                Wrapper clips 5px off the top and bottom of the picture
+                without changing its proportions. */}
+            <YStack width="100%" height={165} marginTop={16} overflow="hidden">
+              <Image
+                source={HERO[step]}
+                resizeMode="contain"
+                style={{ width: '100%', height: 190, marginTop: -15 }}
+              />
+            </YStack>
+
+            <YStack flex={1} marginTop="$4">
+              {step === 1 ? (
+                <RegisterStep1
+                  displayName={displayName}
+                  email={email}
+                  phoneNumber={phoneNumber}
+                  error={error}
+                  onChangeDisplayName={setDisplayName}
+                  onChangeEmail={setEmail}
+                  onChangePhoneNumber={setPhoneNumber}
+                  onContinue={goToStep2}
+                  onGoogleError={(msg) => setError(msg || null)}
+                />
+              ) : (
+                <RegisterStep2
+                  password={password}
+                  confirmPassword={confirmPassword}
+                  agreed={agreed}
+                  passwordVisible={passwordVisible}
+                  confirmVisible={confirmVisible}
+                  loading={loading}
+                  error={error}
+                  onChangePassword={setPassword}
+                  onChangeConfirmPassword={setConfirmPassword}
+                  onToggleAgreed={() => setAgreed((v) => !v)}
+                  onTogglePasswordVisible={() => setPasswordVisible((v) => !v)}
+                  onToggleConfirmVisible={() => setConfirmVisible((v) => !v)}
+                  onSubmit={handleSubmit}
+                />
+              )}
+            </YStack>
+          </YStack>
+
+          {/* Each step owns its own "have an account" link in its bottom group. */}
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1
         </YStack>
       </ScrollView>
     </YStack>
   );
 }
+<<<<<<< HEAD
 
 function PrimaryButton({
   label,
@@ -444,3 +541,5 @@ function CircleButton({
     </Pressable>
   );
 }
+=======
+>>>>>>> 1acc038dba37cfd30d15e42a72fbe1f7ab5abfb1

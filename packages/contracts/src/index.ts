@@ -51,6 +51,7 @@ export type UsersByIdsInput = z.infer<typeof UsersByIdsInputSchema>;
 
 export const UpdateOwnUserSchema = z.object({
   displayName: z.string().min(1).max(80).optional(),
+  phoneNumber: PhoneNumber.optional(),
   avatarUrl: z.string().url().optional(),
   locale: LocaleSchema.optional(),
 });

@@ -5,6 +5,7 @@ export type UserDoc = {
   email: string;
   passwordHash: string | null;
   displayName: string;
+  phoneNumber?: string;
   avatarUrl?: string;
   locale: 'he' | 'en';
   role: 'user' | 'admin';

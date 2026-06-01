@@ -19,21 +19,32 @@ import {
 } from './auth.service.js';
 import { toPublicUser } from '../users/users.mapper.js';
 
+function isDuplicateKeyError(err: unknown, field: string): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: number; keyPattern?: Record<string, unknown> };
+  return e.code === 11000 && !!e.keyPattern && field in e.keyPattern;
+}
+
 export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/auth/register',
     { schema: { body: RegisterInputSchema, tags: ['auth'] } },
     async (req, reply) => {
-      const { password, displayName, locale } = req.body;
+      const { password, displayName, locale, phoneNumber } = req.body;
       const email = req.body.email.toLowerCase();
+      const phone = phoneNumber.trim();
 
-      const existing = await app.collections.users.findOne({ email });
-      if (existing) return reply.code(409).send({ error: 'email already registered' });
+      // Pre-check both unique fields so we can return a specific code per cause.
+      const existingEmail = await app.collections.users.findOne({ email });
+      if (existingEmail) return reply.code(409).send({ error: 'email_already_registered' });
+      const existingPhone = await app.collections.users.findOne({ phoneNumber: phone });
+      if (existingPhone) return reply.code(409).send({ error: 'phone_already_registered' });
 
       const now = new Date();
       const doc = {
         _id: new ObjectId(),
         email,
+        phoneNumber: phone,
         passwordHash: await hashPassword(password),
         displayName,
         locale,
@@ -41,7 +52,19 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
         createdAt: now,
         updatedAt: now,
       };
-      await app.collections.users.insertOne(doc);
+      try {
+        await app.collections.users.insertOne(doc);
+      } catch (e) {
+        // Race condition fallback: the unique index caught what the pre-check
+        // missed (two concurrent registrations with the same email/phone).
+        if (isDuplicateKeyError(e, 'email')) {
+          return reply.code(409).send({ error: 'email_already_registered' });
+        }
+        if (isDuplicateKeyError(e, 'phoneNumber')) {
+          return reply.code(409).send({ error: 'phone_already_registered' });
+        }
+        throw e;
+      }
 
       const tokens = await issueTokens(app.collections, doc, {
         userAgent: req.headers['user-agent'],
@@ -55,9 +78,12 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     '/auth/login',
     { schema: { body: LoginInputSchema, tags: ['auth'] } },
     async (req, reply) => {
-      const { password } = req.body;
-      const email = req.body.email.toLowerCase();
-      const user = await app.collections.users.findOne({ email });
+      const { password, email, phoneNumber } = req.body;
+      // LoginInputSchema's .refine enforces exactly one identifier.
+      const query = email
+        ? { email: email.toLowerCase() }
+        : { phoneNumber: phoneNumber!.trim() };
+      const user = await app.collections.users.findOne(query);
       if (!user || !user.passwordHash) {
         return reply.code(401).send({ error: 'invalid credentials' });
       }
