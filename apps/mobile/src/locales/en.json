@@ -40,6 +40,33 @@
     "seeMore": "See more",
     "emptySection": "Nothing here yet"
   },
+  "recipe": {
+    "startCooking": "Start cooking",
+    "ingredients": "Ingredients",
+    "forServings": "For {{count}} servings",
+    "quantityBase": "1 batch",
+    "quantityFraction": "{{fraction}} batch",
+    "quantityMultiple": "×{{factor}}",
+    "servingsTag": "{{count}} servings",
+    "preparation": "Instructions",
+    "tipTitle": "Quick tip",
+    "minutesShort": "{{count}} min",
+    "createdFrom": "Created from {{source}}",
+    "createdFromRecipe": "Created from another recipe",
+    "addedToShoppingList": "Added to shopping list",
+    "notFound": "Recipe not found",
+    "loadError": "Couldn't load the recipe. Please try again.",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "actions": {
+      "share": "Share",
+      "saveToBook": "Save to book",
+      "shoppingList": "Shopping list"
+    }
+  },
   "add": {
     "title": "What would you like to add?",
     "newRecipe": "New recipe",

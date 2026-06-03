@@ -40,6 +40,33 @@
     "seeMore": "הצג  הכל",
     "emptySection": "אין מה להציג עדיין"
   },
+  "recipe": {
+    "startCooking": "התחלת בישול",
+    "ingredients": "מצרכים",
+    "forServings": "ל-{{count}} מנות",
+    "quantityBase": "כמות 1",
+    "quantityFraction": "{{fraction}} כמות",
+    "quantityMultiple": "פי {{factor}}",
+    "servingsTag": "{{count}} מנות",
+    "preparation": "הוראות הכנה",
+    "tipTitle": "טיפ קטן",
+    "minutesShort": "{{count}} דק'",
+    "createdFrom": "נוצר מתוך {{source}}",
+    "createdFromRecipe": "נוצר מתוך מתכון אחר",
+    "addedToShoppingList": "נוסף לרשימת הקניות",
+    "notFound": "המתכון לא נמצא",
+    "loadError": "לא הצלחנו לטעון את המתכון. נסו שוב.",
+    "difficulty": {
+      "easy": "קל",
+      "medium": "בינוני",
+      "hard": "מורכב"
+    },
+    "actions": {
+      "share": "שיתוף",
+      "saveToBook": "שמירה לספר",
+      "shoppingList": "רשימת קניות"
+    }
+  },
   "add": {
     "title": "מה נוסיף?",
     "newRecipe": "מתכון חדש",
