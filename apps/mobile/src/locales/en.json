@@ -17,9 +17,21 @@
     "register": "Sign up"
   },
   "home": {
+    "cta": {
+      "title": "Got a recipe link?",
+      "subtitle": "We'll turn it into a structured recipe",
+      "button": "Create recipe",
+      "sources": {
+        "ai": "AI",
+        "image": "Photo",
+        "video": "Video",
+        "link": "Link"
+      }
+    },
+    "recentlyViewed": "Recently viewed",
+    "recipesCount": "{{count}} recipes",
     "greeting": "Hello, {{name}}",
     "searchPlaceholder": "Search a recipe, book or ingredient...",
-    "recentlyViewed": "Recently viewed",
     "recentlyImported": "Recently imported",
     "linked": "Linked",
     "booksWithFriends": "Books with friends",

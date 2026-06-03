@@ -1,8 +1,11 @@
-﻿import { useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { YStack } from 'tamagui';
 
+import { HomeHeader } from '@/features/home/components/HomeHeader';
+import { ImportRecipeCard } from '@/features/home/components/ImportRecipeCard';
 import {
   useToggleBookFavorite,
   useToggleRecipeFavorite,
@@ -16,28 +19,41 @@ import { SearchInput } from '@/shared/ui/SearchInput';
 export function HomeFeedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const feed = useHomeFeed();
   const toggleRecipe = useToggleRecipeFavorite();
   const toggleBook = useToggleBookFavorite();
 
   const openSearch = () => router.push('/search');
-  const openRecipe = (id: string) => router.push(`/recipes/${id}`);
-  const openBook = (id: string) => router.push(`/books/${id}`);
+  const openRecipe = (id: string) => router.push(`/recipes/${id}` as never);
+  const openBook = (id: string) => router.push(`/books/${id}` as never);
 
   return (
     <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={{ paddingBottom: 120, paddingTop: 16 }}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8,
+        paddingBottom: 120, // clear the floating tab bar
+      }}
+      showsVerticalScrollIndicator={false}
     >
-      <YStack gap="$5">
+      <YStack gap="$3">
+        <YStack paddingHorizontal="$4">
+          <HomeHeader onNotificationsPress={() => {}} />
+        </YStack>
+
         <YStack paddingHorizontal="$4">
           <SearchInput onPress={openSearch} />
         </YStack>
 
+        <YStack paddingHorizontal="$4">
+          <ImportRecipeCard onCreatePress={openSearch} />
+        </YStack>
+
         <FeedSection<RecipeCardData & { isFavorite: boolean }>
-          title={t('home.recentlyImported')}
-          data={feed.recentlyImported}
+          title={t('home.recentlyViewed')}
+          data={feed.recentlyViewed}
           keyExtractor={(r) => r.id}
+          onSeeMore={() => router.push('/recipes/recent' as never)}
           renderItem={({ item }) => (
             <RecipeCard
               recipe={item}
@@ -54,6 +70,7 @@ export function HomeFeedScreen() {
           title={t('home.booksWithFriends')}
           data={feed.booksWithFriends}
           keyExtractor={(b) => b.id}
+          onSeeMore={() => router.push('/books/friends' as never)}
           renderItem={({ item }) => (
             <BookCard
               book={item}
@@ -70,6 +87,7 @@ export function HomeFeedScreen() {
           title={t('home.sharedWithMe')}
           data={feed.sharedWithMe}
           keyExtractor={(b) => b.id}
+          onSeeMore={() => router.push('/recipes/shared' as never)}
           renderItem={({ item }) => (
             <BookCard
               book={item}
@@ -86,6 +104,7 @@ export function HomeFeedScreen() {
           title={t('home.favorites')}
           data={feed.favorites}
           keyExtractor={(r) => r.id}
+          onSeeMore={() => router.push('/recipes/favorites' as never)}
           renderItem={({ item }) => (
             <RecipeCard
               recipe={item}

@@ -17,15 +17,27 @@
     "register": "הרשמה"
   },
   "home": {
+    "cta": {
+      "title": "יש לך קישור למתכון?",
+      "subtitle": "נהפוך אותו למתכון מסודר",
+      "button": "יצירת מתכון",
+      "sources": {
+        "ai": "AI",
+        "image": "תמונה",
+        "video": "וידאו",
+        "link": "קישור"
+      }
+    },
+    "recentlyViewed": "נצפו לאחרונה",
+    "recipesCount": "{{count}} מתכונים",
     "greeting": "שלום, {{name}}",
     "searchPlaceholder": "חפשי מתכון, ספר או רכיב...",
-    "recentlyViewed": "צפיתי לאחרונה",
     "recentlyImported": "יובאו לאחרונה",
     "linked": "מקושר",
     "booksWithFriends": "ספרים עם חברים",
     "sharedWithMe": "שותף איתי",
     "favorites": "מועדפים",
-    "seeMore": "ראו עוד",
+    "seeMore": "הצג  הכל",
     "emptySection": "אין מה להציג עדיין"
   },
   "add": {

@@ -20,4 +20,5 @@ export const StorageKeys = {
   authUser: 'auth.user',
   language: 'settings.language',
   theme: 'settings.theme',
+  recentlyViewedRecipes: 'home.recentlyViewedRecipes',
 } as const;
