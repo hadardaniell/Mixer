@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
-import { Home, Plus, Search, User } from 'lucide-react-native';
+import { Home, Plus, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,7 +52,6 @@ export function TabBar({ state, navigation, onAddPress }: CustomTabBarProps) {
         {/* Left cluster */}
         <XStack flex={1} alignItems="center" justifyContent="space-around">
           <TabItem
-            label={t('nav.home')}
             active={current === 'home'}
             activeColor={active}
             inactiveColor={inactive}
@@ -88,7 +87,6 @@ export function TabBar({ state, navigation, onAddPress }: CustomTabBarProps) {
         {/* Right cluster */}
         <XStack flex={1} alignItems="center" justifyContent="space-around">
           <TabItem
-            label={t('nav.profile')}
             active={current === 'profile'}
             activeColor={active}
             inactiveColor={inactive}
@@ -97,8 +95,6 @@ export function TabBar({ state, navigation, onAddPress }: CustomTabBarProps) {
           >
             {(color) => <User size={24} color={color} />}
           </TabItem>
-          {/* Spacer keeps the FAB visually centered against the left cluster */}
-          <YStack width={48} />
         </XStack>
       </XStack>
     </YStack>
@@ -114,7 +110,7 @@ function TabItem({
   onPress,
   children,
 }: {
-  label: string;
+  label?: string;
   active: boolean;
   activeColor: string;
   inactiveColor: string;

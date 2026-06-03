@@ -13,7 +13,9 @@ export const feedApi = {
 
   myBooks: () => http<ListResponse<RecipeBook>>('/recipe-books'),
 
-  favoriteRecipes: () => http<ListResponse<Recipe>>('/favorites/recipes'),
+  favoriteRecipes: () => http<ListResponse<Recipe>>('/favorites?kind=recipe'),
+
+  favoriteBooks: () => http<ListResponse<RecipeBook>>('/favorites?kind=book'),
 
   recipeById: (id: string) => http<Recipe>(`/recipes/${id}`),
 

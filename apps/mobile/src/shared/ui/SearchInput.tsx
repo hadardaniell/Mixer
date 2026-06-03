@@ -21,19 +21,17 @@ export function SearchInput({ onPress, placeholder }: SearchInputProps) {
         alignItems="center"
         gap="$3"
         paddingHorizontal="$4"
-        height={56}
+        height={48}
         borderRadius={28}
         backgroundColor="$surface"
-        borderWidth={1}
-        borderColor="$border"
         shadowColor="black"
-        shadowOpacity={0.04}
-        shadowRadius={12}
-        shadowOffset={{ width: 0, height: 4 }}
-        elevation={1}
+        shadowOpacity={0.08}
+        shadowRadius={18}
+        shadowOffset={{ width: 0, height: 6 }}
+        elevation={4}
         pressStyle={{ backgroundColor: '$bgSubtle' }}
       >
-        <Search size={20} color={muted} />
+        {/* <Search size={20} color={muted} /> */}
         <Text flex={1} color="$textMuted" fontSize={15} numberOfLines={1}>
           {label}
         </Text>

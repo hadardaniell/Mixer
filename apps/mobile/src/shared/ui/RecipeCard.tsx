@@ -13,7 +13,8 @@ export const FEED_CARD_SHADOW = {
   shadowOffset: { width: 0, height: 6 },
   elevation: 2,
 };
-const IMAGE_HEIGHT = 150;
+const IMAGE_HEIGHT = 110;
+const RECIPE_CARD_HEIGHT = 170;
 const RADIUS = FEED_CARD_RADIUS;
 
 export interface RecipeCardData {
@@ -59,6 +60,7 @@ export function RecipeCard({
     <YStack
       onPress={onPress}
       width={FEED_CARD_WIDTH}
+      height={RECIPE_CARD_HEIGHT}
       borderRadius={RADIUS}
       overflow="hidden"
       backgroundColor="$surface"
@@ -81,11 +83,12 @@ export function RecipeCard({
           <View
             position="absolute"
             top={8}
-            start={8}
+            left={8}
             paddingHorizontal={10}
             paddingVertical={3}
             borderRadius={999}
-            backgroundColor="$surface"
+            backgroundColor="#FFFFFF"
+            opacity={0.9}
           >
             <Text color="$text" fontSize={11} fontWeight="700">
               {recipe.durationMinutes} דק'
@@ -93,18 +96,24 @@ export function RecipeCard({
           </View>
         ) : null}
 
-        {/* Favorite star — top-left (end in RTL because of `end={8}`). */}
-        <View position="absolute" top={6} end={6}>
+        <View position="absolute" left={10} bottom={-16}>
           <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} size={22} />
         </View>
       </YStack>
 
-      <YStack paddingHorizontal="$3" paddingVertical="$2.5" gap={2} alignItems="center">
-        <Text fontSize={14} fontWeight="700" numberOfLines={1} color="$text">
+      <YStack
+        flex={1}
+        paddingHorizontal="$3"
+        paddingTop={18}
+        paddingBottom="$2"
+        gap={2}
+        alignItems="flex-start"
+      >
+        <Text width="100%" fontSize={14} fontWeight="700" numberOfLines={1} color="$text">
           {recipe.name}
         </Text>
         {recipe.tag ? (
-          <Text fontSize={12} color="$textMuted" numberOfLines={1}>
+          <Text width="100%" fontSize={12} color="$textMuted" numberOfLines={1}>
             {recipe.tag}
           </Text>
         ) : null}

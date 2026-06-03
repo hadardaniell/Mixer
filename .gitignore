@@ -43,3 +43,7 @@ coverage/
 .vscode/
 .idea/
 *.swp
+
+# Claude Code — personal config / skills, not shared
+.claude/skills/
+.claude/settings.local.json

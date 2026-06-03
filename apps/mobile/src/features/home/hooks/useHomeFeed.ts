@@ -20,8 +20,7 @@ export interface HomeFeed {
 }
 
 function toRecipeCard(r: Recipe): RecipeCardData & { isFavorite: boolean } {
-  const totalTime =
-    (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0) || undefined;
+  const totalTime = (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0) || undefined;
   return {
     id: r.id,
     name: r.title,
@@ -119,6 +118,7 @@ export function useHomeFeed(): HomeFeed {
     return {
       id: b.id,
       name: b.name,
+      recipeCount: b.recipeIds.length,
       coverImages,
       members,
       isFavorite: b.isFavorite ?? false,

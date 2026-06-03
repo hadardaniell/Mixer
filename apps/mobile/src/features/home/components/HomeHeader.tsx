@@ -25,23 +25,14 @@ export function HomeHeader({ onNotificationsPress }: HomeHeaderProps) {
   const greeting = t('home.greeting', { name });
 
   return (
-    <XStack width="100%" alignItems="center" gap="$3" justifyContent="flex-start">
-      <Text color="$text" fontSize={26} fontWeight="700" letterSpacing={-0.5}>
+    <XStack width="100%" alignItems="center" gap="$3" justifyContent="flex-start"
+    padding="$3">
+      <Pressable onPress={onNotificationsPress} accessibilityRole="button" hitSlop={8}>
+        <Bell size={20} color={ink} />
+      </Pressable>
+      <Text color="$text" fontSize={21} fontWeight="700" letterSpacing={-0.5}>
         {greeting}
       </Text>
-      <Pressable onPress={onNotificationsPress} accessibilityRole="button" hitSlop={8}>
-        <View
-          width={44}
-          height={44}
-          borderRadius={22}
-          backgroundColor="$accentLavender"
-          alignItems="center"
-          justifyContent="center"
-          pressStyle={{ opacity: 0.85 }}
-        >
-          <Bell size={20} color={ink} />
-        </View>
-      </Pressable>
     </XStack>
   );
 }

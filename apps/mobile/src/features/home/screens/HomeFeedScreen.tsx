@@ -36,7 +36,7 @@ export function HomeFeedScreen() {
       }}
       showsVerticalScrollIndicator={false}
     >
-      <YStack gap="$4">
+      <YStack gap="$3">
         <YStack paddingHorizontal="$4">
           <HomeHeader onNotificationsPress={() => {}} />
         </YStack>
@@ -53,7 +53,6 @@ export function HomeFeedScreen() {
           title={t('home.recentlyViewed')}
           data={feed.recentlyViewed}
           keyExtractor={(r) => r.id}
-          emptyText={t('home.emptySection')}
           onSeeMore={() => router.push('/recipes/recent' as never)}
           renderItem={({ item }) => (
             <RecipeCard
@@ -71,7 +70,6 @@ export function HomeFeedScreen() {
           title={t('home.booksWithFriends')}
           data={feed.booksWithFriends}
           keyExtractor={(b) => b.id}
-          emptyText={t('home.emptySection')}
           onSeeMore={() => router.push('/books/friends' as never)}
           renderItem={({ item }) => (
             <BookCard
@@ -89,7 +87,6 @@ export function HomeFeedScreen() {
           title={t('home.sharedWithMe')}
           data={feed.sharedWithMe}
           keyExtractor={(b) => b.id}
-          emptyText={t('home.emptySection')}
           onSeeMore={() => router.push('/recipes/shared' as never)}
           renderItem={({ item }) => (
             <BookCard
@@ -107,7 +104,6 @@ export function HomeFeedScreen() {
           title={t('home.favorites')}
           data={feed.favorites}
           keyExtractor={(r) => r.id}
-          emptyText={t('home.emptySection')}
           onSeeMore={() => router.push('/recipes/favorites' as never)}
           renderItem={({ item }) => (
             <RecipeCard

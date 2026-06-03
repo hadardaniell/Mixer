@@ -1,7 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
-import type { FavoriteKind } from '@mixer/contracts';
+import { FavoriteKindSchema, type FavoriteKind } from '@mixer/contracts';
 import { toRecipe } from '../recipes/recipes.mapper.js';
 import { toRecipeBook } from '../recipe-books/recipe-books.mapper.js';
 import type { Collections } from '../../plugins/mongo.js';
@@ -83,44 +83,41 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
     },
   );
 
-  // --- list my favorited recipes (visibility-aware) ---
+  // --- list my favorites, branched by ?kind=recipe|book ---
   app.get(
-    '/favorites/recipes',
-    { onRequest: [app.authenticate], schema: { tags: ['favorites'] } },
-    async (req) => {
-      const userId = new ObjectId(req.user.id);
-      const favs = await app.collections.favorites
-        .find({ userId, kind: 'recipe' }, { sort: { createdAt: -1 } })
-        .toArray();
-      const ids = favs.map((f) => f.targetId);
-      if (ids.length === 0) return { items: [] };
-      const recipes = await app.collections.recipes
-        .find({
-          _id: { $in: ids },
-          $or: [{ ownerId: userId }, { visibility: { $ne: 'private' } }],
-        })
-        .toArray();
-      // preserve favorite order (most recent first)
-      const byId = new Map(recipes.map((r) => [r._id.toString(), r]));
-      const items = ids
-        .map((id) => byId.get(id.toString()))
-        .filter((r): r is NonNullable<typeof r> => r !== undefined)
-        .map((r) => toRecipe(r, { isFavorite: true }));
-      return { items };
+    '/favorites',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        querystring: z.object({ kind: FavoriteKindSchema }),
+        tags: ['favorites'],
+      },
     },
-  );
-
-  // --- list my favorited books (membership-aware) ---
-  app.get(
-    '/favorites/books',
-    { onRequest: [app.authenticate], schema: { tags: ['favorites'] } },
     async (req) => {
       const userId = new ObjectId(req.user.id);
+      const { kind } = req.query;
       const favs = await app.collections.favorites
-        .find({ userId, kind: 'book' }, { sort: { createdAt: -1 } })
+        .find({ userId, kind }, { sort: { createdAt: -1 } })
         .toArray();
       const ids = favs.map((f) => f.targetId);
       if (ids.length === 0) return { items: [] };
+
+      if (kind === 'recipe') {
+        const recipes = await app.collections.recipes
+          .find({
+            _id: { $in: ids },
+            $or: [{ ownerId: userId }, { visibility: { $ne: 'private' } }],
+          })
+          .toArray();
+        const byId = new Map(recipes.map((r) => [r._id.toString(), r]));
+        const items = ids
+          .map((id) => byId.get(id.toString()))
+          .filter((r): r is NonNullable<typeof r> => r !== undefined)
+          .map((r) => toRecipe(r, { isFavorite: true }));
+        return { items };
+      }
+
+      // book
       const books = await app.collections.recipeBooks
         .find({
           _id: { $in: ids },
