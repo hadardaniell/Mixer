@@ -19,5 +19,8 @@
     "fastify-type-provider-zod": "^4.0.2",
     "groq-sdk": "^1.2.1",
     "yt-dlp-exec": "^1.0.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1"
   }
 }
