@@ -30,18 +30,15 @@ importers:
 
   apps/ai:
     dependencies:
-<<<<<<< HEAD
-      '@google/generative-ai':
-        specifier: ^0.24.1
-        version: 0.24.1
-=======
       '@fastify/swagger':
         specifier: ^9.7.0
         version: 9.7.0
       '@fastify/swagger-ui':
         specifier: ^5.2.6
         version: 5.2.6
->>>>>>> 57e1f7599f3e0d2423f57b3e82915a56c0a97359
+      '@google/generative-ai':
+        specifier: ^0.24.1
+        version: 0.24.1
       '@mixer/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -51,28 +48,12 @@ importers:
       fastify-type-provider-zod:
         specifier: ^4.0.2
         version: 4.0.2(fastify@5.8.5)(zod@3.25.76)
-<<<<<<< HEAD
-      yt-dlp-exec:
-        specifier: ^1.0.2
-        version: 1.0.2
-=======
       groq-sdk:
         specifier: ^1.2.1
         version: 1.2.1
->>>>>>> 57e1f7599f3e0d2423f57b3e82915a56c0a97359
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      '@types/node':
-        specifier: ^22.7.5
-        version: 22.19.19
-      tsx:
-        specifier: ^4.19.1
-        version: 4.22.0
-      typescript:
-        specifier: ^5.6.3
-        version: 5.9.3
+      yt-dlp-exec:
+        specifier: ^1.0.2
+        version: 1.0.2
 
   apps/api:
     dependencies:

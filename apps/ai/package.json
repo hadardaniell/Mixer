@@ -11,25 +11,13 @@
     "lint": "echo \"(@mixer/ai) no lint configured\""
   },
   "dependencies": {
-<<<<<<< HEAD
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.6",
     "@google/generative-ai": "^0.24.1",
     "@mixer/contracts": "workspace:*",
     "fastify": "^5.0.0",
     "fastify-type-provider-zod": "^4.0.2",
-    "yt-dlp-exec": "^1.0.2",
-=======
-    "@fastify/swagger": "^9.7.0",
-    "@fastify/swagger-ui": "^5.2.6",
-    "@mixer/contracts": "workspace:*",
-    "fastify": "^5.0.0",
-    "fastify-type-provider-zod": "^4.0.2",
     "groq-sdk": "^1.2.1",
->>>>>>> 57e1f7599f3e0d2423f57b3e82915a56c0a97359
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@types/node": "^22.7.5",
-    "tsx": "^4.19.1",
-    "typescript": "^5.6.3"
+    "yt-dlp-exec": "^1.0.2"
   }
 }

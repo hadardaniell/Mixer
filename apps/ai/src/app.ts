@@ -8,11 +8,7 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { healthRoute } from './routes/health.js';
-<<<<<<< HEAD
-import { extractRoutes } from './extract.routes.js';
-=======
 import { extractRoutes } from './modules/extract/extract.routes.js';
->>>>>>> 57e1f7599f3e0d2423f57b3e82915a56c0a97359
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
