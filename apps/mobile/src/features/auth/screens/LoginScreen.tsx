@@ -1,12 +1,15 @@
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable } from 'react-native';
-import { Text, XStack, YStack } from 'tamagui';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { Image, Platform, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text, useTheme, XStack, YStack } from 'tamagui';
 
+import { AuthHeader } from '@/features/auth/components/AuthHeader';
+import { AuthPrimaryButton } from '@/features/auth/components/AuthPrimaryButton';
 import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
-import { AUTH_FONT_FAMILY, AUTH_USES_SYSTEM_FONT } from '@/features/auth/authFonts';
+import { NoAccountLink } from '@/features/auth/components/NoAccountLink';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
@@ -14,23 +17,36 @@ import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
 import { OutlinedInput } from '@/shared/ui/OutlinedInput';
 
+const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
+
+const HERO = require('../../../assets/images/login.png');
+
 export function LoginScreen() {
   const { t } = useTranslation();
+  const theme = useTheme();
   const { signIn } = useAuth();
   const { language } = useLanguage();
-  const [email, setEmail] = useState('');
+  const insets = useSafeAreaInsets();
+
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+
   const isRtl = isRTL(language);
+  const muted = theme.textMuted?.val as string;
+  const disabled = loading || !identifier || !password;
 
   const handleSubmit = async () => {
     if (loading) return;
     setError(null);
     setLoading(true);
     try {
-      const res = await authApi.login({ email: email.trim(), password });
+      // A value containing "@" is treated as an email, otherwise as a phone.
+      const id = identifier.trim();
+      const credential = id.includes('@') ? { email: id } : { phoneNumber: id };
+      const res = await authApi.login({ ...credential, password });
       signIn(res);
       router.replace('/home' as never);
     } catch (e) {
@@ -47,155 +63,113 @@ export function LoginScreen() {
   return (
     <YStack
       flex={1}
-      alignItems="center"
-      justifyContent="space-between"
-      padding="2em"
-      width="100%"
-      backgroundColor="$background"
-      style={
-        {
-          boxSizing: 'border-box',
-          direction: isRtl ? 'rtl' : 'ltr',
-          minHeight: '100dvh',
-          overflowX: 'hidden',
-          position: 'relative',
-        } as never
-      }
+      backgroundColor="$bg"
+      paddingHorizontal={20}
+      paddingTop={insets.top + 10}
+      paddingBottom={insets.bottom + 12}
     >
-      <YStack width="100%" maxWidth={420} gap="$5" paddingTop="5em">
-        <XStack
-          alignItems="flex-end"
-          justifyContent="center"
-          flexDirection={isRtl ? 'row' : 'row-reverse'}
-        >
-          <Text
-            color="#3D2314"
-            fontFamily={AUTH_FONT_FAMILY}
-            fontSize={26}
-            fontWeight="700"
-            letterSpacing={-0.4}
-            lineHeight={36}
-            textAlign="center"
-          >
-            {t('auth.welcomeTitle')}
-          </Text>
-        </XStack>
+      <YStack
+        flex={1}
+        width="100%"
+        maxWidth={440}
+        alignSelf="center"
+        style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
+      >
+        <YStack flex={1}>
+          {/* Back-only header (no language controls on login). */}
+          <AuthHeader onBack={() => router.back()} showLanguageControls={false} />
 
-        <YStack gap={22}>
-          <OutlinedInput
-            label={t('auth.email')}
-            floatingLabel={false}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            value={email}
-            onChangeText={setEmail}
-            fontFamily={AUTH_FONT_FAMILY}
-            useSystemFont={AUTH_USES_SYSTEM_FONT}
-            style={{
-              backgroundColor: 'transparent',
-              borderColor: '#6F8286',
-              borderRadius: 8,
-              borderWidth: 1.5,
-            }}
+          {/* 1em gap from header; full hero image, no cropping. */}
+          <Image
+            source={HERO}
+            resizeMode="contain"
+            style={{ width: '100%', height: 190, marginTop: 16 }}
           />
-          <OutlinedInput
-            label={t('auth.password')}
-            floatingLabel={false}
-            secureTextEntry={!passwordVisible}
-            textContentType="password"
-            value={password}
-            onChangeText={setPassword}
-            fontFamily={AUTH_FONT_FAMILY}
-            useSystemFont={AUTH_USES_SYSTEM_FONT}
-            style={{
-              backgroundColor: 'transparent',
-              borderColor: '#6F8286',
-              borderRadius: 8,
-              borderWidth: 1.5,
-            }}
-            endAdornment={
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setPasswordVisible((current) => !current)}
-                hitSlop={10}
-              >
-                {passwordVisible ? (
-                  <Eye color="#6F8286" size={26} />
-                ) : (
-                  <EyeOff color="#6F8286" size={26} />
-                )}
-              </Pressable>
-            }
-          />
+
+          {/* Form area: flex column with space-between (top = title/fields/google,
+              bottom = login button + "don't have account" link). */}
+          <YStack flex={1} marginTop="$4" justifyContent="space-between" gap={16}>
+            <YStack gap={18}>
+              {/* Title + subtitle */}
+              <YStack gap="$1">
+                <Text color="$text" fontSize={26} fontWeight="700" letterSpacing={-0.5} textAlign="center">
+                  {t('auth.welcomeTitle')}
+                </Text>
+                <Text color="$textMuted" fontSize={15} textAlign="center">
+                  {t('auth.loginSubtitle')}
+                </Text>
+              </YStack>
+
+              {/* Fields */}
+              <YStack gap={12}>
+                <OutlinedInput
+                  label={t('auth.emailOrPhone')}
+                  floatingLabel={false}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  textContentType="username"
+                  value={identifier}
+                  onChangeText={setIdentifier}
+                  fontFamily={INPUT_FONT}
+                  style={{ borderRadius: 14 }}
+                />
+                <OutlinedInput
+                  label={t('auth.password')}
+                  floatingLabel={false}
+                  secureTextEntry={!passwordVisible}
+                  textContentType="password"
+                  value={password}
+                  onChangeText={setPassword}
+                  fontFamily={INPUT_FONT}
+                  style={{ borderRadius: 14 }}
+                  endAdornment={
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setPasswordVisible((v) => !v)}
+                      hitSlop={10}
+                    >
+                      {passwordVisible ? (
+                        <Eye color={muted} size={24} />
+                      ) : (
+                        <EyeOff color={muted} size={24} />
+                      )}
+                    </Pressable>
+                  }
+                />
+              </YStack>
+
+              {error ? (
+                <Text color="$dangerText" fontSize="$3" textAlign={isRtl ? 'right' : 'left'}>
+                  {error}
+                </Text>
+              ) : null}
+
+              {/* "or" divider + Google */}
+              <YStack gap="$2">
+                <XStack alignItems="center" gap={16}>
+                  <YStack flex={1} height={1} backgroundColor="$border" />
+                  <Text color="$textMuted" fontSize={14}>
+                    {t('auth.or')}
+                  </Text>
+                  <YStack flex={1} height={1} backgroundColor="$border" />
+                </XStack>
+                <GoogleSignInButton variant="card" onError={(msg) => setError(msg || null)} />
+              </YStack>
+            </YStack>
+
+            {/* Bottom group: Login button + "don't have account?" link */}
+            <YStack gap={16} paddingBottom={16}>
+              <AuthPrimaryButton
+                label={loading ? t('auth.signingIn') : t('auth.login')}
+                onPress={handleSubmit}
+                disabled={disabled}
+              />
+              <NoAccountLink />
+            </YStack>
+          </YStack>
         </YStack>
-
-        {error ? (
-          <Text color="$dangerText" fontFamily={AUTH_FONT_FAMILY} fontSize="$3">
-            {error}
-          </Text>
-        ) : null}
-
-        <Pressable
-          onPress={handleSubmit}
-          disabled={loading || !email || !password}
-          style={({ pressed }) => ({
-            alignItems: 'center',
-            backgroundColor: pressed ? '' : 'rgb(246, 235, 97)',
-            borderRadius: 999,
-            height: 55,
-            justifyContent: 'center',
-            opacity: loading ? 0.65 : 1,
-            width: '100%',
-          })}
-        >
-          <Text color="#32330c" fontFamily={AUTH_FONT_FAMILY} fontSize={21} fontWeight="800">
-            {loading ? t('auth.signingIn') : t('auth.login')}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setError(t('auth.forgotPasswordUnavailable'))}
-          hitSlop={8}
-          style={{ alignItems: 'center' }}
-        >
-          <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
-            {t('auth.forgotPassword')}
-          </Text>
-        </Pressable>
-
-        <XStack alignItems="center" gap="$4">
-          <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
-          <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
-            {t('auth.or')}
-          </Text>
-          <YStack flex={1} height={1} backgroundColor="#c7c7c7" opacity={0.45} />
-        </XStack>
-
-        <GoogleSignInButton variant="card" onError={(msg) => setError(msg || null)} />
       </YStack>
-
-      <Link href={'/register' as never} asChild>
-        <Pressable
-          hitSlop={8}
-          style={{
-            alignSelf: 'center',
-            bottom: 32,
-            position: 'absolute',
-          }}
-        >
-          <XStack alignItems="center" gap="0.3em">
-            <Text color="#3D2314" fontFamily={AUTH_FONT_FAMILY} fontSize="$5">
-              {t('auth.dontHaveAccount')}
-            </Text>
-            <Text color="#3D2314  " fontFamily={AUTH_FONT_FAMILY} fontSize="$5" fontWeight="800">
-              {t('auth.signUp')}
-            </Text>
-          </XStack>
-        </Pressable>
-      </Link>
     </YStack>
   );
 }

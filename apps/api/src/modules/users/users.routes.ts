@@ -5,6 +5,7 @@ import {
   CreateUserAsAdminInputSchema,
   UpdateOwnUserSchema,
   UpdateUserAsAdminSchema,
+  UsersByIdsInputSchema,
 } from '@mixer/contracts';
 import { toPublicUser } from './users.mapper.js';
 import { hashPassword } from '../auth/auth.service.js';
@@ -14,6 +15,13 @@ const ListQuery = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   skip: z.coerce.number().int().nonnegative().default(0),
 });
+
+// Mongo duplicate-key (E11000); `keyPattern` tells us which unique field collided.
+function isDuplicateKeyError(err: unknown, field: string): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: number; keyPattern?: Record<string, unknown> };
+  return e.code === 11000 && !!e.keyPattern && field in e.keyPattern;
+}
 
 export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get(
@@ -33,13 +41,33 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: { body: UpdateOwnUserSchema, tags: ['users'] },
     },
     async (req, reply) => {
-      const updated = await app.collections.users.findOneAndUpdate(
-        { _id: new ObjectId(req.user.id) },
-        { $set: { ...req.body, updatedAt: new Date() } },
-        { returnDocument: 'after' },
-      );
-      if (!updated) return reply.code(404).send({ error: 'user not found' });
-      return toPublicUser(updated);
+      try {
+        const updated = await app.collections.users.findOneAndUpdate(
+          { _id: new ObjectId(req.user.id) },
+          { $set: { ...req.body, updatedAt: new Date() } },
+          { returnDocument: 'after' },
+        );
+        if (!updated) return reply.code(404).send({ error: 'user not found' });
+        return toPublicUser(updated);
+      } catch (e) {
+        if (isDuplicateKeyError(e, 'phoneNumber')) {
+          return reply.code(409).send({ error: 'phone_already_registered' });
+        }
+        throw e;
+      }
+    },
+  );
+
+  app.post(
+    '/users/by-ids',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: UsersByIdsInputSchema, tags: ['users'] },
+    },
+    async (req) => {
+      const oids = req.body.ids.map((id) => new ObjectId(id));
+      const items = await app.collections.users.find({ _id: { $in: oids } }).toArray();
+      return { items: items.map(toPublicUser) };
     },
   );
 

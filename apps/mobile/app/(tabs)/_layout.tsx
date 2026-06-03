@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Sheet } from '@/shared/ui/Sheet';
 import { TabBar } from '@/shared/ui/TabBar';
+import { APP_BACKGROUND_COLOR } from '@/theme/palette';
 
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -13,7 +14,10 @@ export default function TabsLayout() {
   return (
     <>
       <Tabs
-        screenOptions={{ headerShown: false }}
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: APP_BACKGROUND_COLOR },
+        }}
         tabBar={(props) => <TabBar {...props} onAddPress={() => setAddOpen(true)} />}
       >
         <Tabs.Screen name="home" />

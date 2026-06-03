@@ -1,8 +1,7 @@
 import { Pressable } from 'react-native';
-import { Text, XStack } from 'tamagui';
+import { Text, View, XStack } from 'tamagui';
 import { useTranslation } from 'react-i18next';
 
-import { AUTH_FONT_FAMILY } from '@/features/auth/authFonts';
 import { isRTL, type Language } from '@/shared/lib/i18n';
 
 interface AuthLanguageToggleProps {
@@ -21,12 +20,13 @@ export function AuthLanguageToggle({ language, onChangeLanguage }: AuthLanguageT
   return (
     <XStack
       alignSelf="center"
-      borderColor="#6F8286"
+      backgroundColor="$surface"
+      borderColor="$border"
       borderRadius={999}
-      borderWidth={1.5}
+      borderWidth={1}
+      padding={3}
+      gap={2}
       flexDirection={isRtl ? 'row' : 'row-reverse'}
-      overflow="hidden"
-      width={220}
     >
       {options.map((option) => {
         const selected = language === option.code;
@@ -37,22 +37,25 @@ export function AuthLanguageToggle({ language, onChangeLanguage }: AuthLanguageT
             onPress={() => {
               void onChangeLanguage(option.code);
             }}
-            style={({ pressed }) => ({
-              backgroundColor: selected ? '#2B1B10' : pressed ? '#ffd7e7' : '#FFFFFF',
-              flex: 1,
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-            })}
           >
-            <Text
-              color={selected ? 'rgb(246, 235, 97)' : '#16181F'}
-              fontFamily={AUTH_FONT_FAMILY}
-              fontSize={15}
-              fontWeight={selected ? '800' : '600'}
-              textAlign="center"
+            <View
+              alignItems="center"
+              justifyContent="center"
+              paddingVertical={6}
+              paddingHorizontal={20}
+              borderRadius={999}
+              backgroundColor={selected ? '$accentLavender' : 'transparent'}
+              pressStyle={{ backgroundColor: selected ? '$accentLavender' : '$bgSubtle' }}
             >
-              {option.label}
-            </Text>
+              <Text
+                color={selected ? '$primary' : '$text'}
+                fontSize={14}
+                fontWeight={selected ? '700' : '600'}
+                textAlign="center"
+              >
+                {option.label}
+              </Text>
+            </View>
           </Pressable>
         );
       })}

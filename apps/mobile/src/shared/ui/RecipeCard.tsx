@@ -1,14 +1,36 @@
 import { Image } from 'react-native';
-import { Text, XStack, YStack } from 'tamagui';
+import { Text, View, XStack, YStack } from 'tamagui';
 
 import { FavoriteButton } from '@/shared/ui/FavoriteButton';
+
+export const FEED_CARD_WIDTH = 180;
+export const FEED_CARD_HEIGHT = 230;
+export const FEED_CARD_RADIUS = 18;
+export const FEED_CARD_SHADOW = {
+  shadowColor: 'black' as const,
+  shadowOpacity: 0.06,
+  shadowRadius: 14,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 2,
+};
+const IMAGE_HEIGHT = 110;
+const RECIPE_CARD_HEIGHT = 170;
+const RADIUS = FEED_CARD_RADIUS;
 
 export interface RecipeCardData {
   id: string;
   name: string;
-  imageUrl: string;
-  durationMinutes: number;
+  imageUrl?: string;
+  durationMinutes?: number;
+  /** Comma-separated category labels shown under the title (e.g. "מרקים · טבעוני"). */
   tag?: string;
+}
+
+export interface RecipeAttribution {
+  name: string;
+  avatarUrl?: string;
+  /** Localized suffix like "שיתפה איתך" / "shared with you". */
+  suffix: string;
 }
 
 interface RecipeCardProps {
@@ -16,41 +38,110 @@ interface RecipeCardProps {
   isFavorited: boolean;
   onToggleFavorite: () => void;
   onPress: () => void;
+  /** When present, shows an attribution row at the top of the card. */
+  attribution?: RecipeAttribution;
 }
 
-export function RecipeCard({ recipe, isFavorited, onToggleFavorite, onPress }: RecipeCardProps) {
+/**
+ * Feed recipe card. Two visual modes:
+ *  - Default: image with a time chip (top-right) and yellow favorite star
+ *    (top-left), title + category subtitle below.
+ *  - With `attribution`: an avatar + "X שיתפה איתך" row sits above the image
+ *    (used by the "shared with me" feed row).
+ */
+export function RecipeCard({
+  recipe,
+  isFavorited,
+  onToggleFavorite,
+  onPress,
+  attribution,
+}: RecipeCardProps) {
   return (
     <YStack
       onPress={onPress}
-      width={170}
-      height={210}
-      borderRadius="$6"
+      width={FEED_CARD_WIDTH}
+      height={RECIPE_CARD_HEIGHT}
+      borderRadius={RADIUS}
       overflow="hidden"
-      backgroundColor="$gray3"
-      pressStyle={{ opacity: 0.9, scale: 0.98 }}
+      backgroundColor="$surface"
+      shadowColor="black"
+      shadowOpacity={0.06}
+      shadowRadius={14}
+      shadowOffset={{ width: 0, height: 6 }}
+      elevation={2}
+      pressStyle={{ opacity: 0.92, scale: 0.98 }}
     >
-      <Image source={{ uri: recipe.imageUrl }} style={{ position: 'absolute', inset: 0 }} />
+      {attribution ? <AttributionRow attribution={attribution} /> : null}
 
-      <XStack position="absolute" top="$2" right="$2">
-        <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} />
-      </XStack>
+      <YStack height={IMAGE_HEIGHT} backgroundColor="$bgSubtle">
+        {recipe.imageUrl ? (
+          <Image source={{ uri: recipe.imageUrl }} style={{ width: '100%', height: '100%' }} />
+        ) : null}
+
+        {/* Time chip — top-right (start in RTL because of `start={8}`). */}
+        {recipe.durationMinutes != null ? (
+          <View
+            position="absolute"
+            top={8}
+            left={8}
+            paddingHorizontal={10}
+            paddingVertical={3}
+            borderRadius={999}
+            backgroundColor="#FFFFFF"
+            opacity={0.9}
+          >
+            <Text color="$text" fontSize={11} fontWeight="700">
+              {recipe.durationMinutes} דק'
+            </Text>
+          </View>
+        ) : null}
+
+        <View position="absolute" left={10} bottom={-16}>
+          <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} size={22} />
+        </View>
+      </YStack>
 
       <YStack
-        position="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        padding="$3"
-        gap="$1"
-        backgroundColor="rgba(0,0,0,0.45)"
+        flex={1}
+        paddingHorizontal="$3"
+        paddingTop={18}
+        paddingBottom="$2"
+        gap={2}
+        alignItems="flex-start"
       >
-        <Text color="white" fontSize="$4" fontWeight="600" numberOfLines={1}>
+        <Text width="100%" fontSize={14} fontWeight="700" numberOfLines={1} color="$text">
           {recipe.name}
         </Text>
-        <Text color="white" fontSize="$2" opacity={0.85}>
-          {recipe.durationMinutes} דק{recipe.tag ? ` · ${recipe.tag}` : ''}
-        </Text>
+        {recipe.tag ? (
+          <Text width="100%" fontSize={12} color="$textMuted" numberOfLines={1}>
+            {recipe.tag}
+          </Text>
+        ) : null}
       </YStack>
     </YStack>
+  );
+}
+
+function AttributionRow({ attribution }: { attribution: RecipeAttribution }) {
+  return (
+    <XStack alignItems="center" gap="$2" paddingHorizontal="$3" paddingVertical="$2">
+      <View
+        width={20}
+        height={20}
+        borderRadius={10}
+        overflow="hidden"
+        backgroundColor="$accentLavender"
+      >
+        {attribution.avatarUrl ? (
+          <Image
+            source={{ uri: attribution.avatarUrl }}
+            style={{ width: '100%', height: '100%' }}
+          />
+        ) : null}
+      </View>
+      <Text color="$textMuted" fontSize={11} numberOfLines={1} flex={1}>
+        {attribution.name} {attribution.suffix}
+      </Text>
+    </XStack>
   );
 }

@@ -3,9 +3,12 @@ import { ObjectId, type Filter } from 'mongodb';
 import { z } from 'zod';
 import {
   CreateRecipeInputSchema,
+  ExtractFromTextInputSchema,
+  ExtractFromTextResultSchema,
   RecipeListQuerySchema,
   UpdateRecipeInputSchema,
 } from '@mixer/contracts';
+import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
@@ -192,6 +195,33 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       };
       await app.collections.recipes.insertOne(fork);
       return reply.code(201).send(toRecipe(fork));
+    },
+  );
+
+  app.post(
+    '/recipes/import/text',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: ExtractFromTextInputSchema,
+        response: { 200: ExtractFromTextResultSchema },
+        tags: ['recipes'],
+      },
+    },
+    async (req) => {
+      const response = await fetch(`${config.aiBaseUrl}/extract/text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: req.body.text }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI service failed to extract recipe');
+      }
+
+      const data = await response.json();
+      const result = ExtractFromTextResultSchema.parse(data);
+      return result;
     },
   );
 };
