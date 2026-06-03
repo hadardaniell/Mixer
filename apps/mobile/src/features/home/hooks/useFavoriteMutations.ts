@@ -18,6 +18,7 @@ export function useToggleRecipeFavorite() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed', 'favorite-recipes'] });
       qc.invalidateQueries({ queryKey: ['feed', 'my-recipes'] });
+      qc.invalidateQueries({ queryKey: ['recipe'] });
     },
   });
 }
