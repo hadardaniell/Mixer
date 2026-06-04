@@ -9,15 +9,21 @@ interface FavoriteButtonProps {
 
 export function FavoriteButton({ isFavorited, onPress, size = 22 }: FavoriteButtonProps) {
   const color = '#F8C80E';
+  const buttonSize = 38;
   return (
     <Button
       circular
-      chromeless
       onPress={onPress}
       accessibilityRole="button"
       padding={0}
-      height={size + 8}
-      width={size + 8}
+      height={buttonSize}
+      minHeight={buttonSize}
+      width={buttonSize}
+      minWidth={buttonSize}
+      backgroundColor="#FFFFFF"
+      opacity={1}
+      hoverStyle={{ backgroundColor: '#FFFFFF', opacity: 1 }}
+      pressStyle={{ backgroundColor: '#FFFFFF', opacity: 1 }}
     >
       <Star size={size} color={color} fill={isFavorited ? color : 'transparent'} />
     </Button>

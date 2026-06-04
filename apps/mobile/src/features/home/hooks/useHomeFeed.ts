@@ -4,6 +4,7 @@ import type { PublicUser, Recipe, RecipeBook } from '@mixer/contracts';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { feedApi } from '@/features/home/api/feedApi';
+import { useRecentlyViewed } from '@/features/home/hooks/useRecentlyViewed';
 import type { BookCardData } from '@/shared/ui/BookCard';
 import type { RecipeCardData } from '@/shared/ui/RecipeCard';
 
@@ -12,15 +13,14 @@ const MAX_MEMBER_PREVIEWS = 3;
 
 export interface HomeFeed {
   isLoading: boolean;
-  recentlyImported: Array<RecipeCardData & { isFavorite: boolean }>;
+  recentlyViewed: Array<RecipeCardData & { isFavorite: boolean }>;
   booksWithFriends: Array<BookCardData & { isFavorite: boolean }>;
   sharedWithMe: Array<BookCardData & { isFavorite: boolean }>;
   favorites: Array<RecipeCardData & { isFavorite: boolean }>;
 }
 
 function toRecipeCard(r: Recipe): RecipeCardData & { isFavorite: boolean } {
-  const totalTime =
-    (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0) || undefined;
+  const totalTime = (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0) || undefined;
   return {
     id: r.id,
     name: r.title,
@@ -35,11 +35,8 @@ export function useHomeFeed(): HomeFeed {
   const { user } = useAuth();
   const myId = user?.id;
 
-  const recipesQ = useQuery({
-    queryKey: ['feed', 'my-recipes'],
-    queryFn: () => feedApi.myRecipes(),
-    enabled: !!myId,
-  });
+  // Recently viewed comes from the local MMKV ring, hydrated via per-id fetch.
+  const recentlyViewedQ = useRecentlyViewed();
 
   const booksQ = useQuery({
     queryKey: ['feed', 'my-books'],
@@ -121,6 +118,7 @@ export function useHomeFeed(): HomeFeed {
     return {
       id: b.id,
       name: b.name,
+      recipeCount: b.recipeIds.length,
       coverImages,
       members,
       isFavorite: b.isFavorite ?? false,
@@ -137,11 +135,6 @@ export function useHomeFeed(): HomeFeed {
     [books, recipeById, userById, myId],
   );
 
-  const recentlyImported = useMemo(
-    () => (recipesQ.data?.items ?? []).map(toRecipeCard),
-    [recipesQ.data],
-  );
-
   const favorites = useMemo(
     () => (favRecipesQ.data?.items ?? []).map(toRecipeCard),
     [favRecipesQ.data],
@@ -149,12 +142,12 @@ export function useHomeFeed(): HomeFeed {
 
   return {
     isLoading:
-      recipesQ.isLoading ||
+      recentlyViewedQ.isLoading ||
       booksQ.isLoading ||
       favRecipesQ.isLoading ||
       coverRecipesQ.isLoading ||
       usersQ.isLoading,
-    recentlyImported,
+    recentlyViewed: recentlyViewedQ.items,
     booksWithFriends,
     sharedWithMe,
     favorites,

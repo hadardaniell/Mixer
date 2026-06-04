@@ -17,16 +17,55 @@
     "register": "הרשמה"
   },
   "home": {
+    "cta": {
+      "title": "יש לך קישור למתכון?",
+      "subtitle": "נהפוך אותו למתכון מסודר",
+      "button": "יצירת מתכון",
+      "sources": {
+        "ai": "AI",
+        "image": "תמונה",
+        "video": "וידאו",
+        "link": "קישור"
+      }
+    },
+    "recentlyViewed": "נצפו לאחרונה",
+    "recipesCount": "{{count}} מתכונים",
     "greeting": "שלום, {{name}}",
     "searchPlaceholder": "חפשי מתכון, ספר או רכיב...",
-    "recentlyViewed": "צפיתי לאחרונה",
     "recentlyImported": "יובאו לאחרונה",
     "linked": "מקושר",
     "booksWithFriends": "ספרים עם חברים",
     "sharedWithMe": "שותף איתי",
     "favorites": "מועדפים",
-    "seeMore": "ראו עוד",
+    "seeMore": "הצג  הכל",
     "emptySection": "אין מה להציג עדיין"
+  },
+  "recipe": {
+    "startCooking": "התחלת בישול",
+    "ingredients": "מצרכים",
+    "forServings": "ל-{{count}} מנות",
+    "quantityBase": "כמות 1",
+    "quantityFraction": "{{fraction}} כמות",
+    "quantityMultiple": "פי {{factor}}",
+    "servingsTag": "{{count}} מנות",
+    "preparation": "הוראות הכנה",
+    "tipTitle": "טיפ קטן",
+    "minutesShort": "{{count}} דק'",
+    "createdFrom": "נוצר מתוך {{source}}",
+    "createdFromRecipe": "נוצר מתוך מתכון אחר",
+    "addedToShoppingList": "נוסף לרשימת הקניות",
+    "notFound": "המתכון לא נמצא",
+    "loadError": "לא הצלחנו לטעון את המתכון. נסו שוב.",
+    "difficulty": {
+      "easy": "קל",
+      "medium": "בינוני",
+      "hard": "מורכב"
+    },
+    "actions": {
+      "share": "שיתוף",
+      "saveToBook": "שמירה לספר",
+      "shoppingList": "רשימת קניות"
+    }
   },
   "add": {
     "title": "מה נוסיף?",

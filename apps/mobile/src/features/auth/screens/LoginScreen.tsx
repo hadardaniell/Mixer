@@ -1,12 +1,15 @@
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable } from 'react-native';
+import { Image, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
+import { AuthHeader } from '@/features/auth/components/AuthHeader';
+import { AuthPrimaryButton } from '@/features/auth/components/AuthPrimaryButton';
 import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton';
+import { NoAccountLink } from '@/features/auth/components/NoAccountLink';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
@@ -14,9 +17,9 @@ import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
 import { OutlinedInput } from '@/shared/ui/OutlinedInput';
 
-// Raw RN inputs need a concrete family name per platform (web @font-face is
-// "Rubik"; native loads weight-specific families).
 const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
+
+const HERO = require('../../../assets/images/login.png');
 
 export function LoginScreen() {
   const { t } = useTranslation();
@@ -24,6 +27,7 @@ export function LoginScreen() {
   const { signIn } = useAuth();
   const { language } = useLanguage();
   const insets = useSafeAreaInsets();
+
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -60,124 +64,112 @@ export function LoginScreen() {
     <YStack
       flex={1}
       backgroundColor="$bg"
-      alignItems="center"
-      justifyContent="space-between"
-      paddingHorizontal="$5"
-      paddingTop={insets.top + 32}
-      paddingBottom={insets.bottom + 20}
-      width="100%"
-      style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
+      paddingHorizontal={20}
+      paddingTop={insets.top + 10}
+      paddingBottom={insets.bottom + 12}
     >
-      <YStack width="100%" maxWidth={420} gap="$5">
-        <YStack gap="$2" paddingTop="$6" paddingBottom="$2">
-          <Text color="$text" fontSize={30} fontWeight="700" letterSpacing={-0.5} textAlign="center">
-            {t('auth.welcomeTitle')}
-          </Text>
-          <Text color="$textMuted" fontSize={16} textAlign="center">
-            {t('auth.loginSubtitle')}
-          </Text>
-        </YStack>
+      <YStack
+        flex={1}
+        width="100%"
+        maxWidth={440}
+        alignSelf="center"
+        style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
+      >
+        <YStack flex={1}>
+          {/* Back-only header (no language controls on login). */}
+          <AuthHeader onBack={() => router.back()} showLanguageControls={false} />
 
-        <YStack gap={18}>
-          <OutlinedInput
-            label={t('auth.emailOrPhone')}
-            floatingLabel={false}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            textContentType="username"
-            value={identifier}
-            onChangeText={setIdentifier}
-            fontFamily={INPUT_FONT}
-            style={{ borderRadius: 14 }}
+          {/* 1em gap from header; full hero image, no cropping. */}
+          <Image
+            source={HERO}
+            resizeMode="contain"
+            style={{ width: '100%', height: 190, marginTop: 16 }}
           />
-          <OutlinedInput
-            label={t('auth.password')}
-            floatingLabel={false}
-            secureTextEntry={!passwordVisible}
-            textContentType="password"
-            value={password}
-            onChangeText={setPassword}
-            fontFamily={INPUT_FONT}
-            style={{ borderRadius: 14 }}
-            endAdornment={
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setPasswordVisible((v) => !v)}
-                hitSlop={10}
-              >
-                {passwordVisible ? (
-                  <Eye color={muted} size={24} />
-                ) : (
-                  <EyeOff color={muted} size={24} />
-                )}
-              </Pressable>
-            }
-          />
-        </YStack>
 
-        {error ? (
-          <Text color="$dangerText" fontSize="$3" textAlign={isRtl ? 'right' : 'left'}>
-            {error}
-          </Text>
-        ) : null}
+          {/* Form area: flex column with space-between (top = title/fields/google,
+              bottom = login button + "don't have account" link). */}
+          <YStack flex={1} marginTop="$4" justifyContent="space-between" gap={16}>
+            <YStack gap={18}>
+              {/* Title + subtitle */}
+              <YStack gap="$1">
+                <Text color="$text" fontSize={26} fontWeight="700" letterSpacing={-0.5} textAlign="center">
+                  {t('auth.welcomeTitle')}
+                </Text>
+                <Text color="$textMuted" fontSize={15} textAlign="center">
+                  {t('auth.loginSubtitle')}
+                </Text>
+              </YStack>
 
-        <Pressable onPress={handleSubmit} disabled={disabled} style={{ width: '100%' }}>
-          <YStack
-            width="100%"
-            height={54}
-            borderRadius={20}
-            alignItems="center"
-            justifyContent="center"
-            backgroundColor="$buttonPrimaryBg"
-            opacity={disabled ? 0.55 : 1}
-            shadowColor="$primary"
-            shadowOpacity={0.35}
-            shadowOffset={{ width: 0, height: 8 }}
-            shadowRadius={16}
-            elevation={6}
-            pressStyle={{ backgroundColor: '$buttonPrimaryBgHover' }}
-          >
-            <Text color="$textOnPrimary" fontSize={18} fontWeight="700">
-              {loading ? t('auth.signingIn') : t('auth.login')}
-            </Text>
+              {/* Fields */}
+              <YStack gap={12}>
+                <OutlinedInput
+                  label={t('auth.emailOrPhone')}
+                  floatingLabel={false}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  textContentType="username"
+                  value={identifier}
+                  onChangeText={setIdentifier}
+                  fontFamily={INPUT_FONT}
+                  style={{ borderRadius: 14 }}
+                />
+                <OutlinedInput
+                  label={t('auth.password')}
+                  floatingLabel={false}
+                  secureTextEntry={!passwordVisible}
+                  textContentType="password"
+                  value={password}
+                  onChangeText={setPassword}
+                  fontFamily={INPUT_FONT}
+                  style={{ borderRadius: 14 }}
+                  endAdornment={
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setPasswordVisible((v) => !v)}
+                      hitSlop={10}
+                    >
+                      {passwordVisible ? (
+                        <Eye color={muted} size={24} />
+                      ) : (
+                        <EyeOff color={muted} size={24} />
+                      )}
+                    </Pressable>
+                  }
+                />
+              </YStack>
+
+              {error ? (
+                <Text color="$dangerText" fontSize="$3" textAlign={isRtl ? 'right' : 'left'}>
+                  {error}
+                </Text>
+              ) : null}
+
+              {/* "or" divider + Google */}
+              <YStack gap="$2">
+                <XStack alignItems="center" gap={16}>
+                  <YStack flex={1} height={1} backgroundColor="$border" />
+                  <Text color="$textMuted" fontSize={14}>
+                    {t('auth.or')}
+                  </Text>
+                  <YStack flex={1} height={1} backgroundColor="$border" />
+                </XStack>
+                <GoogleSignInButton variant="card" onError={(msg) => setError(msg || null)} />
+              </YStack>
+            </YStack>
+
+            {/* Bottom group: Login button + "don't have account?" link */}
+            <YStack gap={16} paddingBottom={16}>
+              <AuthPrimaryButton
+                label={loading ? t('auth.signingIn') : t('auth.login')}
+                onPress={handleSubmit}
+                disabled={disabled}
+              />
+              <NoAccountLink />
+            </YStack>
           </YStack>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setError(t('auth.forgotPasswordUnavailable'))}
-          hitSlop={8}
-          style={{ alignItems: 'center' }}
-        >
-          <Text color="$linkText" fontSize={15} fontWeight="600">
-            {t('auth.forgotPassword')}
-          </Text>
-        </Pressable>
-
-        <XStack alignItems="center" gap="$3">
-          <YStack flex={1} height={1} backgroundColor="$border" />
-          <Text color="$textMuted" fontSize={14}>
-            {t('auth.or')}
-          </Text>
-          <YStack flex={1} height={1} backgroundColor="$border" />
-        </XStack>
-
-        <GoogleSignInButton variant="card" onError={(msg) => setError(msg || null)} />
+        </YStack>
       </YStack>
-
-      <Link href={'/register' as never} asChild>
-        <Pressable hitSlop={8} style={{ alignItems: 'center' }}>
-          <XStack alignItems="center" gap={5}>
-            <Text color="$textMuted" fontSize={15}>
-              {t('auth.dontHaveAccount')}
-            </Text>
-            <Text color="$primary" fontSize={15} fontWeight="700">
-              {t('auth.signUp')}
-            </Text>
-          </XStack>
-        </Pressable>
-      </Link>
     </YStack>
   );
 }
