@@ -1,3 +1,4 @@
+//api/src/server.ts
 import { buildApp } from './app.js';
 
 const PORT = Number(process.env.PORT ?? 3000);

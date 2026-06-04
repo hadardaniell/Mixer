@@ -1,3 +1,4 @@
+// apps/api/src/app.ts
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
@@ -16,6 +17,9 @@ import { usersRoutes } from './modules/users/users.routes.js';
 import { recipesRoutes } from './modules/recipes/recipes.routes.js';
 import { recipeBooksRoutes } from './modules/recipe-books/recipe-books.routes.js';
 import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import path from 'node:path';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -29,6 +33,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
+  await app.register(multipart);
 
   await app.register(swagger, {
     openapi: {
@@ -52,6 +58,12 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   await app.register(swaggerUi, {
     routePrefix: '/docs',
+  });
+
+
+  await app.register(fastifyStatic, {
+  root: path.join(process.cwd(), 'uploads'),
+  prefix: '/uploads/',
   });
 
   await mongoPlugin(app);
