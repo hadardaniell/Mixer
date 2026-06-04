@@ -13,10 +13,12 @@
   "dependencies": {
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.6",
+    "@google/generative-ai": "^0.24.1",
     "@mixer/contracts": "workspace:*",
     "fastify": "^5.0.0",
     "fastify-type-provider-zod": "^4.0.2",
     "groq-sdk": "^1.2.1",
+    "tesseract.js": "^7.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -8,7 +8,8 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { healthRoute } from './routes/health.js';
-import { extractRoutes } from './modules/extract/extract.routes.js';
+import { extractTextRoutes } from './modules/extract-text/extract-text.routes.js';
+import { extractImageRoutes } from './modules/extract-image/extract-image.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -37,7 +38,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await app.register(healthRoute);
-  await app.register(extractRoutes);
+  await app.register(extractTextRoutes);
+  await app.register(extractImageRoutes);
 
   return app;
 }
