@@ -1,3 +1,4 @@
+//apps/api/src/db/types.ts
 import type { ObjectId } from 'mongodb';
 
 export type UserDoc = {
