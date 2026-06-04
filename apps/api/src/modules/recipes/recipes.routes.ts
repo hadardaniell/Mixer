@@ -16,6 +16,42 @@ import { favoritedIds } from '../favorites/favorites.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
+function cosineSimilarity(a: number[], b: number[]): number {
+  const dot = a.reduce((sum, val, i) => sum + val * (b[i] ?? 0), 0);
+  const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+  const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+  if (magA === 0 || magB === 0) return 0;
+  return dot / (magA * magB);
+}
+
+async function generateAndStoreEmbedding(
+  collections: { recipes: import('mongodb').Collection<RecipeDoc> },
+  recipeId: import('mongodb').ObjectId,
+  recipe: { title: string; description?: string; ingredients?: Array<{ name: string }>; tags?: string[]; cuisine?: string },
+): Promise<void> {
+  try {
+    const response = await fetch(`${config.aiBaseUrl}/embed/recipe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: recipe.title,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        tags: recipe.tags,
+        cuisine: recipe.cuisine,
+      }),
+    });
+    if (!response.ok) return;
+    const data = await response.json() as { embedding: number[] };
+    await collections.recipes.updateOne(
+      { _id: recipeId },
+      { $set: { embedding: data.embedding, embeddingIndexedAt: new Date() } },
+    );
+  } catch {
+    // silently fail — embedding is optional, recipe save must succeed
+  }
+}
+
 function canRead(req: { user?: { id: string; role: string } }, doc: RecipeDoc): boolean {
   if (doc.visibility !== 'private') return true;
   return req.user?.id === doc.ownerId.toString();
@@ -59,6 +95,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         updatedAt: now,
       };
       await app.collections.recipes.insertOne(doc);
+      generateAndStoreEmbedding(app.collections, doc._id, doc);
       return reply.code(201).send(toRecipe(doc));
     },
   );
@@ -150,6 +187,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         { $set },
         { returnDocument: 'after' },
       );
+      generateAndStoreEmbedding(app.collections, _id, updated!);
       return toRecipe(updated!);
     },
   );
@@ -254,6 +292,54 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const data = await response.json();
       const result = ExtractFromTextResultSchema.parse(data);
       return result;
+    },
+  );
+
+  app.get(
+    '/recipes/semantic-search',
+    {
+      schema: {
+        querystring: z.object({ q: z.string().min(1) }),
+        tags: ['recipes'],
+      },
+    },
+    async (req, reply) => {
+      const { q } = req.query;
+
+      const embedResponse = await fetch(`${config.aiBaseUrl}/embed/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      });
+
+      if (!embedResponse.ok) {
+        return reply.code(503).send({ error: 'embedding service unavailable' });
+      }
+
+      const { embedding: queryEmbedding } = await embedResponse.json() as { embedding: number[] };
+
+      const visibilityFilter: Filter<RecipeDoc> = req.user
+        ? { $or: [{ ownerId: new ObjectId(req.user.id) }, { visibility: { $in: ['public', 'unlisted'] } }] }
+        : { visibility: { $in: ['public', 'unlisted'] } };
+
+      const recipes = await app.collections.recipes
+        .find({ ...visibilityFilter, embedding: { $exists: true } })
+        .toArray();
+
+      const scored = recipes
+        .map((r) => ({ recipe: r, score: cosineSimilarity(queryEmbedding, r.embedding!) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+
+      const favSet = req.user
+        ? await favoritedIds(app.collections, req.user.id, 'recipe', scored.map((s) => s.recipe._id))
+        : null;
+
+      return {
+        items: scored.map(({ recipe }) =>
+          favSet ? toRecipe(recipe, { isFavorite: favSet.has(recipe._id.toString()) }) : toRecipe(recipe),
+        ),
+      };
     },
   );
 };
