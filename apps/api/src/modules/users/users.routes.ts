@@ -1,3 +1,4 @@
+// apps/api/src/modules/users/users.routes.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';

@@ -1,3 +1,4 @@
+// apps/api/src/plugins/mongo.ts
 import type { FastifyInstance } from 'fastify';
 import { MongoClient, type Db, type Collection } from 'mongodb';
 import { config } from '../config.js';
@@ -8,6 +9,7 @@ import type {
   RecipeBookDoc,
   FavoriteDoc,
 } from '../db/types.js';
+
 
 export type Collections = {
   users: Collection<UserDoc>;
