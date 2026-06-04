@@ -24,7 +24,11 @@ function canRead(req: { user?: { id: string; role: string } }, doc: RecipeDoc): 
 
 
 export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
-  app.addHook('onRequest', async (req) => {
+  app.addHook('onRequest', async (req, reply) => {
+    try {
+      await app.authenticate(req, reply);
+    } catch (err) {
+    }
 });
   
   app.post(
@@ -118,6 +122,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     '/recipes/:id',
     { schema: { params: IdParam, tags: ['recipes'] } },
     async (req, reply) => {
+      console.log('USER:', req.user);
       const doc = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
       if (!doc) return reply.code(404).send({ error: 'recipe not found' });
       if (!canRead(req, doc)) return reply.code(403).send({ error: 'forbidden' });
