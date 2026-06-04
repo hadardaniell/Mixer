@@ -10,6 +10,7 @@ import {
 } from '@mixer/contracts';
 import { toPublicUser } from './users.mapper.js';
 import { hashPassword } from '../auth/auth.service.js';
+import { saveUserAvatar } from '../uploads/upload.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 const ListQuery = z.object({
@@ -154,6 +155,47 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
       const res = await app.collections.users.deleteOne({ _id: new ObjectId(req.params.id) });
       if (res.deletedCount === 0) return reply.code(404).send({ error: 'user not found' });
       return reply.code(204).send();
+    },
+  );
+
+  app.post(
+  '/users/me/avatar',
+  {
+    onRequest: [app.authenticate],
+    schema: {
+      tags: ['users'],
+    },
+  },
+  async (req, reply) => {
+    const userId = new ObjectId(req.user.id);
+
+    const user = await app.collections.users.findOne({ _id: userId });
+
+    if (!user) {
+      return reply.code(404).send({ error: 'user not found' });
+    }
+
+    const file = await req.file();
+
+    if (!file) {
+      return reply.code(400).send({ error: 'file is required' });
+    }
+
+    const imageUrl = await saveUserAvatar(file, userId.toString());
+
+    await app.collections.users.updateOne(
+      { _id: userId },
+      {
+        $set: {
+          avatarUrl: imageUrl,
+          updatedAt: new Date(),
+        },
+      },
+    );
+
+      return {
+        avatarUrl: imageUrl,
+      };
     },
   );
 };
