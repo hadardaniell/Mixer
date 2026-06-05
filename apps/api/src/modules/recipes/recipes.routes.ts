@@ -1,3 +1,4 @@
+// apps/api/src/modules/recipes/recipes.routes.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId, type Filter } from 'mongodb';
 import { z } from 'zod';
@@ -12,6 +13,7 @@ import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
+import { saveRecipeImage } from '../uploads/upload.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -20,7 +22,11 @@ function canRead(req: { user?: { id: string; role: string } }, doc: RecipeDoc): 
   return req.user?.id === doc.ownerId.toString();
 }
 
+
 export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
+  app.addHook('onRequest', async (req) => {
+});
+  
   app.post(
     '/recipes',
     {
@@ -58,6 +64,27 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         updatedAt: now,
       };
       await app.collections.recipes.insertOne(doc);
+        const personalBook =
+          await app.collections.recipeBooks.findOne({
+            ownerId: doc.ownerId,
+            type: 'personal',
+          });
+
+        if (personalBook) {
+          await app.collections.recipeBooks.updateOne(
+            {
+              _id: personalBook._id,
+            },
+            {
+              $addToSet: {
+                recipeIds: doc._id,
+              },
+              $set: {
+                updatedAt: new Date(),
+              },
+            },
+          );
+        }
       return reply.code(201).send(toRecipe(doc));
     },
   );
@@ -222,6 +249,64 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const data = await response.json();
       const result = ExtractFromTextResultSchema.parse(data);
       return result;
+    },
+  );
+
+    app.post(
+    '/recipes/:id/cover',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        params: IdParam,
+        tags: ['recipes'],
+      },
+    },
+    async (req, reply) => {
+
+      const recipeId = new ObjectId(req.params.id);
+
+      const recipe = await app.collections.recipes.findOne({
+        _id: recipeId,
+      });
+
+      if (!recipe) {
+        return reply.code(404).send({
+          error: 'recipe not found',
+        });
+      }
+
+      if (recipe.ownerId.toString() !== req.user.id) {
+        return reply.code(403).send({
+          error: 'not the owner',
+        });
+      }
+
+      const file = await req.file();
+
+      if (!file) {
+        return reply.code(400).send({
+          error: 'file is required',
+        });
+      }
+
+      const imageUrl = await saveRecipeImage(
+        file,
+        recipeId.toString(),
+      );
+
+      await app.collections.recipes.updateOne(
+        { _id: recipeId },
+        {
+          $set: {
+            coverImageUrl: imageUrl,
+            updatedAt: new Date(),
+          },
+        },
+      );
+
+      return {
+        coverImageUrl: imageUrl,
+      };
     },
   );
 };

@@ -1,3 +1,4 @@
+// apps/api/src/modules/recipe-books/recipe-books.mapper.ts
 import type { RecipeBook } from '@mixer/contracts';
 import type { RecipeBookDoc } from '../../db/types.js';
 
