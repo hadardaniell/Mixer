@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 export const textLlamaService = {
   async extractRecipeFromText(text: string): Promise<any | null> {
@@ -7,31 +7,68 @@ export const textLlamaService = {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+    const recipeSchema = {
+      type: SchemaType.OBJECT,
+      properties: {
+        title: { type: SchemaType.STRING, nullable: true },
+        description: { type: SchemaType.STRING, nullable: true },
+        ingredients: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              name: { type: SchemaType.STRING },
+              amount: { type: SchemaType.NUMBER, nullable: true },
+              unit: { type: SchemaType.STRING, nullable: true },
+            },
+            required: ["name"],
+          },
+          description: 'List of all ingredients with their measurements.',
+          nullable: true,
+        },
+        steps: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              order: { type: SchemaType.INTEGER },
+              text: { type: SchemaType.STRING },
+              durationMinutes: { type: SchemaType.INTEGER, nullable: true },
+            },
+            required: ["order", "text"],
+          },
+          description: 'Every single step of the recipe in strict chronological order. Do not summarize or abbreviate.',
+          nullable: true,
+        },
+        prepTimeMinutes: { type: SchemaType.INTEGER, nullable: true },
+        cookTimeMinutes: { type: SchemaType.INTEGER, nullable: true },
+        servings: { type: SchemaType.INTEGER, nullable: true },
+        difficulty: { type: SchemaType.STRING, description: 'Must be one of: "easy", "medium", "hard"', nullable: true },
+        cuisine: { type: SchemaType.STRING, nullable: true },
+        tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, nullable: true },
+      },
+      required: ['title'],
+    };
+
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash-lite',
-      generationConfig: { responseMimeType: 'application/json' },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: recipeSchema,
+        maxOutputTokens: 8192,
+      },
     });
 
     const prompt = `You are a recipe parser. Analyze the following text, which comes from the comment section of a video. Determine if a full recipe (with ingredients and steps) is present.
     
-If a full recipe is found, extract it into the following JSON structure.
-If the text does NOT contain a full recipe, return a JSON object with a null "title", like this: { "title": null }. Do not try to invent a recipe or fill in missing information.
+If a full recipe is found, extract it. If the text does NOT contain a full recipe, you MUST return a JSON object with a null "title".
+Do not try to invent a recipe or fill in missing information. Extract EVERY SINGLE STEP and ingredient in full detail from beginning to end. DO NOT summarize.
 
 Text to analyze:
 """
 ${text}
-"""
-
-JSON structure to use if a recipe is found:
-{
-  "title": "Recipe Title",
-  "description": "Short description of the recipe",
-  "ingredients": ["1 cup sugar", "2 eggs"],
-  "steps": ["Step 1...", "Step 2..."],
-  "prepTimeMinutes": 10,
-  "cookTimeMinutes": 20,
-  "servings": 4
-}`;
+"""`;
 
     const result = await model.generateContent(prompt);
     

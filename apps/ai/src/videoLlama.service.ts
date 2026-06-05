@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'node:fs';
 
@@ -24,23 +24,56 @@ export const videoLlamaService = {
 
     const uploadResults = await Promise.all(uploadPromises);
 
+    const recipeSchema = {
+      type: SchemaType.OBJECT,
+      properties: {
+        title: { type: SchemaType.STRING },
+        description: { type: SchemaType.STRING },
+        ingredients: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              name: { type: SchemaType.STRING },
+              amount: { type: SchemaType.NUMBER },
+              unit: { type: SchemaType.STRING },
+            },
+            required: ["name"],
+          },
+          description: "List of all ingredients with their measurements.",
+        },
+        steps: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              order: { type: SchemaType.INTEGER },
+              text: { type: SchemaType.STRING },
+              durationMinutes: { type: SchemaType.INTEGER },
+            },
+            required: ["order", "text"],
+          },
+          description: "Every single step of the recipe in strict chronological order. Do not summarize or abbreviate.",
+        },
+        prepTimeMinutes: { type: SchemaType.INTEGER },
+        cookTimeMinutes: { type: SchemaType.INTEGER },
+        servings: { type: SchemaType.INTEGER },
+        difficulty: { type: SchemaType.STRING, description: 'Must be one of: "easy", "medium", "hard"' },
+        cuisine: { type: SchemaType.STRING },
+        tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+      },
+      required: ["title", "description", "ingredients", "steps"],
+    };
+
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash-lite',
-      generationConfig: { responseMimeType: 'application/json' }
+      generationConfig: { 
+        responseMimeType: 'application/json',
+        responseSchema: recipeSchema
+      }
     });
     
-    const prompt = `You are a professional chef. You are provided with the audio track and a sequence of extracted frames from a recipe video. Transcribe any spoken words, and carefully describe all visual instructions, ingredients, and measurements shown.
-    
-    The output JSON must strictly match this structure:
-    {
-      "title": "Recipe Title",
-      "description": "Short description of the recipe",
-      "ingredients": ["1 cup sugar", "2 eggs"],
-      "steps": ["Step 1...", "Step 2..."],
-      "prepTimeMinutes": 10,
-      "cookTimeMinutes": 20,
-      "servings": 4
-    }`;
+    const prompt = `You are a professional chef. You are provided with the audio track and a sequence of extracted frames from a recipe video. Transcribe any spoken words, and carefully describe all visual instructions, ingredients, and measurements shown. Extract EVERY SINGLE STEP in full detail from beginning to end. DO NOT summarize.`;
     
     const parts = uploadResults.map((res) => ({
       fileData: { mimeType: res.file.mimeType, fileUri: res.file.uri }

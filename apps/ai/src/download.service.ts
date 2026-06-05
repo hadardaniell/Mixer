@@ -13,42 +13,18 @@ export const downloadService = {
     try {
       console.log(`[download.service] Fetching metadata and comments for: ${url}`);
       
-      let info: any;
-      try {
-        // Execute yt-dlp to dump JSON info with comments, without downloading the video
-        info = await ytDlp(url, {
-          dumpSingleJson: true,
-          writeComments: true,
-          skipDownload: true,
-          noWarnings: true,
-          noCheckCertificate: true,
-          playlistEnd: 1,
-          cookiesFromBrowser: 'chrome', // Automatically pulls cookies from local Chrome installation
-        } as any);
-      } catch (cookieErr) {
-        console.warn(`[download.service] Could not read Chrome cookies, trying Edge...`);
-        try {
-          info = await ytDlp(url, {
-            dumpSingleJson: true,
-            writeComments: true,
-            skipDownload: true,
-            noWarnings: true,
-            noCheckCertificate: true,
-            playlistEnd: 1,
-            cookiesFromBrowser: 'edge',
-          } as any);
-        } catch (edgeErr) {
-          console.warn(`[download.service] Could not read Edge cookies either, retrying without cookies...`);
-          info = await ytDlp(url, {
-            dumpSingleJson: true,
-            writeComments: true,
-            skipDownload: true,
-            noWarnings: true,
-            noCheckCertificate: true,
-            playlistEnd: 1,
-          } as any);
-        }
-      }
+      const baseOptions: any = {
+        dumpSingleJson: true,
+        writeComments: true,
+        skipDownload: true,
+        noWarnings: true,
+        noCheckCertificate: true,
+        playlistEnd: 1,
+        impersonate: 'chrome',
+        extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+      };
+
+      const info = await ytDlp(url, baseOptions);
 
       // yt-dlp sometimes returns a stringified JSON. Let's make sure it's an object!
       const parsedInfo = typeof info === 'string' ? JSON.parse(info) : info;
@@ -74,34 +50,20 @@ export const downloadService = {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mixer-import-'));
     const outputPath = path.join(tempDir, 'video.mp4');
 
+    const baseOptions: any = {
+      output: outputPath,
+      format: 'worstvideo[height>=360][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+      noWarnings: true,
+      noCheckCertificate: true,
+      impersonate: 'chrome',
+      extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+    };
+
     try {
-      // Download the video using yt-dlp-exec
-      await ytDlp(url, {
-        output: outputPath,
-        format: 'worstvideo[height>=360][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        noWarnings: true,
-        noCheckCertificate: true,
-        cookiesFromBrowser: 'chrome',
-      });
-    } catch (cookieErr) {
-      console.warn(`[download.service] Could not read Chrome cookies for video download, trying Edge...`);
-      try {
-        await ytDlp(url, {
-          output: outputPath,
-          format: 'worstvideo[height>=360][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-          noWarnings: true,
-          noCheckCertificate: true,
-          cookiesFromBrowser: 'edge',
-        });
-      } catch (edgeErr) {
-        console.warn(`[download.service] Could not read Edge cookies either, retrying without cookies...`);
-        await ytDlp(url, {
-          output: outputPath,
-          format: 'worstvideo[height>=360][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-          noWarnings: true,
-          noCheckCertificate: true,
-        });
-      }
+      await ytDlp(url, baseOptions);
+    } catch (finalErr) {
+      console.error(`[download.service] Final download attempt failed.`);
+      throw new Error(`Failed to download video. Platform might be blocking the request (403 Forbidden). URL: ${url}`);
     }
 
     const audioPath = path.join(tempDir, 'audio.mp3');
@@ -109,8 +71,8 @@ export const downloadService = {
     // 1. Extract audio track
     await execAsync(`"${ffmpeg}" -i "${outputPath}" -q:a 0 -map a "${audioPath}" -y`).catch(() => {});
     
-    // 2. Extract 1 frame every 5 seconds (fps=1/5)
-    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vf fps=1/5 "${tempDir}/frame-%03d.jpg" -y`);
+    // 2. Extract 1 frame every 2 seconds (fps=1/2)
+    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vf fps=1/2 "${tempDir}/frame-%03d.jpg" -y`);
 
     const files = await fs.readdir(tempDir);
     const framePaths = files.filter(f => f.startsWith('frame-') && f.endsWith('.jpg')).map(f => path.join(tempDir, f));
