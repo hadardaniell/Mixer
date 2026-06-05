@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   CreateRecipeInputSchema,
   ExtractFromTextInputSchema,
+  ExtractFromImageInputSchema,
   ExtractFromTextResultSchema,
   RecipeListQuerySchema,
   UpdateRecipeInputSchema,
@@ -217,6 +218,37 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       if (!response.ok) {
         throw new Error('AI service failed to extract recipe');
+      }
+
+      const data = await response.json();
+      const result = ExtractFromTextResultSchema.parse(data);
+      return result;
+    },
+  );
+
+  app.post(
+    '/recipes/import/image',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: ExtractFromImageInputSchema,
+        response: { 200: ExtractFromTextResultSchema },
+        tags: ['recipes'],
+      },
+    },
+    async (req) => {
+      const response = await fetch(`${config.aiBaseUrl}/extract/image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: req.body.images }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json() as { message?: string };
+        if (data?.message === 'images_not_same_recipe') {
+          throw new Error('images_not_same_recipe');
+        }
+        throw new Error('AI service failed to extract recipe from image');
       }
 
       const data = await response.json();

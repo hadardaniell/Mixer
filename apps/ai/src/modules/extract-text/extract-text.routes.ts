@@ -2,11 +2,11 @@ import fs from 'node:fs/promises';
 import { z } from 'zod';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ExtractFromTextInputSchema, ExtractFromTextResultSchema } from '@mixer/contracts';
-import { extractRecipeFromText } from './extract.service.js';
+import { extractRecipeFromText } from './extract-text.service.js';
 import { downloadService } from '../../download.service.js';
 import { videoLlamaService } from '../../videoLlama.service.js';
 
-export const extractRoutes: FastifyPluginAsyncZod = async (app) => {
+export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/extract/text',
     {
