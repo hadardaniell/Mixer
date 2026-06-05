@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType, Schema } from '@google/generative-ai';
 
 export const textLlamaService = {
   async extractRecipeFromText(text: string): Promise<any | null> {
@@ -8,7 +8,7 @@ export const textLlamaService = {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    const recipeSchema = {
+    const recipeSchema: Schema = {
       type: SchemaType.OBJECT,
       properties: {
         title: { type: SchemaType.STRING, nullable: true },

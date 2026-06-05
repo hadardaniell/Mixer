@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType, Schema } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'node:fs';
 
@@ -24,7 +24,7 @@ export const videoLlamaService = {
 
     const uploadResults = await Promise.all(uploadPromises);
 
-    const recipeSchema = {
+    const recipeSchema: Schema = {
       type: SchemaType.OBJECT,
       properties: {
         title: { type: SchemaType.STRING },
