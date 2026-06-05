@@ -1,3 +1,4 @@
+// apps/api/src/modules/auth/auth.service.ts
 import { randomBytes, createHash } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
