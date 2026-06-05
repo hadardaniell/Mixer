@@ -45,4 +45,5 @@ export const StorageKeys = {
   language: 'settings.language',
   theme: 'settings.theme',
   recentlyViewedRecipes: 'home.recentlyViewedRecipes',
+  shoppingList: 'shopping.list',
 } as const;
