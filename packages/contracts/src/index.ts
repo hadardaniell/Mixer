@@ -271,3 +271,13 @@ export const ExtractFromTextResultSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 export type ExtractFromTextResult = z.infer<typeof ExtractFromTextResultSchema>;
+
+const ImageItemSchema = z.object({
+  imageBase64: z.string().min(1),
+  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']).default('image/jpeg'),
+});
+
+export const ExtractFromImageInputSchema = z.object({
+  images: z.array(ImageItemSchema).min(1).max(10),
+});
+export type ExtractFromImageInput = z.infer<typeof ExtractFromImageInputSchema>;
