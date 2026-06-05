@@ -1,3 +1,4 @@
+// apps/api/src/modules/users/users.mapper.ts
 import type { PublicUser } from '@mixer/contracts';
 import type { UserDoc } from '../../db/types.js';
 

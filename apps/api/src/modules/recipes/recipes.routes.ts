@@ -64,6 +64,27 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         updatedAt: now,
       };
       await app.collections.recipes.insertOne(doc);
+        const personalBook =
+          await app.collections.recipeBooks.findOne({
+            ownerId: doc.ownerId,
+            type: 'personal',
+          });
+
+        if (personalBook) {
+          await app.collections.recipeBooks.updateOne(
+            {
+              _id: personalBook._id,
+            },
+            {
+              $addToSet: {
+                recipeIds: doc._id,
+              },
+              $set: {
+                updatedAt: new Date(),
+              },
+            },
+          );
+        }
       return reply.code(201).send(toRecipe(doc));
     },
   );

@@ -1,3 +1,4 @@
+// apps/api/src/plugins/auth.ts
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { ObjectId } from 'mongodb';
