@@ -1,6 +1,6 @@
-import { GeminiEmbedProvider } from '../../embed-providers/gemini.embed.js';
+import { JinaEmbedProvider } from '../../embed-providers/jina.embed.js';
 // To switch provider: replace the line above and the line below
-const embedProvider = new GeminiEmbedProvider();
+const embedProvider = new JinaEmbedProvider();
 
 export function buildRecipeText(recipe: {
   title: string;

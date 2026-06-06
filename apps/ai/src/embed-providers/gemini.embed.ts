@@ -5,12 +5,11 @@ export class GeminiEmbedProvider implements EmbedProvider {
 
   async embed(text: string): Promise<number[]> {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key=${this.apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${this.apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'models/embedding-001',
           content: { parts: [{ text }] },
         }),
       },
