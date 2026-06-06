@@ -40,6 +40,25 @@
     "seeMore": "הצג  הכל",
     "emptySection": "אין מה להציג עדיין"
   },
+  "newRecipe": {
+    "title": "יצירת מתכון",
+    "subtitle": "איך תרצי להתחיל?",
+    "hero": {
+      "title": "בחרי דרך ליצור מתכון חדש",
+      "subtitle": "יש לך רעיון למתכון? בואי נתחיל!"
+    },
+    "options": {
+      "link": "מקישור",
+      "image": "מתמונה",
+      "text": "מטקסט חופשי",
+      "manual": "ידני"
+    },
+    "drafts": {
+      "title": "טיוטות אחרונות",
+      "seeAll": "הצג הכל",
+      "updatedDaysAgo": "עודכן לפני {{count}} ימים"
+    }
+  },
   "recipe": {
     "startCooking": "התחלת בישול",
     "ingredients": "מצרכים",
@@ -88,10 +107,34 @@
     "fromFileDesc": "PDF, DOCX או טקסט"
   },
   "profile": {
+    "bioDefault": "אוספת, יוצרת ומשתפת מתכונים",
+    "editProfile": "עריכת פרופיל",
     "stats": {
       "books": "ספרים",
       "recipes": "מתכונים",
       "friends": "חברים"
+    },
+    "tabs": {
+      "favorites": "מועדפים",
+      "books": "ספרים",
+      "recipes": "מתכונים"
+    },
+    "filters": {
+      "all": "הכל",
+      "recipes": "מתכונים",
+      "books": "ספרים"
+    },
+    "favoriteRecipes": "מתכונים מועדפים",
+    "favoriteBooks": "ספרים מועדפים",
+    "sharedWithFriends": "שיתוף עם חברים",
+    "empty": {
+      "favorites": "אין מועדפים עדיין",
+      "books": "אין ספרים עדיין",
+      "recipes": "אין מתכונים עדיין"
+    },
+    "edit": {
+      "title": "עריכת פרופיל",
+      "comingSoon": "עריכת פרופיל תהיה זמינה בקרוב."
     }
   },
   "settings": {

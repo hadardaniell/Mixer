@@ -29,6 +29,7 @@ export function useToggleBookFavorite() {
     mutationFn: ({ id, next }: { id: string; next: boolean }) => toggleBookFavorite(id, next),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed', 'my-books'] });
+      qc.invalidateQueries({ queryKey: ['feed', 'favorite-books'] });
     },
   });
 }

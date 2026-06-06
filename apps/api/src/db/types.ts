@@ -63,6 +63,7 @@ export type RecipeDoc = {
     importTaskId?: ObjectId;
   };
   visibility: 'private' | 'unlisted' | 'public';
+  status: 'draft' | 'published';
   forkedFrom?: ObjectId;
   forkedAt?: Date;
   embedding?: number[];

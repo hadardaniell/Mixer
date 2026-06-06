@@ -1,39 +1,22 @@
-import { CakeSlice } from 'lucide-react-native';
+import {
+  CakeSlice,
+  ChefHat,
+  Coffee,
+  Cookie,
+  Globe,
+  Leaf,
+  Salad,
+  Soup,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { I18nManager, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Text, useTheme, View, XStack, YStack } from 'tamagui';
+import { Text, useTheme, XStack, YStack } from 'tamagui';
 
-import { FEED_CARD_RADIUS } from '@/shared/ui/RecipeCard';
+import type { BookCardData, BookCardMember } from '@/shared/ui/BookCard';
 
-const AVATAR_SIZE = 28;
+const AVATAR_SIZE = 26;
 const AVATAR_OVERLAP = -8;
-const BOOK_CARD_WIDTH = 260;
-const BOOK_CARD_HEIGHT = 126;
-const COVER_SIZE = 94;
-
-export interface BookCardMember {
-  id: string;
-  displayName: string;
-  avatarUrl?: string;
-}
-
-export interface BookCardData {
-  id: string;
-  name: string;
-  recipeCount?: number;
-  /** Legacy cover images — unused in the new design but kept on the shape so
-   * existing call-sites don't break. The new card uses a colored accent +
-   * generic illustration instead. */
-  coverImages?: string[];
-  members: BookCardMember[];
-}
-
-interface BookCardProps {
-  book: BookCardData;
-  isFavorited: boolean;
-  onToggleFavorite: () => void;
-  onPress: () => void;
-}
 
 const ACCENT_KEYS = [
   'accentLavender',
@@ -43,86 +26,83 @@ const ACCENT_KEYS = [
   'accentLime',
 ] as const;
 
-function pickAccent(id: string): (typeof ACCENT_KEYS)[number] {
-  // Deterministic, stable per id — char-sum mod len.
+const ILLUSTRATIONS: LucideIcon[] = [Salad, Soup, CakeSlice, Leaf, Globe, Cookie, ChefHat, Coffee];
+
+function hash(id: string): number {
   let sum = 0;
   for (let i = 0; i < id.length; i += 1) sum += id.charCodeAt(i);
-  return ACCENT_KEYS[sum % ACCENT_KEYS.length]!;
+  return sum;
+}
+
+function pickAccent(id: string) {
+  return ACCENT_KEYS[hash(id) % ACCENT_KEYS.length]!;
+}
+
+function pickIllustration(id: string): LucideIcon {
+  return ILLUSTRATIONS[hash(id) % ILLUSTRATIONS.length]!;
 }
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
-  return (
-    parts
-      .slice(0, 2)
-      .map((p) => p.charAt(0))
-      .join('')
-      .toUpperCase() || '?'
-  );
+  return parts.slice(0, 2).map((p) => p.charAt(0)).join('').toUpperCase() || '?';
 }
 
-export function BookCard({
-  book,
-  isFavorited: _isFavorited,
-  onToggleFavorite: _onToggleFavorite,
-  onPress,
-}: BookCardProps) {
+interface ProfileBookCardProps {
+  book: BookCardData;
+  onPress: () => void;
+  /** Fixed width for horizontal scrollers; omit to flex inside a grid. */
+  width?: number;
+}
+
+/**
+ * Vertical book card used on the profile page — a pastel accent panel with a
+ * generic illustration on top, then the book name, recipe count and (when the
+ * book is shared) the members' avatars. Mirrors the design language of the
+ * horizontal feed `BookCard` but in a portrait shape for grids.
+ */
+export function ProfileBookCard({ book, onPress, width }: ProfileBookCardProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const accentToken = `$${pickAccent(book.id)}` as const;
   const ink = theme.text?.val as string;
+  const accentToken = `$${pickAccent(book.id)}` as const;
+  const Illustration = pickIllustration(book.id);
 
   const visible = book.members.slice(0, 3);
   const extra = Math.max(0, book.members.length - visible.length);
 
   return (
-    <XStack
+    <YStack
       onPress={onPress}
-      width={BOOK_CARD_WIDTH}
-      height={BOOK_CARD_HEIGHT}
-      borderRadius={FEED_CARD_RADIUS}
+      width={width}
+      flex={width == null ? 1 : undefined}
+      borderRadius={18}
       backgroundColor="$surface"
-      padding={14}
-      gap={14}
-      alignItems="center"
+      overflow="hidden"
       shadowColor="black"
       shadowOpacity={0.08}
       shadowRadius={18}
       shadowOffset={{ width: 0, height: 6 }}
       elevation={4}
       pressStyle={{ opacity: 0.92, scale: 0.98 }}
-      style={{ direction: 'ltr' } as never}
     >
       <YStack
-        width={COVER_SIZE}
-        height={COVER_SIZE}
-        borderRadius={26}
+        height={104}
         backgroundColor={accentToken}
         alignItems="center"
         justifyContent="center"
-        overflow="hidden"
       >
-        <CakeSlice size={48} color={ink} strokeWidth={1.7} />
+        <Illustration size={42} color={ink} strokeWidth={1.7} />
       </YStack>
 
-      <YStack flex={1} height="100%" justifyContent="space-between" alignItems="flex-end">
-        <YStack gap={4} width="100%" alignItems="flex-end">
-          <Text
-            width="100%"
-            textAlign="right"
-            fontSize={15}
-            fontWeight="700"
-            numberOfLines={1}
-            color="$text"
-          >
-            {book.name}
+      <YStack padding="$3" gap="$2" alignItems="flex-end">
+        <Text width="100%" textAlign="right" fontSize={15} fontWeight="700" numberOfLines={2} color="$text">
+          {book.name}
+        </Text>
+        {book.recipeCount != null ? (
+          <Text width="100%" textAlign="right" fontSize={13} color="$textMuted">
+            {t('home.recipesCount', { count: book.recipeCount })}
           </Text>
-          {book.recipeCount != null ? (
-            <Text width="100%" textAlign="right" fontSize={13} color="$textMuted">
-              {t('home.recipesCount', { count: book.recipeCount })}
-            </Text>
-          ) : null}
-        </YStack>
+        ) : null}
 
         {visible.length > 0 ? (
           <XStack alignItems="center" style={{ direction: 'rtl' } as never}>
@@ -133,7 +113,7 @@ export function BookCard({
           </XStack>
         ) : null}
       </YStack>
-    </XStack>
+    </YStack>
   );
 }
 
@@ -173,13 +153,13 @@ function MoreChip({ count }: { count: number }) {
       width={AVATAR_SIZE}
       height={AVATAR_SIZE}
       borderRadius={AVATAR_SIZE / 2}
-      backgroundColor="$gray3"
+      backgroundColor="$accentLavender"
       alignItems="center"
       justifyContent="center"
       marginStart={startOverlap}
       marginEnd={endOverlap}
     >
-      <Text color="$text" fontSize={12} fontWeight="700">
+      <Text color="$primary" fontSize={11} fontWeight="700">
         +{count}
       </Text>
     </YStack>

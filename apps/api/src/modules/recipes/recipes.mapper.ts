@@ -25,6 +25,8 @@ export function toRecipe(doc: RecipeDoc, opts: { isFavorite?: boolean } = {}): R
       importTaskId: doc.source.importTaskId?.toString(),
     },
     visibility: doc.visibility,
+    // Legacy docs may predate the status field — treat them as published.
+    status: doc.status ?? 'published',
     forkedFrom: doc.forkedFrom?.toString(),
     forkedAt: doc.forkedAt?.toISOString(),
     createdAt: doc.createdAt.toISOString(),

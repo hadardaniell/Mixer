@@ -40,6 +40,25 @@
     "seeMore": "See more",
     "emptySection": "Nothing here yet"
   },
+  "newRecipe": {
+    "title": "Create recipe",
+    "subtitle": "How would you like to start?",
+    "hero": {
+      "title": "Choose a way to create a new recipe",
+      "subtitle": "Got a recipe idea? Let's start!"
+    },
+    "options": {
+      "link": "From link",
+      "image": "From image",
+      "text": "From free text",
+      "manual": "Manual"
+    },
+    "drafts": {
+      "title": "Recent drafts",
+      "seeAll": "See all",
+      "updatedDaysAgo": "Updated {{count}} days ago"
+    }
+  },
   "recipe": {
     "startCooking": "Start cooking",
     "ingredients": "Ingredients",
@@ -88,10 +107,34 @@
     "fromFileDesc": "PDF, DOCX or plain text"
   },
   "profile": {
+    "bioDefault": "Collects, creates and shares recipes",
+    "editProfile": "Edit profile",
     "stats": {
       "books": "books",
       "recipes": "recipes",
       "friends": "friends"
+    },
+    "tabs": {
+      "favorites": "Favorites",
+      "books": "Books",
+      "recipes": "Recipes"
+    },
+    "filters": {
+      "all": "All",
+      "recipes": "Recipes",
+      "books": "Books"
+    },
+    "favoriteRecipes": "Favorite recipes",
+    "favoriteBooks": "Favorite books",
+    "sharedWithFriends": "Shared with friends",
+    "empty": {
+      "favorites": "No favorites yet",
+      "books": "No books yet",
+      "recipes": "No recipes yet"
+    },
+    "edit": {
+      "title": "Edit profile",
+      "comingSoon": "Profile editing is coming soon."
     }
   },
   "settings": {

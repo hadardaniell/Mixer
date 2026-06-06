@@ -74,7 +74,7 @@ export function CompleteProfileScreen() {
       paddingBottom={insets.bottom + 16}
       style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
     >
-      <YStack flex={1} width="100%" maxWidth={440} alignSelf="center" gap="$4">
+      <YStack flex={1} width="100%" alignSelf="center" gap="$4">
         <AuthHeader onBack={() => router.back()} />
 
         {/* Same hero treatment as Register step 2: 16px gap from header,

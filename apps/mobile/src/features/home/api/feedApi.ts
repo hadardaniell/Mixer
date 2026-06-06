@@ -11,6 +11,9 @@ export const feedApi = {
   myRecipes: (limit = 10) =>
     http<ListResponse<Recipe>>(`/recipes?owner=me&limit=${limit}`),
 
+  drafts: (limit = 10) =>
+    http<ListResponse<Recipe>>(`/recipes?owner=me&status=draft&limit=${limit}`),
+
   myBooks: () => http<ListResponse<RecipeBook>>('/recipe-books'),
 
   favoriteRecipes: () => http<ListResponse<Recipe>>('/favorites?kind=recipe'),
