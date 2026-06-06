@@ -99,3 +99,15 @@ export type RecipeBookDoc = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type SharedItemDoc = {
+  _id: ObjectId;
+  resourceType: 'recipe' | 'book';
+  resourceId: ObjectId;
+  ownerId: ObjectId;
+  friendId: ObjectId;
+  status: 'pending' | 'accepted' | 'rejected';
+  savedAt: Date | null;
+  savedResourceId: ObjectId | null;
+  createdAt: Date;
+};

@@ -13,6 +13,7 @@ import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
+import { sendNotification } from '../../services/notification.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -205,6 +206,40 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (existing.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'not the owner' });
       }
+
+      // Auto-fork for friends who have a live link (accepted share, not yet saved)
+      const liveShares = await app.collections.sharedItems
+        .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
+        .toArray();
+
+      await Promise.all(
+        liveShares.map(async (share) => {
+          const now = new Date();
+          const fork: RecipeDoc = {
+            ...existing,
+            _id: new ObjectId(),
+            ownerId: share.friendId,
+            visibility: 'private',
+            forkedFrom: existing._id,
+            forkedAt: now,
+            createdAt: now,
+            updatedAt: now,
+          };
+          await app.collections.recipes.insertOne(fork);
+          await app.collections.sharedItems.updateOne(
+            { _id: share._id },
+            { $set: { savedAt: now, savedResourceId: fork._id } },
+          );
+          await sendNotification(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+            fromUserId: req.user.id,
+            resourceType: 'recipe',
+            resourceName: existing.title,
+            savedCopyId: fork._id.toString(),
+          });
+        }),
+      );
+
+      await app.collections.sharedItems.deleteMany({ resourceId: _id, resourceType: 'recipe' });
       await app.collections.recipes.deleteOne({ _id });
       return reply.code(204).send();
     },
