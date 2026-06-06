@@ -1,7 +1,7 @@
 import { Image as ImageIcon, Link as LinkIcon, Sparkles, Video } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Pressable } from 'react-native';
-import { Text, useTheme, View, XStack, YStack } from 'tamagui';
+import { Image, Pressable } from 'react-native';
+import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 export type ImportRecipeSource = 'ai' | 'image' | 'video' | 'link';
 
@@ -10,12 +10,14 @@ interface ImportRecipeCardProps {
   onSourcePress?: (source: ImportRecipeSource) => void;
 }
 
+const CTA_ILLUSTRATION = require('../../../assets/images/CTA.png');
+
 /**
  * Home CTA — "Got a recipe link?" card.
  *
- * Self-contained so we can swap copy/illustration/chips later without touching
- * the home screen layout. The illustration is a placeholder (a chef-hat-on-a-
- * lavender-blob) until a final asset is provided.
+ * Self-contained so we can swap copy/chips later without touching the home
+ * screen layout. The illustration is the CTA.png asset (bowl + recipe sheet +
+ * whisk on soft blobs).
  */
 export function ImportRecipeCard({ onCreatePress, onSourcePress }: ImportRecipeCardProps) {
   const { t } = useTranslation();
@@ -28,7 +30,7 @@ export function ImportRecipeCard({ onCreatePress, onSourcePress }: ImportRecipeC
       backgroundColor="$surface"
       borderRadius={24}
       padding="$4"
-      gap="$3"
+      gap="$4"
       shadowColor="black"
       shadowOpacity={0.08}
       shadowRadius={28}
@@ -36,19 +38,7 @@ export function ImportRecipeCard({ onCreatePress, onSourcePress }: ImportRecipeC
       elevation={5}
     >
       <XStack alignItems="center" gap="$3">
-        {/* Illustration placeholder */}
-        <View
-          width={80}
-          height={80}
-          borderRadius={20}
-          backgroundColor="$accentLavender"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Sparkles size={36} color={primary} />
-        </View>
-
-        <YStack flex={1} gap="$2" alignItems="center">
+        <YStack flex={1} gap="$3" alignItems="center" justifyContent="center">
           <Text color="$text" fontSize={18} fontWeight="700" textAlign="center">
             {t('home.cta.title')}
           </Text>
@@ -56,9 +46,9 @@ export function ImportRecipeCard({ onCreatePress, onSourcePress }: ImportRecipeC
             {t('home.cta.subtitle')}
           </Text>
           <Pressable onPress={onCreatePress} accessibilityRole="button">
-            <View
-              paddingHorizontal={20}
-              paddingVertical={8}
+            <YStack
+              paddingHorizontal={22}
+              paddingVertical={9}
               borderRadius={999}
               borderWidth={1.5}
               borderColor="$primary"
@@ -70,33 +60,38 @@ export function ImportRecipeCard({ onCreatePress, onSourcePress }: ImportRecipeC
               <Text color="$primary" fontSize={14} fontWeight="700">
                 {t('home.cta.button')}
               </Text>
-            </View>
+            </YStack>
           </Pressable>
-        </YStack>
-      </XStack>
 
-      {/* Source chips */}
-      <XStack justifyContent="space-around" gap="$2" paddingTop="$1">
-        <SourceChip
-          icon={<Sparkles size={16} color={primary} />}
-          label={t('home.cta.sources.ai')}
-          highlighted
-          onPress={() => onSourcePress?.('ai')}
-        />
-        <SourceChip
-          icon={<ImageIcon size={16} color={ink} />}
-          label={t('home.cta.sources.image')}
-          onPress={() => onSourcePress?.('image')}
-        />
-        <SourceChip
-          icon={<Video size={16} color={ink} />}
-          label={t('home.cta.sources.video')}
-          onPress={() => onSourcePress?.('video')}
-        />
-        <SourceChip
-          icon={<LinkIcon size={16} color={ink} />}
-          label={t('home.cta.sources.link')}
-          onPress={() => onSourcePress?.('link')}
+          {/* Source chips */}
+          <XStack flexWrap="wrap" justifyContent="center" gap="$2">
+            <SourceChip
+              icon={<Sparkles size={16} color={primary} />}
+              label={t('home.cta.sources.ai')}
+              onPress={() => onSourcePress?.('ai')}
+            />
+            <SourceChip
+              icon={<ImageIcon size={16} color={ink} />}
+              label={t('home.cta.sources.image')}
+              onPress={() => onSourcePress?.('image')}
+            />
+            <SourceChip
+              icon={<Video size={16} color={ink} />}
+              label={t('home.cta.sources.video')}
+              onPress={() => onSourcePress?.('video')}
+            />
+            <SourceChip
+              icon={<LinkIcon size={16} color={ink} />}
+              label={t('home.cta.sources.link')}
+              onPress={() => onSourcePress?.('link')}
+            />
+          </XStack>
+        </YStack>
+
+        <Image
+          source={CTA_ILLUSTRATION}
+          style={{ width: 170, height: 120 }}
+          resizeMode="contain"
         />
       </XStack>
     </YStack>

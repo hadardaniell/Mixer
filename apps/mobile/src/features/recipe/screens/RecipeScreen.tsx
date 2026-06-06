@@ -89,7 +89,7 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
 
   return (
     <ScrollView
-      style={{ backgroundColor: theme.bg?.val as string }}
+      style={{ backgroundColor: theme.bg?.val as string, width: "100%" }}
       contentContainerStyle={{
         paddingTop: insets.top + 8,
         paddingBottom: insets.bottom + 24,
@@ -98,8 +98,6 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
     >
       <YStack
         width="100%"
-        maxWidth={440}
-        alignSelf="center"
         paddingHorizontal="$4"
         gap="$4"
         style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
@@ -109,7 +107,7 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
           isFavorited={isFavorited}
           onToggleFavorite={() => toggleFavorite.mutate({ id: recipe.id, next: !isFavorited })}
           onShare={() => {}}
-          onBack={() => router.back()}
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
         />
 
         <StartCookingButton label={t('recipe.startCooking')} onPress={() => {}} />
