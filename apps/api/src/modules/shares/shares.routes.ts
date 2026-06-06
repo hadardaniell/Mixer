@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { CreateShareInputSchema, ShareListQuerySchema } from '@mixer/contracts';
 import type { RecipeBookDoc, RecipeDoc, SharedItemDoc } from '../../db/types.js';
 import type { Collections } from '../../plugins/mongo.js';
-import { sendNotification } from '../../services/notification.service.js';
+import { notificationService } from '../../services/notification.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -147,7 +147,7 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
         app.collections.users.findOne({ _id: ownerId }, { projection: { displayName: 1 } }),
       ]);
 
-      await sendNotification(friendIdStr, 'SHARE_REQUEST', {
+      await notificationService.send(friendIdStr, 'SHARE_REQUEST', {
         fromUserId: req.user.id,
         resourceType,
         resourceId: resourceIdStr,
@@ -180,7 +180,7 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
         app.collections.users.findOne({ _id: share.ownerId }, { projection: { displayName: 1 } }),
       ]);
 
-      await sendNotification(share.ownerId.toString(), 'SHARE_ACCEPTED', {
+      await notificationService.send(share.ownerId.toString(), 'SHARE_ACCEPTED', {
         fromUserId: req.user.id,
         resourceType: share.resourceType,
         resourceId: share.resourceId.toString(),
@@ -212,7 +212,7 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
         app.collections.users.findOne({ _id: share.ownerId }, { projection: { displayName: 1 } }),
       ]);
 
-      await sendNotification(share.ownerId.toString(), 'SHARE_REJECTED', {
+      await notificationService.send(share.ownerId.toString(), 'SHARE_REJECTED', {
         fromUserId: req.user.id,
         resourceType: share.resourceType,
         resourceId: share.resourceId.toString(),
@@ -287,7 +287,7 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
               ? await forkRecipe(app.collections, share.resourceId, share.friendId)
               : await forkBook(app.collections, share.resourceId, share.friendId);
 
-          await sendNotification(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+          await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
             fromUserId: req.user.id,
             resourceType: share.resourceType,
             resourceName,

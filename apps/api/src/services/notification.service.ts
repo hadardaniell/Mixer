@@ -1,10 +1,4 @@
-export type NotificationType =
-  | 'SHARE_REQUEST'
-  | 'SHARE_ACCEPTED'
-  | 'SHARE_REJECTED'
-  | 'OWNER_DELETED_RESOURCE';
-
-export type NotificationPayload = {
+export type NotificationPayloadMap = {
   SHARE_REQUEST: {
     fromUserId: string;
     resourceType: 'recipe' | 'book';
@@ -32,11 +26,18 @@ export type NotificationPayload = {
   };
 };
 
-// TODO: notifications team — implement this function
-export async function sendNotification<T extends NotificationType>(
-  userId: string,
-  type: T,
-  payload: NotificationPayload[T],
-): Promise<void> {
-  console.log('[notification stub]', { userId, type, payload });
+export type NotificationType = keyof NotificationPayloadMap;
+
+class NotificationService {
+  public async send<T extends NotificationType>(
+    userId: string,
+    type: T,
+    payload: NotificationPayloadMap[T],
+  ): Promise<void> {
+    console.log(`[NotificationService] Sending '${type}' notification to user: ${userId}`);
+    console.log(`[NotificationService] Payload:`, payload);
+    // TODO: Implement DB storage or delivery logic later
+  }
 }
+
+export const notificationService = new NotificationService();

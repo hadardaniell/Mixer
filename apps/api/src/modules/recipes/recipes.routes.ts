@@ -13,7 +13,7 @@ import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
-import { sendNotification } from '../../services/notification.service.js';
+import { notificationService } from '../../services/notification.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -230,7 +230,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
             { _id: share._id },
             { $set: { savedAt: now, savedResourceId: fork._id } },
           );
-          await sendNotification(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+          await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
             fromUserId: req.user.id,
             resourceType: 'recipe',
             resourceName: existing.title,
