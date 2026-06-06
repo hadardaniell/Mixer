@@ -281,3 +281,6 @@ export const ExtractFromImageInputSchema = z.object({
   images: z.array(ImageItemSchema).min(1).max(10),
 });
 export type ExtractFromImageInput = z.infer<typeof ExtractFromImageInputSchema>;
+
+// --- friends ---
+export * from './friends.js';
