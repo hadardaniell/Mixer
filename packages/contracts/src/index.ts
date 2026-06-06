@@ -281,3 +281,23 @@ export const ExtractFromImageInputSchema = z.object({
   images: z.array(ImageItemSchema).min(1).max(10),
 });
 export type ExtractFromImageInput = z.infer<typeof ExtractFromImageInputSchema>;
+
+// --- embeddings ---
+export const EmbedRecipeInputSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  ingredients: z.array(z.object({ name: z.string() })).optional(),
+  tags: z.array(z.string()).optional(),
+  cuisine: z.string().optional(),
+});
+export type EmbedRecipeInput = z.infer<typeof EmbedRecipeInputSchema>;
+
+export const EmbedResponseSchema = z.object({
+  embedding: z.array(z.number()),
+});
+export type EmbedResponse = z.infer<typeof EmbedResponseSchema>;
+
+export const EmbedQueryInputSchema = z.object({
+  query: z.string().min(1),
+});
+export type EmbedQueryInput = z.infer<typeof EmbedQueryInputSchema>;
