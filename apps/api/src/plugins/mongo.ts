@@ -26,7 +26,12 @@ declare module 'fastify' {
 }
 
 export async function mongoPlugin(app: FastifyInstance): Promise<void> {
-  const client = new MongoClient(config.mongoUrl);
+  // ignoreUndefined: the driver defaults this to false, which serializes
+  // `undefined` fields as BSON null. Optional fields left undefined when
+  // building docs (e.g. coverImageUrl, source.url/platform) would then be
+  // written as null and rejected by the collections' $jsonSchema validators
+  // (which expect string/enum/objectId when present). Omit them instead.
+  const client = new MongoClient(config.mongoUrl, { ignoreUndefined: true });
   await client.connect();
   const db = client.db(config.mongoDbName);
 
