@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
 
+import { formatDuration } from '@/shared/lib/formatDuration';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 
 interface PreparationStepsProps {
@@ -89,7 +90,7 @@ export function PreparationSteps({ steps }: PreparationStepsProps) {
               >
                 <Clock size={12} color={ink} />
                 <Text fontSize={11} fontWeight="600" color="$text">
-                  {t('recipe.minutesShort', { count: step.durationMinutes })}
+                  {formatDuration(step.durationMinutes, t)}
                 </Text>
               </XStack>
             ) : null}

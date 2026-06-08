@@ -25,10 +25,10 @@ export function SearchInput({ onPress, placeholder }: SearchInputProps) {
         borderRadius={28}
         backgroundColor="$surface"
         shadowColor="black"
-        shadowOpacity={0.08}
-        shadowRadius={18}
-        shadowOffset={{ width: 0, height: 6 }}
-        elevation={4}
+        shadowOpacity={0.1}
+        shadowRadius={24}
+        shadowOffset={{ width: 0, height: 8 }}
+        elevation={6}
         pressStyle={{ backgroundColor: '$bgSubtle' }}
       >
         {/* <Search size={20} color={muted} /> */}

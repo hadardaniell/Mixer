@@ -57,7 +57,53 @@
       "title": "Recent drafts",
       "seeAll": "See all",
       "updatedDaysAgo": "Updated {{count}} days ago"
+    },
+    "creating": "Creating recipe...",
+    "errors": {
+      "extractFailed": "We couldn't extract the recipe. Please try again.",
+      "notSameRecipe": "These photos don't look like the same recipe. Try photos of one recipe."
+    },
+    "link": {
+      "title": "Recipe from a link",
+      "subtitle": "Paste a link and we'll turn it into a structured recipe",
+      "heroTitle": "Every recipe starts with a link",
+      "heroSubtitle": "Paste a link to content you love – and we'll build a structured recipe for you",
+      "inputPlaceholder": "Paste a link here...",
+      "supportedTitle": "Supported links from",
+      "supported": {
+        "web": "Websites",
+        "video": "Videos",
+        "social": "Social posts"
+      },
+      "cta": "Create recipe",
+      "comingSoon": "Coming soon"
+    },
+    "image": {
+      "title": "Recipe from a photo",
+      "subtitle": "Upload a photo and we'll extract the recipe",
+      "dropzone": "Drag or upload a photo",
+      "replace": "Replace photo",
+      "cta": "Continue"
+    },
+    "text": {
+      "title": "Free text",
+      "subtitle": "Write whatever you like and we'll shape it into a recipe",
+      "placeholder": "e.g. a recipe idea, ingredients, prep steps or free text...",
+      "cta": "Create recipe",
+      "inspireTitle": "Looking for inspiration?",
+      "inspire": {
+        "instructions": "Instructions",
+        "ingredients": "Ingredients",
+        "about": "About the recipe"
+      }
     }
+  },
+  "time": {
+    "min": "{{count}} min",
+    "hour": "1 hr",
+    "twoHours": "2 hr",
+    "hours": "{{count}} hr",
+    "and": " "
   },
   "recipe": {
     "startCooking": "Start cooking",

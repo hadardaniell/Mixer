@@ -1,4 +1,5 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useRouter } from 'expo-router';
 import { Home, Plus, User } from 'lucide-react-native';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,8 +7,9 @@ import { useTheme, XStack, YStack } from 'tamagui';
 
 type CustomTabBarProps = BottomTabBarProps;
 
-export function TabBar({ state, navigation }: CustomTabBarProps) {
+export function TabBar({ state }: CustomTabBarProps) {
   const theme = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
 
@@ -19,7 +21,7 @@ export function TabBar({ state, navigation }: CustomTabBarProps) {
 
   const goTab = (routeName: string) => {
     if (routeName === current) return;
-    navigation.navigate(routeName);
+    router.navigate(`/${routeName}` as never);
   };
 
   return (
@@ -41,6 +43,7 @@ export function TabBar({ state, navigation }: CustomTabBarProps) {
           right={0}
           bottom={0}
           borderRadius={32}
+          opacity={0.9}
           backgroundColor="$surface"
           shadowColor="black"
           shadowOpacity={0.12}
@@ -70,8 +73,9 @@ export function TabBar({ state, navigation }: CustomTabBarProps) {
             </TabItem>
           </XStack>
 
-          {/* Center FAB — violet, navigates to the create-recipe screen. */}
-          <Pressable onPress={() => goTab('new-recipe')} accessibilityRole="button">
+          {/* Center FAB — violet. Always lands on the create-recipe chooser,
+              even when already inside a new-recipe sub-screen. */}
+          <Pressable onPress={() => router.navigate('/new-recipe')} accessibilityRole="button">
             <YStack
               width={48}
               height={48}

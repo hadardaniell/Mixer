@@ -41,6 +41,12 @@ const config: ExpoConfig = {
       '@react-native-google-signin/google-signin',
       iosUrlScheme ? { iosUrlScheme } : {},
     ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'Mixer needs access to your photos to import a recipe from an image.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: false,

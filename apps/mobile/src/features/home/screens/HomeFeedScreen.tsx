@@ -25,13 +25,14 @@ export function HomeFeedScreen() {
   const toggleBook = useToggleBookFavorite();
 
   const openSearch = () => router.push('/search');
+  const openNewRecipe = () => router.navigate('/new-recipe');
   const openRecipe = (id: string) => router.push(`/recipes/${id}` as never);
   const openBook = (id: string) => router.push(`/books/${id}` as never);
 
   return (
     <ScrollView
       contentContainerStyle={{
-        paddingTop: insets.top + 8,
+        paddingTop: insets.top + 16,
         paddingBottom: 120, // clear the floating tab bar
       }}
       showsVerticalScrollIndicator={false}
@@ -46,7 +47,7 @@ export function HomeFeedScreen() {
         </YStack>
 
         <YStack paddingHorizontal="$4">
-          <ImportRecipeCard onCreatePress={openSearch} />
+          <ImportRecipeCard onCreatePress={openNewRecipe} />
         </YStack>
 
         <FeedSection<RecipeCardData & { isFavorite: boolean }>

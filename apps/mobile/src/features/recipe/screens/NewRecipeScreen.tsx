@@ -1,4 +1,5 @@
 import type { Recipe } from '@mixer/contracts';
+import { useRouter } from 'expo-router';
 import { Bell, FileText, MoreVertical } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, Pressable, ScrollView } from 'react-native';
@@ -33,6 +34,7 @@ function daysAgo(iso: string): number {
 export function NewRecipeScreen() {
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const isRtl = isRTL(language);
@@ -57,7 +59,7 @@ export function NewRecipeScreen() {
         style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
       >
         {/* Header — bell on the start side, centered title + subtitle */}
-        <YStack gap="$1">
+        {/* <YStack gap="$1">
           <XStack width="100%" justifyContent="flex-start">
             <Pressable accessibilityRole="button" hitSlop={8}>
               <Bell size={22} color={ink} />
@@ -71,7 +73,7 @@ export function NewRecipeScreen() {
               {t('newRecipe.subtitle')}
             </Text>
           </YStack>
-        </YStack>
+        </YStack> */}
 
         {/* Hero card */}
         <XStack
@@ -108,19 +110,19 @@ export function NewRecipeScreen() {
             <OptionCard
               image={OPTION_IMAGES.link}
               label={t('newRecipe.options.link')}
-              onPress={() => {}}
+              onPress={() => router.push('/new-recipe/link')}
             />
             <OptionCard
               image={OPTION_IMAGES.image}
               label={t('newRecipe.options.image')}
-              onPress={() => {}}
+              onPress={() => router.push('/new-recipe/image')}
             />
           </XStack>
           <XStack gap="$3">
             <OptionCard
               image={OPTION_IMAGES.text}
               label={t('newRecipe.options.text')}
-              onPress={() => {}}
+              onPress={() => router.push('/new-recipe/text')}
             />
             <OptionCard
               image={OPTION_IMAGES.manual}
@@ -170,8 +172,8 @@ function OptionCard({
       flex={1}
       backgroundColor="$surface"
       borderRadius={24}
-      paddingVertical="$6"
-      gap="$3"
+      paddingVertical="$4"
+      gap="$2"
       alignItems="center"
       shadowColor="black"
       shadowOpacity={0.06}
@@ -181,8 +183,8 @@ function OptionCard({
       pressStyle={{ opacity: 0.92, scale: 0.98 }}
       onPress={onPress}
     >
-      <Image source={image} style={{ width: 140, height: 140 }} resizeMode="contain" />
-      <Text color="$text" fontSize={16} fontWeight="700">
+      <Image source={image} style={{ width: 104, height: 104 }} resizeMode="contain" />
+      <Text color="$text" fontSize={15} fontWeight="700">
         {label}
       </Text>
     </YStack>
