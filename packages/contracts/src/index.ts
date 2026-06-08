@@ -127,6 +127,8 @@ export const DifficultySchema = z.enum(['easy', 'medium', 'hard']);
 export const RecipeSourceTypeSchema = z.enum(['manual', 'url', 'image', 'video-upload', 'text']);
 export const RecipePlatformSchema = z.enum(['tiktok', 'instagram', 'youtube', 'facebook', 'web']);
 export const VisibilitySchema = z.enum(['private', 'unlisted', 'public']);
+export const RecipeStatusSchema = z.enum(['draft', 'published']);
+export type RecipeStatus = z.infer<typeof RecipeStatusSchema>;
 
 export const RecipeSourceSchema = z.object({
   type: RecipeSourceTypeSchema,
@@ -152,6 +154,7 @@ export const RecipeSchema = z.object({
   language: LocaleSchema,
   source: RecipeSourceSchema,
   visibility: VisibilitySchema,
+  status: RecipeStatusSchema,
   forkedFrom: ObjectIdString.optional(),
   forkedAt: IsoDate.optional(),
   createdAt: IsoDate,
@@ -175,6 +178,7 @@ export const CreateRecipeInputSchema = z.object({
   language: LocaleSchema.default('en'),
   source: RecipeSourceSchema.default({ type: 'manual' }),
   visibility: VisibilitySchema.default('private'),
+  status: RecipeStatusSchema.default('published'),
 });
 export type CreateRecipeInput = z.infer<typeof CreateRecipeInputSchema>;
 
@@ -186,6 +190,7 @@ export const RecipeListQuerySchema = z.object({
   tag: z.string().optional(),
   q: z.string().optional(),
   visibility: VisibilitySchema.optional(),
+  status: RecipeStatusSchema.optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   skip: z.coerce.number().int().nonnegative().default(0),
 });

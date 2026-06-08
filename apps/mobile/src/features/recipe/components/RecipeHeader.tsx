@@ -51,7 +51,7 @@ export function RecipeHeader({
           justifyContent="space-between"
           style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
         >
-          <CircleIconButton onPress={onBack}>
+          <CircleIconButton onPress={onBack} opacity={0.8}>
             <ArrowRight size={24} color={ink} />
           </CircleIconButton>
 
@@ -80,7 +80,15 @@ export function RecipeHeader({
   );
 }
 
-function CircleIconButton({ onPress, children }: { onPress: () => void; children: ReactNode }) {
+function CircleIconButton({
+  onPress,
+  children,
+  opacity,
+}: {
+  onPress: () => void;
+  children: ReactNode;
+  opacity?: number;
+}) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" hitSlop={8}>
       <YStack
@@ -88,6 +96,7 @@ function CircleIconButton({ onPress, children }: { onPress: () => void; children
         height={40}
         borderRadius={20}
         backgroundColor="$surface"
+        opacity={opacity}
         alignItems="center"
         justifyContent="center"
         shadowColor="black"

@@ -14,6 +14,7 @@ declare module 'fastify' {
   }
   interface FastifyInstance {
     authenticate: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
+    optionalAuthenticate: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
     requireAdmin: (req: import('fastify').FastifyRequest, reply: import('fastify').FastifyReply) => Promise<void>;
   }
 }
@@ -87,6 +88,23 @@ export async function authPlugin(app: FastifyInstance): Promise<void> {
       req.user = { id: payload.sub, role: payload.role };
     } catch {
       return reply.code(401).send({ error: 'invalid or expired token' });
+    }
+  });
+
+  // Populates req.user when a valid Bearer token is present, but never rejects.
+  // Used by visibility-aware public routes (recipe list / detail) so they can
+  // tell "my private recipe" / isFavorite apart for signed-in callers.
+  app.decorate('optionalAuthenticate', async (req) => {
+    const header = req.headers.authorization;
+    if (!header?.startsWith('Bearer ')) return;
+    const token = header.slice('Bearer '.length).trim();
+    try {
+      const payload = verifyAccessToken(token);
+      if (ObjectId.isValid(payload.sub)) {
+        req.user = { id: payload.sub, role: payload.role };
+      }
+    } catch {
+      // Anonymous / bad token — fall through unauthenticated.
     }
   });
 

@@ -8,10 +8,10 @@ export const FEED_CARD_HEIGHT = 230;
 export const FEED_CARD_RADIUS = 18;
 export const FEED_CARD_SHADOW = {
   shadowColor: 'black' as const,
-  shadowOpacity: 0.06,
-  shadowRadius: 14,
+  shadowOpacity: 0.08,
+  shadowRadius: 18,
   shadowOffset: { width: 0, height: 6 },
-  elevation: 2,
+  elevation: 4,
 };
 const IMAGE_HEIGHT = 110;
 const RECIPE_CARD_HEIGHT = 170;
@@ -40,6 +40,8 @@ interface RecipeCardProps {
   onPress: () => void;
   /** When present, shows an attribution row at the top of the card. */
   attribution?: RecipeAttribution;
+  /** Override the default fixed feed width — e.g. "100%" to fill a grid cell. */
+  width?: number | string;
 }
 
 /**
@@ -55,20 +57,21 @@ export function RecipeCard({
   onToggleFavorite,
   onPress,
   attribution,
+  width = FEED_CARD_WIDTH,
 }: RecipeCardProps) {
   return (
     <YStack
       onPress={onPress}
-      width={FEED_CARD_WIDTH}
+      width={width}
       height={RECIPE_CARD_HEIGHT}
       borderRadius={RADIUS}
       overflow="hidden"
       backgroundColor="$surface"
       shadowColor="black"
-      shadowOpacity={0.06}
-      shadowRadius={14}
+      shadowOpacity={0.08}
+      shadowRadius={18}
       shadowOffset={{ width: 0, height: 6 }}
-      elevation={2}
+      elevation={4}
       pressStyle={{ opacity: 0.92, scale: 0.98 }}
     >
       {attribution ? <AttributionRow attribution={attribution} /> : null}

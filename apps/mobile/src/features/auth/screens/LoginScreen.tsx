@@ -71,7 +71,7 @@ export function LoginScreen() {
       <YStack
         flex={1}
         width="100%"
-        maxWidth={440}
+        // maxWidth={440}
         alignSelf="center"
         style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
       >

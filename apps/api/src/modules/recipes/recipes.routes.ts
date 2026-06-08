@@ -92,6 +92,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
             : undefined,
         },
         visibility: body.visibility,
+        status: body.status,
         createdAt: now,
         updatedAt: now,
       };
@@ -103,13 +104,17 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.get(
     '/recipes',
-    { schema: { querystring: RecipeListQuerySchema, tags: ['recipes'] } },
+    {
+      onRequest: [app.optionalAuthenticate],
+      schema: { querystring: RecipeListQuerySchema, tags: ['recipes'] },
+    },
     async (req) => {
-      const { owner, tag, q, visibility, limit, skip } = req.query;
+      const { owner, tag, q, visibility, status, limit, skip } = req.query;
       const filter: Filter<RecipeDoc> = {};
 
-      if (owner === 'me' && req.user?.id) {
-        filter.ownerId = new ObjectId(req.user.id);
+      const isOwnerSelf = owner === 'me' && !!req.user?.id;
+      if (isOwnerSelf) {
+        filter.ownerId = new ObjectId(req.user!.id);
       } else if (owner && owner !== 'me' && ObjectId.isValid(owner)) {
         filter.ownerId = new ObjectId(owner);
         if (req.user?.id !== owner) filter.visibility = { $ne: 'private' };
@@ -120,6 +125,16 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
           { ownerId: new ObjectId(req.user.id) },
           { visibility: { $ne: 'private' } },
         ];
+      }
+
+      // Drafts are private work-in-progress. They surface only when explicitly
+      // requested (e.g. the drafts screen: owner=me&status=draft); every other
+      // listing hides them. `$ne: 'draft'` also covers legacy docs with no
+      // status field, so nothing disappears before the backfill runs.
+      if (status === 'draft') {
+        filter.status = 'draft';
+      } else if (status === 'published' || !isOwnerSelf) {
+        filter.status = { $ne: 'draft' };
       }
 
       if (visibility) filter.visibility = visibility;
@@ -149,7 +164,10 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.get(
     '/recipes/:id',
-    { schema: { params: IdParam, tags: ['recipes'] } },
+    {
+      onRequest: [app.optionalAuthenticate],
+      schema: { params: IdParam, tags: ['recipes'] },
+    },
     async (req, reply) => {
       const doc = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
       if (!doc) return reply.code(404).send({ error: 'recipe not found' });
@@ -262,6 +280,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         _id: new ObjectId(),
         ownerId: new ObjectId(req.user.id),
         visibility: 'private',
+        status: 'published',
         forkedFrom: source._id,
         forkedAt: now,
         createdAt: now,
