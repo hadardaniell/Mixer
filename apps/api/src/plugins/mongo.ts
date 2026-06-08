@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { MongoClient, type Db, type Collection } from 'mongodb';
 import { config } from '../config.js';
-import { collectionValidators } from '../db/validators.js';
+import { collectionValidators } from '../db/validators/index.js';
 import type {
   UserDoc,
   RefreshTokenDoc,
