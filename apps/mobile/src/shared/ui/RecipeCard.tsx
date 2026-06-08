@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { Image } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
 import { FavoriteButton } from '@/shared/ui/FavoriteButton';
+import { formatDuration } from '@/shared/lib/formatDuration';
 
 export const FEED_CARD_WIDTH = 180;
 export const FEED_CARD_HEIGHT = 230;
@@ -59,6 +61,7 @@ export function RecipeCard({
   attribution,
   width = FEED_CARD_WIDTH,
 }: RecipeCardProps) {
+  const { t } = useTranslation();
   return (
     <YStack
       onPress={onPress}
@@ -94,7 +97,7 @@ export function RecipeCard({
             opacity={0.9}
           >
             <Text color="$text" fontSize={11} fontWeight="700">
-              {recipe.durationMinutes} דק'
+              {formatDuration(recipe.durationMinutes, t)}
             </Text>
           </View>
         ) : null}
