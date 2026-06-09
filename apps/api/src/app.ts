@@ -16,6 +16,7 @@ import { usersRoutes } from './modules/users/users.routes.js';
 import { recipesRoutes } from './modules/recipes/recipes.routes.js';
 import { recipeBooksRoutes } from './modules/recipe-books/recipe-books.routes.js';
 import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
+import { sharesRoutes } from './modules/shares/shares.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -63,6 +64,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(recipesRoutes);
   await app.register(recipeBooksRoutes);
   await app.register(favoritesRoutes);
+  await app.register(sharesRoutes);
 
   return app;
 }

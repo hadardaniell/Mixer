@@ -306,3 +306,39 @@ export const EmbedQueryInputSchema = z.object({
   query: z.string().min(1),
 });
 export type EmbedQueryInput = z.infer<typeof EmbedQueryInputSchema>;
+
+// --- shares ---
+export const ShareResourceTypeSchema = z.enum(['recipe', 'book']);
+export type ShareResourceType = z.infer<typeof ShareResourceTypeSchema>;
+
+export const ShareStatusSchema = z.enum(['pending', 'accepted', 'rejected']);
+export type ShareStatus = z.infer<typeof ShareStatusSchema>;
+
+export const SharedItemSchema = z.object({
+  id: ObjectIdString,
+  resourceType: ShareResourceTypeSchema,
+  resourceId: ObjectIdString,
+  resourceName: z.string(),
+  ownerId: ObjectIdString,
+  ownerName: z.string(),
+  friendId: ObjectIdString,
+  status: ShareStatusSchema,
+  savedAt: IsoDate.nullable(),
+  savedResourceId: ObjectIdString.nullable(),
+  createdAt: IsoDate,
+});
+export type SharedItem = z.infer<typeof SharedItemSchema>;
+
+export const CreateShareInputSchema = z.object({
+  resourceType: ShareResourceTypeSchema,
+  resourceId: ObjectIdString,
+  friendId: ObjectIdString,
+});
+export type CreateShareInput = z.infer<typeof CreateShareInputSchema>;
+
+export const ShareListQuerySchema = z.object({
+  status: ShareStatusSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  skip: z.coerce.number().int().nonnegative().default(0),
+});
+export type ShareListQuery = z.infer<typeof ShareListQuerySchema>;

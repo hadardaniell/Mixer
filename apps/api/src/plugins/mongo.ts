@@ -8,6 +8,7 @@ import type {
   RecipeDoc,
   RecipeBookDoc,
   FavoriteDoc,
+  SharedItemDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -16,6 +17,7 @@ export type Collections = {
   recipes: Collection<RecipeDoc>;
   recipeBooks: Collection<RecipeBookDoc>;
   favorites: Collection<FavoriteDoc>;
+  sharedItems: Collection<SharedItemDoc>;
 };
 
 declare module 'fastify' {
@@ -43,6 +45,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     recipes: db.collection<RecipeDoc>('recipes'),
     recipeBooks: db.collection<RecipeBookDoc>('recipe_books'),
     favorites: db.collection<FavoriteDoc>('favorites'),
+    sharedItems: db.collection<SharedItemDoc>('shared_items'),
   };
 
   await ensureValidators(app, db);
@@ -104,4 +107,8 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     { 'providers.google.sub': 1 },
     { unique: true, sparse: true },
   );
+
+  await collections.sharedItems.createIndex({ resourceId: 1, friendId: 1 });
+  await collections.sharedItems.createIndex({ friendId: 1, status: 1 });
+  await collections.sharedItems.createIndex({ ownerId: 1, status: 1 });
 }
