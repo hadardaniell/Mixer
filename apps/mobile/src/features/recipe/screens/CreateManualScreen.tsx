@@ -95,8 +95,6 @@ export function CreateManualScreen() {
       >
         <YStack
           width="100%"
-          maxWidth={440}
-          alignSelf="center"
           paddingHorizontal="$4"
           gap="$4"
           style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
