@@ -96,6 +96,69 @@
         "ingredients": "מצרכים",
         "about": "על המתכון"
       }
+    },
+    "manual": {
+      "title": "יצירת מתכון ידני",
+      "stepOf": "שלב {{current}} מתוך {{total}}",
+      "saving": "שומר...",
+      "buttons": {
+        "next": "הבא",
+        "back": "הקודם",
+        "save": "שמירת מתכון"
+      },
+      "step1": {
+        "title": "איך נקרא למתכון?",
+        "nameLabel": "שם המתכון",
+        "namePlaceholder": "למשל: פסטה ברוטב עגבניות",
+        "descLabel": "תיאור קצר",
+        "descPlaceholder": "כמה מילים על המתכון...",
+        "photoLabel": "הוספת תמונה (אופציונלי)",
+        "photoHint": "לחצי להוספת תמונה"
+      },
+      "step2": {
+        "title": "כמה פרטים קטנים",
+        "prepTime": "זמן הכנה",
+        "prepOther": "אחר",
+        "prepOtherPlaceholder": "דקות",
+        "difficulty": "רמת קושי",
+        "diffEasy": "קל",
+        "diffMedium": "בינוני",
+        "diffHard": "מתקדם",
+        "servings": "מספר מנות",
+        "servingsMany": "6+",
+        "category": "קטגוריה",
+        "catMain": "עיקרי",
+        "catDessert": "קינוח",
+        "catHealthy": "בריא",
+        "catQuick": "מהיר"
+      },
+      "step3": {
+        "title": "מה נכנס למתכון?",
+        "forServings": "ל-{{count}} מנות",
+        "addIngredient": "הוספת מצרך",
+        "updateIngredient": "עדכון מצרך",
+        "namePlaceholder": "למשל: פסטה",
+        "amountPlaceholder": "כמות",
+        "unitPlaceholder": "יחידה",
+        "empty": "עדיין לא הוספת מצרכים"
+      },
+      "step4": {
+        "subtitle": "נסדר את ההכנה שלב-שלב",
+        "title": "איך מכינים?",
+        "addStep": "הוספת שלב",
+        "updateStep": "עדכון שלב",
+        "stepPlaceholder": "מה השלב הבא ברשימת ההכנה?",
+        "durationPlaceholder": "דק'",
+        "empty": "עדיין לא הוספת שלבים"
+      },
+      "step5": {
+        "subtitle": "בדיקה אחרונה ויאללה לשמור",
+        "title": "כמעט מוכן",
+        "autosaveNote": "הטיוטה תישמר אוטומטית",
+        "ingredientsHeading": "רכיבים",
+        "stepsHeading": "אופן ההכנה"
+      },
+      "saveError": "לא הצלחנו לשמור את המתכון. נסי שוב."
     }
   },
   "time": {

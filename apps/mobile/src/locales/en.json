@@ -96,6 +96,72 @@
         "ingredients": "Ingredients",
         "about": "About the recipe"
       }
+    },
+    "manual": {
+      "title": "Manual recipe",
+      "stepOf": "Step {{current}} of {{total}}",
+      "saving": "Saving...",
+      "buttons": {
+        "next": "Next",
+        "back": "Back",
+        "save": "Save recipe"
+      },
+      "step1": {
+        "subtitle": "Let's build your recipe together",
+        "title": "What's the recipe called?",
+        "nameLabel": "Recipe name",
+        "namePlaceholder": "e.g. Pasta in tomato sauce",
+        "descLabel": "Short description",
+        "descPlaceholder": "A few words about the recipe...",
+        "photoLabel": "Add a photo (optional)",
+        "photoHint": "Tap to add a photo"
+      },
+      "step2": {
+        "subtitle": "A few small details and we move on",
+        "title": "A few small details",
+        "prepTime": "Prep time",
+        "prepOther": "Other",
+        "prepOtherPlaceholder": "minutes",
+        "difficulty": "Difficulty",
+        "diffEasy": "Easy",
+        "diffMedium": "Medium",
+        "diffHard": "Advanced",
+        "servings": "Servings",
+        "servingsMany": "6+",
+        "category": "Category",
+        "catMain": "Main",
+        "catDessert": "Dessert",
+        "catHealthy": "Healthy",
+        "catQuick": "Quick"
+      },
+      "step3": {
+        "subtitle": "Let's gather all the ingredients",
+        "title": "What goes into the recipe?",
+        "forServings": "for {{count}} servings",
+        "addIngredient": "Add ingredient",
+        "updateIngredient": "Update ingredient",
+        "namePlaceholder": "e.g. Pasta",
+        "amountPlaceholder": "Amount",
+        "unitPlaceholder": "Unit",
+        "empty": "No ingredients added yet"
+      },
+      "step4": {
+        "subtitle": "Let's lay out the prep step by step",
+        "title": "How is it made?",
+        "addStep": "Add step",
+        "updateStep": "Update step",
+        "stepPlaceholder": "What's the next step in the prep?",
+        "durationPlaceholder": "min",
+        "empty": "No steps added yet"
+      },
+      "step5": {
+        "subtitle": "One last check and let's save",
+        "title": "Almost ready",
+        "autosaveNote": "The draft is saved automatically",
+        "ingredientsHeading": "Ingredients",
+        "stepsHeading": "Preparation"
+      },
+      "saveError": "We couldn't save the recipe. Please try again."
     }
   },
   "time": {

@@ -127,7 +127,7 @@ export function NewRecipeScreen() {
             <OptionCard
               image={OPTION_IMAGES.manual}
               label={t('newRecipe.options.manual')}
-              onPress={() => {}}
+              onPress={() => router.push('/new-recipe/manual')}
             />
           </XStack>
         </YStack>

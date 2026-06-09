@@ -137,7 +137,7 @@ export function CreateFromLinkScreen() {
             borderRadius={20}
             alignItems="center"
             justifyContent="center"
-            backgroundColor="$buttonPrimaryBg"
+            backgroundColor="$accentCoral"
             opacity={0.55}
           >
             <XStack alignItems="center" gap="$2">

@@ -53,4 +53,10 @@ export const feedApi = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+
+  updateRecipe: (id: string, input: Partial<CreateRecipeInput>) =>
+    http<Recipe>(`/recipes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
 };

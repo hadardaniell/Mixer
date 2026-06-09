@@ -36,12 +36,19 @@ export function CreateFlowHeader({ title, subtitle, onBack }: CreateFlowHeaderPr
 
   return (
     <YStack gap="$1">
-      <XStack width="100%" justifyContent="flex-start">
-        <Pressable onPress={handleBack} accessibilityRole="button" hitSlop={8}>
+      <XStack width="100%" justifyContent="flex-start" zIndex={1}>
+        <Pressable
+          onPress={handleBack}
+          accessibilityRole="button"
+          hitSlop={12}
+          style={{ padding: 4 }}
+        >
           <BackIcon size={28} color={ink} />
         </Pressable>
       </XStack>
-      <YStack alignItems="center" gap="$1" marginTop={-16}>
+      {/* Decorative title block — must not intercept taps on the back chevron,
+          which it overlaps via the negative top margin. */}
+      <YStack alignItems="center" gap="$1" marginTop={-16} pointerEvents="none">
         <Text color="$text" fontSize={26} fontWeight="700" letterSpacing={-0.5} textAlign="center">
           {title}
         </Text>

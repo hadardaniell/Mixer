@@ -1,11 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
-import { AuthPrimaryButton } from '@/features/auth/components/AuthPrimaryButton';
 import { feedApi } from '@/features/home/api/feedApi';
 import { CreateFlowHeader } from '@/features/recipe/components/CreateFlowHeader';
 import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromExtraction';
@@ -113,11 +112,27 @@ export function CreateFromTextScreen() {
           </Text>
         ) : null}
 
-        <AuthPrimaryButton
-          label={busy ? t('newRecipe.creating') : t('newRecipe.text.cta')}
-          onPress={submit}
-          disabled={!text.trim() || busy}
-        />
+        <Pressable onPress={submit} disabled={!text.trim() || busy} style={{ width: '100%' }}>
+          <YStack
+            width="100%"
+            height={54}
+            borderRadius={20}
+            alignItems="center"
+            justifyContent="center"
+            backgroundColor="$accentTeal"
+            opacity={!text.trim() || busy ? 0.55 : 1}
+            shadowColor="$accentTeal"
+            shadowOpacity={0.35}
+            shadowOffset={{ width: 0, height: 8 }}
+            shadowRadius={16}
+            elevation={6}
+            pressStyle={{ opacity: 0.9 }}
+          >
+            <Text color="$textOnPrimary" fontSize={18} fontWeight="700">
+              {busy ? t('newRecipe.creating') : t('newRecipe.text.cta')}
+            </Text>
+          </YStack>
+        </Pressable>
 
         {/* Inspiration */}
         <YStack gap="$2">

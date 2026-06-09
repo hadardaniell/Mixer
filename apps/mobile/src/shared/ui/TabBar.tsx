@@ -1,9 +1,11 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
-import { Home, Plus, User } from 'lucide-react-native';
+import { CirclePlus, User } from 'lucide-react-native';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, XStack, YStack } from 'tamagui';
+
+import { HomeIcon } from './HomeIcon';
 
 type CustomTabBarProps = BottomTabBarProps;
 
@@ -13,11 +15,9 @@ export function TabBar({ state }: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
 
-  // Icons are dark ink whether active or not; the active state is shown via the
-  // lavender circle behind it plus a small violet dot underneath.
+  // Icons are dark ink whether active or not; the active state is shown by
+  // filling the icon (outline → solid) rather than any colored background.
   const iconColor = theme.text.val;
-  const dotColor = theme.primary.val;
-  const pill = theme.primarySubtle.val;
 
   const goTab = (routeName: string) => {
     if (routeName === current) return;
@@ -65,31 +65,38 @@ export function TabBar({ state }: CustomTabBarProps) {
             <TabItem
               active={current === 'home'}
               iconColor={iconColor}
-              pillColor={pill}
-              dotColor={dotColor}
               onPress={() => goTab('home')}
             >
-              {(color) => <Home size={24} color={color} />}
+              {(color, fill) => <HomeIcon size={24} color={color} filled={fill !== 'none'} />}
             </TabItem>
           </XStack>
 
-          {/* Center FAB — violet. Always lands on the create-recipe chooser,
-              even when already inside a new-recipe sub-screen. */}
+          {/* Center FAB — white circle with the same ink icon as the other tabs.
+              Always lands on the create-recipe chooser, even when already inside
+              a new-recipe sub-screen. */}
           <Pressable onPress={() => router.navigate('/new-recipe')} accessibilityRole="button">
             <YStack
               width={48}
               height={48}
               borderRadius={24}
-              backgroundColor="$primary"
+              backgroundColor="$surface"
               alignItems="center"
               justifyContent="center"
-              shadowColor="$primary"
-              shadowOpacity={0.3}
+              shadowColor="black"
+              shadowOpacity={0.18}
               shadowOffset={{ width: 0, height: 6 }}
               shadowRadius={12}
               elevation={6}
             >
-              <Plus size={22} color={theme.textOnPrimary.val} />
+              <CirclePlus
+                size={28}
+                // Active (on the new-recipe tab): fill the disc with ink and draw
+                // the plus in the surface color so it reads on the fill. Inactive:
+                // plain outlined plus-circle.
+                color={current === 'new-recipe' ? theme.surface.val : iconColor}
+                fill={current === 'new-recipe' ? iconColor : 'none'}
+                strokeWidth={1.8}
+              />
             </YStack>
           </Pressable>
 
@@ -98,11 +105,9 @@ export function TabBar({ state }: CustomTabBarProps) {
             <TabItem
               active={current === 'profile'}
               iconColor={iconColor}
-              pillColor={pill}
-              dotColor={dotColor}
               onPress={() => goTab('profile')}
             >
-              {(color) => <User size={24} color={color} />}
+              {(color, fill) => <User size={24} color={color} fill={fill} />}
             </TabItem>
           </XStack>
         </XStack>
@@ -114,42 +119,22 @@ export function TabBar({ state }: CustomTabBarProps) {
 function TabItem({
   active,
   iconColor,
-  pillColor,
-  dotColor,
   onPress,
   children,
 }: {
   active: boolean;
   iconColor: string;
-  pillColor: string;
-  dotColor: string;
   onPress: () => void;
-  children: (color: string) => React.ReactNode;
+  /** Receives the stroke color and the fill ('none' when inactive, the ink
+   *  color when active) so the icon renders outlined → solid on selection. */
+  children: (color: string, fill: string) => React.ReactNode;
 }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button">
-      {/* The icon circle is the laid-out element, so its center lines up with
-          the FAB's center. The active dot is absolutely positioned below and
-          doesn't affect vertical alignment. */}
-      <YStack
-        width={44}
-        height={44}
-        borderRadius={999}
-        alignItems="center"
-        justifyContent="center"
-        backgroundColor={active ? pillColor : 'transparent'}
-      >
-        {children(iconColor)}
-        {active ? (
-          <YStack
-            position="absolute"
-            bottom={-9}
-            width={6}
-            height={6}
-            borderRadius={999}
-            backgroundColor={dotColor}
-          />
-        ) : null}
+      {/* The icon box is the laid-out element, so its center lines up with the
+          FAB's center. */}
+      <YStack width={44} height={44} borderRadius={999} alignItems="center" justifyContent="center">
+        {children(iconColor, active ? iconColor : 'none')}
       </YStack>
     </Pressable>
   );

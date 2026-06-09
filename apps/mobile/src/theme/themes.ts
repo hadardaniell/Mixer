@@ -55,6 +55,7 @@ type ThemeShape = {
   accentMint: string;
   accentLime: string;
   accentLimeBright: string;
+  accentLimeVivid: string;
   accentTeal: string;
   accentBlue: string;
   accentCoral: string;
@@ -156,6 +157,7 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     accentMint: c[k('mint')],
     accentLime: c[k('lime')],
     accentLimeBright: c[k('limeBright')],
+    accentLimeVivid: c[k('limeVivid')],
     accentTeal: c[k('teal')],
     accentBlue: c[k('blue')],
     accentCoral: c[k('coral')],
