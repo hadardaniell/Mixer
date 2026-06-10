@@ -1,3 +1,4 @@
+// apps/api/src/modules/users/users.routes.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
@@ -16,7 +17,6 @@ const ListQuery = z.object({
   skip: z.coerce.number().int().nonnegative().default(0),
 });
 
-// Mongo duplicate-key (E11000); `keyPattern` tells us which unique field collided.
 function isDuplicateKeyError(err: unknown, field: string): boolean {
   if (!err || typeof err !== 'object') return false;
   const e = err as { code?: number; keyPattern?: Record<string, unknown> };
@@ -24,6 +24,69 @@ function isDuplicateKeyError(err: unknown, field: string): boolean {
 }
 
 export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
+  app.post(
+    '/users/me/avatar',
+    {
+      onRequest: [app.authenticate], 
+    },
+    async (req, reply) => {
+      const data = await req.file({ limits: { fileSize: 3 * 1024 * 1024 } }); 
+      
+      if (!data) {
+        return reply.code(400).send({ error: 'No image file sent' });
+      }
+
+      const uniqueFileName = `avatars/${req.user.id}_${Date.now()}_${data.filename}`;
+      
+      const file = app.firebaseBucket.file(uniqueFileName);
+
+      const writeStream = file.createWriteStream({
+        metadata: {
+          contentType: data.mimetype, // (png/jpeg)
+        },
+        resumable: false,
+      });
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          data.file.pipe(writeStream)
+            .on('finish', resolve)
+            .on('error', (err: any) => {
+              app.log.error('Avatar Write Stream Error:', err);
+              reject(err);
+            });
+          
+          data.file.on('error', (err: any) => {
+            app.log.error('Avatar File Read Error:', err);
+            reject(err);
+          });
+        });
+
+          const encodedFilePath = encodeURIComponent(uniqueFileName);
+          const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${app.firebaseBucket.name}/o/${encodedFilePath}?alt=media`;
+
+          const updatedUser = await app.collections.users.findOneAndUpdate(
+            { _id: new ObjectId(req.user.id) },
+            { $set: { avatarUrl: publicUrl, updatedAt: new Date() } },
+            { returnDocument: 'after' }
+          );
+
+          if (!updatedUser) {
+            return reply.code(404).send({ error: 'user not found' });
+          }
+
+          return reply.code(200).send(toPublicUser(updatedUser));
+
+        } catch (error: any) {
+          app.log.error('Avatar Upload Error Details:', error);
+          return reply.code(500).send({ 
+            error: 'Failed to upload profile picture to Firebase storage server',
+            message: error?.message || error 
+          });
+        }
+      }
+    );
+
   app.get(
     '/users/me',
     { onRequest: [app.authenticate], schema: { tags: ['users'] } },
