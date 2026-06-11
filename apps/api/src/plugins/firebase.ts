@@ -15,10 +15,10 @@ async function firebasePlugin(fastify: FastifyInstance) {
 
   const storage = new Storage({
     keyFilename: serviceAccountPath,
-    projectId: 'mixer-64b7f' 
+    projectId: process.env.FIREBASE_PROJECT_ID 
   });
 
-  const bucket = storage.bucket('mixer-64b7f.firebasestorage.app');
+  const bucket = storage.bucket(`${process.env.FIREBASE_PROJECT_ID}.firebasestorage.app`);
 
   fastify.decorate('firebaseBucket', bucket);
   
