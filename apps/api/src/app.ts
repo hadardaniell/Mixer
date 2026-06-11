@@ -1,3 +1,4 @@
+// apps/api/src/app.ts
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
@@ -16,6 +17,8 @@ import { usersRoutes } from './modules/users/users.routes.js';
 import { recipesRoutes } from './modules/recipes/recipes.routes.js';
 import { recipeBooksRoutes } from './modules/recipe-books/recipe-books.routes.js';
 import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
+import multipart from '@fastify/multipart';
+import firebasePlugin from './plugins/firebase.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -49,6 +52,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
     transform: jsonSchemaTransform,
   });
+
+  await app.register(multipart);
+  await app.register(firebasePlugin);
 
   await app.register(swaggerUi, {
     routePrefix: '/docs',

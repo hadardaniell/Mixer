@@ -1,3 +1,4 @@
+// apps/api/src/modules/recipes/recipes.routes.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId, type Filter } from 'mongodb';
 import { z } from 'zod';
@@ -58,6 +59,60 @@ function canRead(req: { user?: { id: string; role: string } }, doc: RecipeDoc): 
 }
 
 export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
+    app.post(
+      '/recipes/upload-image',
+      {
+        onRequest: [app.authenticate], 
+      },
+      async (req, reply) => {
+        const data = await req.file({ limits: { fileSize: 5 * 1024 * 1024 } }); 
+        
+        if (!data) {
+          return reply.code(400).send({ error: 'No image file sent' });
+        }
+
+        const uniqueFileName = `recipes/${Date.now()}_${data.filename}`;
+        
+        const file = app.firebaseBucket.file(uniqueFileName);
+
+        const writeStream = file.createWriteStream({
+          metadata: {
+            contentType: data.mimetype, // (png/jpeg)
+          },
+          resumable: false, 
+        });
+
+        try {
+          await new Promise<void>((resolve, reject) => {
+            data.file.pipe(writeStream)
+              .on('finish', resolve)
+              .on('error', (err: any) => {
+                app.log.error('Write Stream Error:', err);
+                reject(err);
+              });
+            
+            data.file.on('error', (err: any) => {
+              app.log.error('File Read Error:', err);
+              reject(err);
+            });
+          });
+
+          const encodedFilePath = encodeURIComponent(uniqueFileName);
+          const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${app.firebaseBucket.name}/o/${encodedFilePath}?alt=media`;
+
+          return reply.code(200).send({ imageUrl: publicUrl });
+
+        } catch (error: any) {
+          app.log.error('Upload Error Details:', error);
+
+          return reply.code(500).send({ 
+            error: 'Failed to upload profile picture to Firebase storage server',
+            message: error?.message || error
+          });
+        }
+      }
+    );
+
   app.post(
     '/recipes',
     {

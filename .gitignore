@@ -47,3 +47,6 @@ coverage/
 # Claude Code — personal config / skills, not shared
 .claude/skills/
 .claude/settings.local.json
+
+# Firebase Secret Key
+firebase-service-account.json
