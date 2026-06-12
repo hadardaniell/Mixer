@@ -24,8 +24,12 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@fastify/multipart": "^10.0.0",
+    "@fastify/swagger-ui": "^6.0.0",
     "expo-localization": "^56.0.6",
     "fastify": "^5.8.5",
+    "fastify-type-provider-zod": "^6.1.0",
     "ffmpeg-static": "^5.3.0",
     "pnpm": "^10.33.4"
   }

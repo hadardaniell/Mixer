@@ -108,6 +108,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
         const updated = await app.collections.users.findOneAndUpdate(
           { _id: new ObjectId(req.user.id) },
           { $set: { ...req.body, updatedAt: new Date() } },
+          { $set: { ...(req.body as Record<string, any>), updatedAt: new Date() } },
           { returnDocument: 'after' },
         );
         if (!updated) return reply.code(404).send({ error: 'user not found' });
@@ -199,6 +200,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
       const updated = await app.collections.users.findOneAndUpdate(
         { _id: new ObjectId(req.params.id) },
         { $set: { ...req.body, updatedAt: new Date() } },
+        { $set: { ...(req.body as Record<string, any>), updatedAt: new Date() } },
         { returnDocument: 'after' },
       );
       if (!updated) return reply.code(404).send({ error: 'user not found' });
