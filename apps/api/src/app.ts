@@ -17,6 +17,7 @@ import { usersRoutes } from './modules/users/users.routes.js';
 import { recipesRoutes } from './modules/recipes/recipes.routes.js';
 import { recipeBooksRoutes } from './modules/recipe-books/recipe-books.routes.js';
 import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
+import { friendsRoutes } from './routes/friends.routes.js';
 import multipart from '@fastify/multipart';
 import firebasePlugin from './plugins/firebase.js';
 
@@ -69,6 +70,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(recipesRoutes);
   await app.register(recipeBooksRoutes);
   await app.register(favoritesRoutes);
+  await app.register(friendsRoutes, { prefix: '/friends' });
 
   return app;
 }
