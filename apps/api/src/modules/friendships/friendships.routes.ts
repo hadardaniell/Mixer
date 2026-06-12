@@ -69,7 +69,7 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       const result = await friendshipsService.sendFriendRequest(db, currentUserId, targetUserId);
       
       if ('error' in result) {
-        return reply.code(result.code).send({ message: result.error });
+        return reply.code(result.code as 400).send({ message: result.error as string });
       }
       return { status: result.status as 'pending' };
     }
@@ -103,7 +103,7 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       // TODO: Call push notification service here!
 
       if ('error' in result) {
-        return reply.code(result.code).send({ message: result.error });
+        return reply.code(result.code as 404).send({ message: result.error as string });
       }
       return { status: result.status as 'accepted' };
     }
@@ -135,7 +135,7 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       const result = await friendshipsService.rejectOrCancelFriendRequest(db, currentUserId, targetId);
 
       if ('error' in result) {
-        return reply.code(result.code).send({ message: result.error });
+        return reply.code(result.code as 404).send({ message: result.error as string });
       }
       return { status: result.status as 'deleted' };
     }
@@ -232,9 +232,39 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       const result = await friendshipsService.unfriendUser(db, currentUserId, friendId);
 
       if ('error' in result) {
-        return reply.code(result.code).send({ message: result.error });
+        return reply.code(result.code as 404).send({ message: result.error as string });
       }
       return { status: result.status as 'unfriended', forkedCount: result.forkedCount! };
+    }
+  );
+
+  // 8. GET /status/:id - Get friendship status
+  app.get(
+    '/status/:id',
+    {
+      schema: {
+        tags: ['Friends'],
+        summary: 'Get friendship status',
+        description: 'Returns the friendship status between the current user and the target user.',
+        params: z.object({
+          id: z.string().regex(/^[a-fA-F0-9]{24}$/),
+        }),
+        response: {
+          200: z.object({
+            status: z.string(),
+            isRequester: z.boolean().optional(),
+          }),
+        },
+      },
+      onRequest: [app.authenticate],
+    },
+    async (request) => {
+      const currentUserId = new ObjectId(request.user.id);
+      const targetId = new ObjectId(request.params.id);
+      const db = getDb(request.server);
+
+      const result = await friendshipsService.getFriendshipStatus(db, currentUserId, targetId);
+      return { status: result.friendshipStatus, isRequester: result.isRequester };
     }
   );
 };

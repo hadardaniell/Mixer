@@ -215,3 +215,22 @@ export async function unfriendUser(db: Db, currentUserId: ObjectId, friendId: Ob
 
   return { status: 'unfriended', forkedCount };
 }
+
+export async function getFriendshipStatus(db: Db, currentUserId: ObjectId, targetUserId: ObjectId) {
+  if (currentUserId.equals(targetUserId)) {
+    return { friendshipStatus: 'self', isRequester: false };
+  }
+  const friendship = await db.collection('friendships').findOne({
+    $or: [
+      { requesterId: currentUserId, addresseeId: targetUserId },
+      { requesterId: targetUserId, addresseeId: currentUserId },
+    ],
+  });
+
+  if (!friendship) return { friendshipStatus: 'none', isRequester: false };
+
+  return {
+    friendshipStatus: friendship.status,
+    isRequester: friendship.requesterId.equals(currentUserId),
+  };
+}
