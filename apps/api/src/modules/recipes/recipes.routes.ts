@@ -189,41 +189,46 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (req, reply) => {
-      const original = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
-      if (!original) return reply.code(404).send({ error: 'recipe not found' });
-      if (!canRead(req, original)) return reply.code(403).send({ error: 'forbidden' });
+      try {
+        const original = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
+        if (!original) return reply.code(404).send({ error: 'recipe not found' });
+        if (!canRead(req, original)) return reply.code(403).send({ error: 'forbidden' });
 
-      const now = new Date();
-      const doc: RecipeDoc = {
-        ...original,
-        _id: new ObjectId(),
-        ownerId: new ObjectId(req.user.id),
-        forkedFrom: original._id,
-        forkedAt: now,
-        visibility: 'private',
-        createdAt: now,
-        updatedAt: now,
-      };
+        const now = new Date();
+        const doc: RecipeDoc = {
+          ...original,
+          _id: new ObjectId(),
+          ownerId: new ObjectId(req.user.id),
+          forkedFrom: original._id,
+          forkedAt: now,
+          visibility: 'private',
+          createdAt: now,
+          updatedAt: now,
+        };
 
-      await app.collections.recipes.insertOne(doc);
+        await app.collections.recipes.insertOne(doc);
 
-      const personalBook = await app.collections.recipeBooks.findOne({
-        ownerId: doc.ownerId,
-        type: 'personal',
-      });
+        const personalBook = await app.collections.recipeBooks.findOne({
+          ownerId: doc.ownerId,
+          type: 'personal',
+        });
 
-      if (personalBook) {
-        await app.collections.recipeBooks.updateOne(
-          { _id: personalBook._id },
-          {
-            $addToSet: { recipeIds: doc._id },
-            $set: { updatedAt: now },
-          },
-        );
+        if (personalBook) {
+          await app.collections.recipeBooks.updateOne(
+            { _id: personalBook._id },
+            {
+              $addToSet: { recipeIds: doc._id },
+              $set: { updatedAt: now },
+            },
+          );
+        }
+
+        generateAndStoreEmbedding(app.collections, doc._id, doc);
+        return reply.code(201).send(toRecipe(doc));
+      } catch (error) {
+        app.log.error(error, 'Error during recipe save-as (forking) process');
+        return reply.code(500).send({ error: 'Failed to duplicate recipe due to an internal error' });
       }
-
-      generateAndStoreEmbedding(app.collections, doc._id, doc);
-      return reply.code(201).send(toRecipe(doc));
     },
   );
 
