@@ -164,6 +164,54 @@
       "saveError": "We couldn't save the recipe. Please try again."
     }
   },
+  "createBook": {
+    "title": "Create recipe book",
+    "next": "Next",
+    "back": "Back",
+    "create": "Create book",
+    "saving": "Saving...",
+    "saveError": "We couldn't create the book. Please try again.",
+    "loading": "Loading...",
+    "preview": {
+      "label": "Preview",
+      "namePlaceholder": "Your book name"
+    },
+    "step1": {
+      "title": "Create a new recipe book",
+      "subtitle": "Let's start with a few basics",
+      "nameLabel": "Book name",
+      "namePlaceholder": "e.g. Shabbat recipes",
+      "descLabel": "Short description (optional)",
+      "descPlaceholder": "A few words about your collection...",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "Add a tag and tap +"
+    },
+    "step2": {
+      "title": "Pick recipes",
+      "subtitle": "Which recipes go into the book?",
+      "searchPlaceholder": "Search a recipe...",
+      "selectedCount": "{{count}} selected",
+      "selectAll": "Select all",
+      "clearAll": "Clear",
+      "empty": "No recipes to show"
+    },
+    "step3": {
+      "title": "Share & start",
+      "subtitle": "Who can see the book?",
+      "private": "Private",
+      "privateDesc": "Only you can see the book",
+      "shared": "With friends",
+      "sharedDesc": "Share and add recipes together",
+      "inviteLabel": "Invite friends (optional)",
+      "invitePlaceholder": "Search friends to invite...",
+      "inviteComingSoon": "Friend invites coming soon",
+      "skipHint": "You can skip this step"
+    },
+    "step4": {
+      "title": "Pick a cover",
+      "subtitle": "You can change it later too"
+    }
+  },
   "time": {
     "min": "{{count}} min",
     "hour": "1 hr",

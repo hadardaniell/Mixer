@@ -3,6 +3,7 @@ import { I18nManager, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
 
+import { coverSource } from '@/shared/lib/coverImages';
 import { FEED_CARD_RADIUS } from '@/shared/ui/RecipeCard';
 
 const AVATAR_SIZE = 28;
@@ -21,9 +22,12 @@ export interface BookCardData {
   id: string;
   name: string;
   recipeCount?: number;
+  /** Key of a bundled cover illustration (e.g. "rbc3"). */
+  coverKey?: string;
+  /** Remote cover URL (e.g. a future Firebase upload). Takes precedence over coverKey. */
+  coverImageUrl?: string;
   /** Legacy cover images — unused in the new design but kept on the shape so
-   * existing call-sites don't break. The new card uses a colored accent +
-   * generic illustration instead. */
+   * existing call-sites don't break. */
   coverImages?: string[];
   members: BookCardMember[];
 }
@@ -72,6 +76,10 @@ export function BookCard({
   const accentToken = `$${pickAccent(book.id)}` as const;
   const ink = theme.text?.val as string;
 
+  const cover = book.coverImageUrl
+    ? { uri: book.coverImageUrl }
+    : coverSource(book.coverKey);
+
   const visible = book.members.slice(0, 3);
   const extra = Math.max(0, book.members.length - visible.length);
 
@@ -102,7 +110,11 @@ export function BookCard({
         justifyContent="center"
         overflow="hidden"
       >
-        <CakeSlice size={48} color={ink} strokeWidth={1.7} />
+        {cover ? (
+          <Image source={cover} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        ) : (
+          <CakeSlice size={48} color={ink} strokeWidth={1.7} />
+        )}
       </YStack>
 
       <YStack flex={1} height="100%" justifyContent="space-between" alignItems="flex-end">

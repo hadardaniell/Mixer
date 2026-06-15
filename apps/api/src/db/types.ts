@@ -93,6 +93,7 @@ export type RecipeBookDoc = {
   name: string;
   description?: string;
   coverImageUrl?: string;
+  coverKey?: string;
   type: 'personal' | 'shared' | 'meal';
   members: RecipeBookMember[];
   recipeIds: ObjectId[];

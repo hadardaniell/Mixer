@@ -213,6 +213,8 @@ export const RecipeBookSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   coverImageUrl: z.string().url().optional(),
+  /** Key of a bundled cover illustration (e.g. "rbc3"), resolved to a local asset on the client. */
+  coverKey: z.string().optional(),
   type: RecipeBookTypeSchema,
   members: z.array(RecipeBookMemberSchema),
   recipeIds: z.array(ObjectIdString),
@@ -230,8 +232,10 @@ export const CreateRecipeBookInputSchema = z.object({
   name: z.string().min(1).max(120),
   description: z.string().max(2000).optional(),
   coverImageUrl: z.string().url().optional(),
+  coverKey: z.string().optional(),
   type: RecipeBookTypeSchema.default('personal'),
   tags: z.array(z.string()).default([]),
+  recipeIds: z.array(ObjectIdString).default([]),
 });
 export type CreateRecipeBookInput = z.infer<typeof CreateRecipeBookInputSchema>;
 

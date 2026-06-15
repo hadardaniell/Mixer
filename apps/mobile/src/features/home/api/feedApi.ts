@@ -1,4 +1,5 @@
 ﻿import type {
+  CreateRecipeBookInput,
   CreateRecipeInput,
   ExtractFromImageInput,
   ExtractFromTextResult,
@@ -22,6 +23,14 @@ export const feedApi = {
     http<ListResponse<Recipe>>(`/recipes?owner=me&status=draft&limit=${limit}`),
 
   myBooks: () => http<ListResponse<RecipeBook>>('/recipe-books'),
+
+  allMyRecipes: () => http<ListResponse<Recipe>>('/recipes?owner=me&limit=200'),
+
+  createBook: (input: CreateRecipeBookInput) =>
+    http<RecipeBook>('/recipe-books', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
 
   favoriteRecipes: () => http<ListResponse<Recipe>>('/favorites?kind=recipe'),
 

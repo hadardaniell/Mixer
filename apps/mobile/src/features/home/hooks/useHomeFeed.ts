@@ -119,6 +119,8 @@ export function useHomeFeed(): HomeFeed {
       id: b.id,
       name: b.name,
       recipeCount: b.recipeIds.length,
+      coverKey: b.coverKey,
+      coverImageUrl: b.coverImageUrl,
       coverImages,
       members,
       isFavorite: b.isFavorite ?? false,
