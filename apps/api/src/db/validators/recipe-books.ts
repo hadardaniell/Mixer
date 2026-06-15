@@ -22,6 +22,7 @@ export const recipeBooksValidator: CollectionValidator = {
         name: { bsonType: 'string' },
         description: { bsonType: 'string' },
         coverImageUrl: { bsonType: 'string' },
+        coverKey: { bsonType: 'string' },
         type: { enum: ['personal', 'shared', 'meal'] },
         members: {
           bsonType: 'array',

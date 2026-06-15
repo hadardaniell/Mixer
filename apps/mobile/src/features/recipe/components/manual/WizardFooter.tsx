@@ -10,6 +10,8 @@ interface WizardFooterProps {
   onNext: () => void;
   backDisabled?: boolean;
   nextDisabled?: boolean;
+  /** Fill + shadow color of the primary (next) button. Defaults to orange. */
+  nextColor?: string;
 }
 
 /**
@@ -23,6 +25,7 @@ export function WizardFooter({
   onNext,
   backDisabled,
   nextDisabled,
+  nextColor = '$accentOrange',
 }: WizardFooterProps) {
   const isRtl = useIsRtl();
   return (
@@ -55,9 +58,9 @@ export function WizardFooter({
             borderRadius={20}
             alignItems="center"
             justifyContent="center"
-            backgroundColor="$accentOrange"
+            backgroundColor={nextColor}
             opacity={nextDisabled ? 0.55 : 1}
-            shadowColor="$accentOrange"
+            shadowColor={nextColor}
             shadowOpacity={0.35}
             shadowOffset={{ width: 0, height: 8 }}
             shadowRadius={16}
