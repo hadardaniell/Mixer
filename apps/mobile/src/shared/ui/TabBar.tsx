@@ -16,6 +16,8 @@ export function TabBar({ state }: CustomTabBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
+  // The FAB reads as "active" while inside a create flow (new recipe or new book).
+  const onCreateFlow = current === 'new-recipe' || current === 'books';
   const [addOpen, setAddOpen] = useState(false);
 
   // Icons are dark ink whether active or not; the active state is shown by
@@ -92,11 +94,11 @@ export function TabBar({ state }: CustomTabBarProps) {
             >
               <CirclePlus
                 size={28}
-                // Active (on the new-recipe tab): fill the disc with ink and draw
-                // the plus in the surface color so it reads on the fill. Inactive:
-                // plain outlined plus-circle.
-                color={current === 'new-recipe' ? theme.surface.val : iconColor}
-                fill={current === 'new-recipe' ? iconColor : 'none'}
+                // Active (on a create flow — new recipe or new book): fill the disc
+                // with ink and draw the plus in the surface color so it reads on the
+                // fill. Inactive: plain outlined plus-circle.
+                color={onCreateFlow ? theme.surface.val : iconColor}
+                fill={onCreateFlow ? iconColor : 'none'}
                 strokeWidth={1.8}
               />
             </YStack>

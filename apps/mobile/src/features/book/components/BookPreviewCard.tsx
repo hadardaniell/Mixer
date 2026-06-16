@@ -11,6 +11,7 @@ export function BookPreviewCard({ form }: { form: BookForm }) {
   return (
     <YStack alignItems="center">
       <BookCard
+        elevated
         book={{
           id: 'preview',
           name: form.name.trim() || t('createBook.preview.namePlaceholder'),

@@ -31,6 +31,13 @@ export function Step4Cover({ form, dispatch }: Props) {
       subtitle={t('createBook.step4.subtitle')}
     >
       <YStack gap="$4" style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}>
+        <YStack gap="$2">
+          <Text color="$textMuted" fontSize={13} fontWeight="600">
+            {t('createBook.preview.label')}
+          </Text>
+          <BookPreviewCard form={form} />
+        </YStack>
+
         <XStack flexWrap="wrap" gap="$3" justifyContent="space-between">
           {COVER_KEYS.map((key) => {
             const selected = form.coverKey === key;
@@ -40,8 +47,8 @@ export function Step4Cover({ form, dispatch }: Props) {
                 width="30%"
                 aspectRatio={1}
                 borderRadius={18}
-                borderWidth={2}
-                borderColor={selected ? '$accentOrange' : '$border'}
+                borderWidth={1}
+                borderColor={selected ? '$accentCoral' : '$border'}
                 overflow="hidden"
                 onPress={() => dispatch({ type: 'patch', value: { coverKey: key } })}
                 pressStyle={{ opacity: 0.9 }}
@@ -50,12 +57,12 @@ export function Step4Cover({ form, dispatch }: Props) {
                 {selected ? (
                   <YStack
                     position="absolute"
-                    top={6}
-                    end={6}
+                    top={10}
+                    right={10}
                     width={22}
                     height={22}
                     borderRadius={999}
-                    backgroundColor="$accentOrange"
+                    backgroundColor="$accentCoral"
                     alignItems="center"
                     justifyContent="center"
                   >
@@ -66,13 +73,6 @@ export function Step4Cover({ form, dispatch }: Props) {
             );
           })}
         </XStack>
-
-        <YStack gap="$2">
-          <Text color="$textMuted" fontSize={13} fontWeight="600">
-            {t('createBook.preview.label')}
-          </Text>
-          <BookPreviewCard form={form} />
-        </YStack>
       </YStack>
     </BookStepShell>
   );

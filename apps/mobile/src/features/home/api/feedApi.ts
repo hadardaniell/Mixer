@@ -24,7 +24,7 @@ export const feedApi = {
 
   myBooks: () => http<ListResponse<RecipeBook>>('/recipe-books'),
 
-  allMyRecipes: () => http<ListResponse<Recipe>>('/recipes?owner=me&limit=200'),
+  allMyRecipes: () => http<ListResponse<Recipe>>('/recipes?owner=me&limit=100'),
 
   createBook: (input: CreateRecipeBookInput) =>
     http<RecipeBook>('/recipe-books', {

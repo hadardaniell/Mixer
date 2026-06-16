@@ -79,28 +79,34 @@ export function CreateBookScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 140 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <YStack
+        flex={1}
+        width="100%"
+        paddingTop={insets.top + 16}
+        style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
       >
-        <YStack
-          width="100%"
-          paddingHorizontal="$4"
-          gap="$4"
-          style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
+        {/* Stepper — pinned at the top */}
+        <YStack paddingHorizontal="$4">
+          <BookStepper current={step} total={TOTAL_STEPS} />
+        </YStack>
+
+        {/* Only the step body scrolls (e.g. the recipe grid in step 2) */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <BookStepper current={step} total={TOTAL_STEPS} onBack={goBack} />
-
           {renderStep()}
-
           {error ? (
-            <Text color="$danger" fontSize={13} textAlign="center">
+            <Text color="$danger" fontSize={13} textAlign="center" marginTop="$2">
               {error}
             </Text>
           ) : null}
+        </ScrollView>
 
+        {/* Footer — pinned, lifted above the floating nav bar (~72px tall) */}
+        <YStack paddingHorizontal="$4" paddingTop="$2" paddingBottom={insets.bottom + 92}>
           <WizardFooter
             backLabel={t('createBook.back')}
             nextLabel={nextLabel}
@@ -108,10 +114,10 @@ export function CreateBookScreen() {
             onNext={goNext}
             backDisabled={step === 1 || create.isPending}
             nextDisabled={create.isPending || !canAdvance(step, form)}
-            nextColor={isLast ? '$accentTeal' : '$accentOrange'}
+            nextColor="$accentTeal"
           />
         </YStack>
-      </ScrollView>
+      </YStack>
     </KeyboardAvoidingView>
   );
 }

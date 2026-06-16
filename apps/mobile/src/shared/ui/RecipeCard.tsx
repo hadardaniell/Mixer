@@ -1,6 +1,7 @@
+import { Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'react-native';
-import { Text, View, XStack, YStack } from 'tamagui';
+import { Text, useTheme, View, XStack, YStack } from 'tamagui';
 
 import { FavoriteButton } from '@/shared/ui/FavoriteButton';
 import { formatDuration } from '@/shared/lib/formatDuration';
@@ -44,6 +45,11 @@ interface RecipeCardProps {
   attribution?: RecipeAttribution;
   /** Override the default fixed feed width — e.g. "100%" to fill a grid cell. */
   width?: number | string;
+  /** Selection mode (e.g. the book recipe-picker): shows a checkbox on the
+   *  right and a highlight layer when selected. Off by default so feed usages
+   *  are unaffected. `onPress` toggles selection. */
+  selectable?: boolean;
+  selected?: boolean;
 }
 
 /**
@@ -60,8 +66,11 @@ export function RecipeCard({
   onPress,
   attribution,
   width = FEED_CARD_WIDTH,
+  selectable = false,
+  selected = false,
 }: RecipeCardProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   return (
     <YStack
       onPress={onPress}
@@ -102,9 +111,11 @@ export function RecipeCard({
           </View>
         ) : null}
 
-        <View position="absolute" left={10} bottom={-16}>
-          <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} size={22} />
-        </View>
+        {!selectable ? (
+          <View position="absolute" left={10} bottom={-16}>
+            <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} size={22} />
+          </View>
+        ) : null}
       </YStack>
 
       <YStack
@@ -124,6 +135,38 @@ export function RecipeCard({
           </Text>
         ) : null}
       </YStack>
+
+      {selectable ? (
+        <>
+          {selected ? (
+            <View
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              backgroundColor="$accentCharcoal"
+              opacity={0.12}
+              pointerEvents="none"
+            />
+          ) : null}
+          <View
+            position="absolute"
+            top={8}
+            right={8}
+            width={24}
+            height={24}
+            borderRadius={999}
+            alignItems="center"
+            justifyContent="center"
+            backgroundColor={selected ? '$accentCloud' : 'rgba(255,255,255,0.92)'}
+            borderWidth={selected ? 0 : 1.5}
+            borderColor="$border"
+          >
+            {selected ? <Check size={15} color={theme.text?.val as string} strokeWidth={3} /> : null}
+          </View>
+        </>
+      ) : null}
     </YStack>
   );
 }
