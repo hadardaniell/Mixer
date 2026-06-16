@@ -37,6 +37,8 @@ interface BookCardProps {
   isFavorited: boolean;
   onToggleFavorite: () => void;
   onPress: () => void;
+  /** Stronger shadow so the card reads on a white surface (e.g. the wizard preview). */
+  elevated?: boolean;
 }
 
 const ACCENT_KEYS = [
@@ -70,6 +72,7 @@ export function BookCard({
   isFavorited: _isFavorited,
   onToggleFavorite: _onToggleFavorite,
   onPress,
+  elevated = false,
 }: BookCardProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -94,10 +97,10 @@ export function BookCard({
       gap={14}
       alignItems="center"
       shadowColor="black"
-      shadowOpacity={0.08}
-      shadowRadius={18}
-      shadowOffset={{ width: 0, height: 6 }}
-      elevation={4}
+      shadowOpacity={elevated ? 0.24 : 0.08}
+      shadowRadius={elevated ? 32 : 18}
+      shadowOffset={{ width: 0, height: elevated ? 14 : 6 }}
+      elevation={elevated ? 14 : 4}
       pressStyle={{ opacity: 0.92, scale: 0.98 }}
       style={{ direction: 'ltr' } as never}
     >
@@ -105,7 +108,7 @@ export function BookCard({
         width={COVER_SIZE}
         height={COVER_SIZE}
         borderRadius={26}
-        backgroundColor={accentToken}
+        backgroundColor={cover ? 'transparent' : accentToken}
         alignItems="center"
         justifyContent="center"
         overflow="hidden"

@@ -98,9 +98,9 @@ function PrivacyCard({
       flex={1}
       onPress={onPress}
       borderRadius={18}
-      borderWidth={2}
-      borderColor={selected ? '$accentOrange' : '$border'}
-      backgroundColor={selected ? '$accentPeach' : '$surface'}
+      borderWidth={1}
+      borderColor={selected ? '$accentCoral' : '$border'}
+      backgroundColor={selected ? '$accentPink' : '$surface'}
       padding="$3"
       gap="$2"
       alignItems="center"
@@ -114,7 +114,7 @@ function PrivacyCard({
           width={22}
           height={22}
           borderRadius={999}
-          backgroundColor="$accentOrange"
+          backgroundColor="$accentCoral"
           alignItems="center"
           justifyContent="center"
         >

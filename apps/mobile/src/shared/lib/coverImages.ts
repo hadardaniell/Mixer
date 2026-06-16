@@ -10,13 +10,11 @@ export const COVER_IMAGES: Record<string, ImageSourcePropType> = {
   rbc2: require('../../assets/images/recipe book covers/rbc2.png'),
   rbc3: require('../../assets/images/recipe book covers/rbc3.png'),
   rbc4: require('../../assets/images/recipe book covers/rbc4.png'),
-  rbc5: require('../../assets/images/recipe book covers/rbc5.png'),
   rbc6: require('../../assets/images/recipe book covers/rbc6.png'),
   rbc7: require('../../assets/images/recipe book covers/rbc7.png'),
   rbc8: require('../../assets/images/recipe book covers/rbc8.png'),
   rbc9: require('../../assets/images/recipe book covers/rbc9.png'),
   rbc10: require('../../assets/images/recipe book covers/rbc10.png'),
-  rbc11: require('../../assets/images/recipe book covers/rbc11.png'),
 };
 
 /** Ordered keys for the cover picker grid. */

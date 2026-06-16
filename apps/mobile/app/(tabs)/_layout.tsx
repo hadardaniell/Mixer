@@ -15,6 +15,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="home" />
       <Tabs.Screen name="new-recipe" />
       <Tabs.Screen name="profile" />
+      <Tabs.Screen name="books" />
     </Tabs>
   );
 }

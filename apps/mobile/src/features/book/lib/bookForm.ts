@@ -22,6 +22,7 @@ export const initialBookForm: BookForm = {
   recipeIds: [],
   privacy: 'personal',
   invitedIds: [],
+  coverKey: 'rbc1',
 };
 
 export type BookFormAction =
@@ -63,9 +64,11 @@ export function bookFormReducer(state: BookForm, action: BookFormAction): BookFo
   }
 }
 
-/** Whether the user can advance from a given step. Only the name (step 1) is required. */
+/** Whether the user can advance from a given step. Step 1 needs a name; step 2
+ *  needs at least one selected recipe. */
 export function canAdvance(step: number, form: BookForm): boolean {
   if (step === 1) return form.name.trim().length > 0;
+  if (step === 2) return form.recipeIds.length > 0;
   return true;
 }
 

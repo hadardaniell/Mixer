@@ -192,6 +192,8 @@ const accentsLight = {
   purple: '#BA68C8',
   brown: '#A1887F',
   blueGray: '#90A4AE',
+  charcoal: '#454344',
+  cloud: '#F5F5F5',
 } as const;
 
 // Slightly deepened so the same hues read on dark surfaces.
@@ -214,6 +216,8 @@ const accentsDark = {
   purple: '#A65BB3',
   brown: '#8E776F',
   blueGray: '#7E909C',
+  charcoal: '#454344',
+  cloud: '#F5F5F5',
 } as const;
 
 // ─── Surfaces ───────────────────────────────────────────────────────────────
