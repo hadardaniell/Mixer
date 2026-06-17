@@ -23,3 +23,16 @@ export const COVER_KEYS = Object.keys(COVER_IMAGES);
 export function coverSource(coverKey?: string): ImageSourcePropType | undefined {
   return coverKey ? COVER_IMAGES[coverKey] : undefined;
 }
+
+/**
+ * Resolve the image a book card should show: a remote upload wins, then the
+ * chosen bundled cover, and finally rbc1 as the default so every book renders a
+ * real cover instead of an empty box.
+ */
+export function resolveBookCover(book: {
+  coverImageUrl?: string;
+  coverKey?: string;
+}): ImageSourcePropType {
+  if (book.coverImageUrl) return { uri: book.coverImageUrl };
+  return coverSource(book.coverKey) ?? COVER_IMAGES.rbc1!;
+}
