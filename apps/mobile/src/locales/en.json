@@ -56,7 +56,9 @@
     "drafts": {
       "title": "Recent drafts",
       "seeAll": "See all",
-      "updatedDaysAgo": "Updated {{count}} days ago"
+      "updatedDaysAgo": "Updated {{count}} days ago",
+      "delete": "Delete recipe",
+      "empty": "No drafts yet"
     },
     "creating": "Creating recipe...",
     "errors": {
@@ -99,6 +101,7 @@
     },
     "manual": {
       "title": "Manual recipe",
+      "editTitle": "Edit recipe",
       "stepOf": "Step {{current}} of {{total}}",
       "saving": "Saving...",
       "buttons": {

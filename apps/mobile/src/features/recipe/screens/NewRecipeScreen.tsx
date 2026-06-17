@@ -1,11 +1,10 @@
-import type { Recipe } from '@mixer/contracts';
 import { useRouter } from 'expo-router';
-import { Bell, FileText, MoreVertical } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, useTheme, XStack, YStack } from 'tamagui';
+import { Text, XStack, YStack } from 'tamagui';
 
+import { DraftCard } from '@/features/recipe/components/DraftCard';
 import { useDrafts } from '@/features/recipe/hooks/useDrafts';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { isRTL } from '@/shared/lib/i18n';
@@ -19,26 +18,12 @@ const OPTION_IMAGES = {
   manual: require('../../../assets/images/create-recipe/by hands.png'),
 } satisfies Record<string, ImageSourcePropType>;
 
-const DRAFT_ACCENTS = ['$accentMint', '$accentPink', '$accentPeach', '$accentLavender'] as const;
-
-function pickAccent(id: string): (typeof DRAFT_ACCENTS)[number] {
-  let sum = 0;
-  for (let i = 0; i < id.length; i += 1) sum += id.charCodeAt(i);
-  return DRAFT_ACCENTS[sum % DRAFT_ACCENTS.length]!;
-}
-
-function daysAgo(iso: string): number {
-  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
-}
-
 export function NewRecipeScreen() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const router = useRouter();
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const isRtl = isRTL(language);
-  const ink = theme.text?.val as string;
   const { data: drafts } = useDrafts(6);
 
   return (
@@ -139,16 +124,24 @@ export function NewRecipeScreen() {
               <Text color="$text" fontSize={17} fontWeight="700">
                 {t('newRecipe.drafts.title')}
               </Text>
-              <Pressable accessibilityRole="button" hitSlop={6}>
-                <Text color="$primary" fontSize={14} fontWeight="600">
-                  {t('newRecipe.drafts.seeAll')}
-                </Text>
-              </Pressable>
+              {drafts.length > 2 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  hitSlop={6}
+                  onPress={() => router.push('/new-recipe/drafts' as never)}
+                >
+                  <Text color="$primary" fontSize={14} fontWeight="600">
+                    {t('newRecipe.drafts.seeAll')}
+                  </Text>
+                </Pressable>
+              ) : null}
             </XStack>
 
-            <XStack gap="$3">
+            <XStack flexWrap="wrap" gap="$3">
               {drafts.slice(0, 2).map((d) => (
-                <DraftCard key={d.id} draft={d} ink={ink} />
+                <YStack key={d.id} width="48%">
+                  <DraftCard draft={d} />
+                </YStack>
               ))}
             </XStack>
           </YStack>
@@ -191,47 +184,3 @@ function OptionCard({
   );
 }
 
-function DraftCard({ draft, ink }: { draft: Recipe; ink: string }) {
-  const { t } = useTranslation();
-  return (
-    <XStack
-      flex={1}
-      maxWidth="48%"
-      backgroundColor="$surface"
-      borderRadius={18}
-      padding="$3"
-      gap="$2"
-      alignItems="center"
-      shadowColor="black"
-      shadowOpacity={0.06}
-      shadowRadius={14}
-      shadowOffset={{ width: 0, height: 6 }}
-      elevation={2}
-      pressStyle={{ opacity: 0.92, scale: 0.98 }}
-    >
-      <YStack
-        width={40}
-        height={40}
-        borderRadius={12}
-        backgroundColor={pickAccent(draft.id)}
-        alignItems="center"
-        justifyContent="center"
-      >
-        <FileText size={20} color={ink} strokeWidth={1.8} />
-      </YStack>
-
-      <YStack flex={1} gap={2}>
-        <Text color="$text" fontSize={13} fontWeight="700" numberOfLines={1}>
-          {draft.title}
-        </Text>
-        <Text color="$textMuted" fontSize={11} numberOfLines={1}>
-          {t('newRecipe.drafts.updatedDaysAgo', { count: daysAgo(draft.updatedAt) })}
-        </Text>
-      </YStack>
-
-      <Pressable accessibilityRole="button" hitSlop={6}>
-        <MoreVertical size={18} color={ink} />
-      </Pressable>
-    </XStack>
-  );
-}

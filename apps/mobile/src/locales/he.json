@@ -56,7 +56,9 @@
     "drafts": {
       "title": "טיוטות אחרונות",
       "seeAll": "הצג הכל",
-      "updatedDaysAgo": "עודכן לפני {{count}} ימים"
+      "updatedDaysAgo": "עודכן לפני {{count}} ימים",
+      "delete": "מחיקת מתכון",
+      "empty": "אין טיוטות עדיין"
     },
     "creating": "יוצר מתכון...",
     "errors": {
@@ -99,6 +101,7 @@
     },
     "manual": {
       "title": "יצירת מתכון ידני",
+      "editTitle": "עריכת מתכון ידני",
       "stepOf": "שלב {{current}} מתוך {{total}}",
       "saving": "שומר...",
       "buttons": {

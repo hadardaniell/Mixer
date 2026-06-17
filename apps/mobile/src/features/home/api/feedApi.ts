@@ -68,4 +68,7 @@ export const feedApi = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }),
+
+  deleteRecipe: (id: string) =>
+    http<void>(`/recipes/${id}`, { method: 'DELETE' }),
 };
