@@ -21,7 +21,9 @@ import multipart from '@fastify/multipart';
 import firebasePlugin from './plugins/firebase.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
+  // `warn`: silence Fastify's startup ("Server listening at…") and per-request
+  // info logs; real warnings/errors still surface. Startup banner is printed in server.ts.
+  const app = Fastify({ logger: { level: 'warn' } }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
