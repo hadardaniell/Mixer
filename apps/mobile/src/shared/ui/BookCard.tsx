@@ -1,16 +1,17 @@
-import { CakeSlice } from 'lucide-react-native';
-import { I18nManager, Image } from 'react-native';
+import { Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Text, useTheme, View, XStack, YStack } from 'tamagui';
+import { Text, XStack, YStack } from 'tamagui';
 
-import { coverSource } from '@/shared/lib/coverImages';
+import { resolveBookCover } from '@/shared/lib/coverImages';
+import { useIsRtl } from '@/shared/lib/useIsRtl';
 import { FEED_CARD_RADIUS } from '@/shared/ui/RecipeCard';
+import { dir } from 'i18next';
 
 const AVATAR_SIZE = 28;
-const AVATAR_OVERLAP = -8;
+const AVATAR_OVERLAP = -10;
 const BOOK_CARD_WIDTH = 260;
 const BOOK_CARD_HEIGHT = 126;
-const COVER_SIZE = 94;
+const COVER_SIZE = 116;
 
 export interface BookCardMember {
   id: string;
@@ -37,23 +38,10 @@ interface BookCardProps {
   isFavorited: boolean;
   onToggleFavorite: () => void;
   onPress: () => void;
+  /** Override the fixed feed width — e.g. "100%" to fill a profile list row. */
+  width?: number | string;
   /** Stronger shadow so the card reads on a white surface (e.g. the wizard preview). */
   elevated?: boolean;
-}
-
-const ACCENT_KEYS = [
-  'accentLavender',
-  'accentMint',
-  'accentPink',
-  'accentPeach',
-  'accentLime',
-] as const;
-
-function pickAccent(id: string): (typeof ACCENT_KEYS)[number] {
-  // Deterministic, stable per id — char-sum mod len.
-  let sum = 0;
-  for (let i = 0; i < id.length; i += 1) sum += id.charCodeAt(i);
-  return ACCENT_KEYS[sum % ACCENT_KEYS.length]!;
 }
 
 function initials(name: string): string {
@@ -72,16 +60,12 @@ export function BookCard({
   isFavorited: _isFavorited,
   onToggleFavorite: _onToggleFavorite,
   onPress,
+  width = BOOK_CARD_WIDTH,
   elevated = false,
 }: BookCardProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const accentToken = `$${pickAccent(book.id)}` as const;
-  const ink = theme.text?.val as string;
-
-  const cover = book.coverImageUrl
-    ? { uri: book.coverImageUrl }
-    : coverSource(book.coverKey);
+  const isRtl = useIsRtl();
+  const cover = resolveBookCover(book);
 
   const visible = book.members.slice(0, 3);
   const extra = Math.max(0, book.members.length - visible.length);
@@ -89,12 +73,12 @@ export function BookCard({
   return (
     <XStack
       onPress={onPress}
-      width={BOOK_CARD_WIDTH}
+      width={width}
       height={BOOK_CARD_HEIGHT}
       borderRadius={FEED_CARD_RADIUS}
       backgroundColor="$surface"
-      padding={14}
-      gap={14}
+      overflow="hidden"
+      paddingRight={14}
       alignItems="center"
       shadowColor="black"
       shadowOpacity={elevated ? 0.24 : 0.08}
@@ -104,23 +88,20 @@ export function BookCard({
       pressStyle={{ opacity: 0.92, scale: 0.98 }}
       style={{ direction: 'ltr' } as never}
     >
-      <YStack
-        width={COVER_SIZE}
-        height={COVER_SIZE}
-        borderRadius={26}
-        backgroundColor={cover ? 'transparent' : accentToken}
-        alignItems="center"
-        justifyContent="center"
-        overflow="hidden"
-      >
-        {cover ? (
-          <Image source={cover} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-        ) : (
-          <CakeSlice size={48} color={ink} strokeWidth={1.7} />
-        )}
+      {/* Cover bleeds to the card's left/top/bottom edges — bigger art, same card size. */}
+      <YStack width={COVER_SIZE} height="100%" alignItems="center" justifyContent="center" overflow="hidden">
+        <Image source={cover} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
       </YStack>
 
-      <YStack flex={1} height="100%" justifyContent="space-between" alignItems="flex-end">
+      {/* Text + avatars: padding on top/bottom and the cover side only — no right padding. */}
+      <YStack
+        flex={1}
+        height="100%"
+        paddingVertical={14}
+        paddingStart={12}
+        justifyContent="space-between"
+        alignItems="flex-end"
+      >
         <YStack gap={4} width="100%" alignItems="flex-end">
           <Text
             width="100%"
@@ -133,14 +114,22 @@ export function BookCard({
             {book.name}
           </Text>
           {book.recipeCount != null ? (
-            <Text width="100%" textAlign="right" fontSize={13} color="$textMuted">
+            <Text
+              width="100%"
+              textAlign="right"
+              fontSize={13}
+              color="$textMuted"
+              style={{ direction: isRtl ? 'rtl' : 'ltr', writingDirection: isRtl ? 'rtl' : 'ltr' } as never}
+            >
               {t('home.recipesCount', { count: book.recipeCount })}
             </Text>
           ) : null}
         </YStack>
 
+        {/* Overlapping avatar stack, hugging the cover (start) edge. Forced LTR so
+            the overlap direction is predictable regardless of the app's RTL mode. */}
         {visible.length > 0 ? (
-          <XStack alignItems="center" style={{ direction: 'rtl' } as never}>
+          <XStack alignItems="center" alignSelf="flex-start" style={{ direction: 'ltr' } as never}>
             {visible.map((m, idx) => (
               <Avatar key={m.id} member={m} overlap={idx > 0} />
             ))}
@@ -153,8 +142,6 @@ export function BookCard({
 }
 
 function Avatar({ member, overlap }: { member: BookCardMember; overlap: boolean }) {
-  const startOverlap = I18nManager.isRTL ? 0 : overlap ? AVATAR_OVERLAP : 0;
-  const endOverlap = I18nManager.isRTL ? (overlap ? AVATAR_OVERLAP : 0) : 0;
   return (
     <YStack
       width={AVATAR_SIZE}
@@ -166,8 +153,7 @@ function Avatar({ member, overlap }: { member: BookCardMember; overlap: boolean 
       alignItems="center"
       justifyContent="center"
       overflow="hidden"
-      marginStart={startOverlap}
-      marginEnd={endOverlap}
+      marginLeft={overlap ? AVATAR_OVERLAP : 0}
     >
       {member.avatarUrl ? (
         <Image source={{ uri: member.avatarUrl }} style={{ width: '100%', height: '100%' }} />
@@ -181,8 +167,6 @@ function Avatar({ member, overlap }: { member: BookCardMember; overlap: boolean 
 }
 
 function MoreChip({ count }: { count: number }) {
-  const startOverlap = I18nManager.isRTL ? 0 : AVATAR_OVERLAP;
-  const endOverlap = I18nManager.isRTL ? AVATAR_OVERLAP : 0;
   return (
     <YStack
       width={AVATAR_SIZE}
@@ -191,8 +175,7 @@ function MoreChip({ count }: { count: number }) {
       backgroundColor="$gray3"
       alignItems="center"
       justifyContent="center"
-      marginStart={startOverlap}
-      marginEnd={endOverlap}
+      marginLeft={AVATAR_OVERLAP}
     >
       <Text color="$text" fontSize={12} fontWeight="700">
         +{count}

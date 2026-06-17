@@ -11,15 +11,13 @@ import {
   useToggleRecipeFavorite,
 } from '@/features/home/hooks/useFavoriteMutations';
 import { ProfileFilterChips, type FavoritesFilter } from '@/features/profile/components/ProfileFilterChips';
-import { ProfileBookCard } from '@/features/profile/components/ProfileBookCard';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 import { isRTL } from '@/shared/lib/i18n';
+import { BookCard } from '@/shared/ui/BookCard';
 import { FeedSection } from '@/shared/ui/FeedSection';
 import { RecipeCard } from '@/shared/ui/RecipeCard';
-
-const FAV_BOOK_CARD_WIDTH = 168;
 
 interface ProfileScreenProps {
   /** Defaults to the authenticated user when omitted. */
@@ -101,9 +99,12 @@ export function ProfileScreen({ userId }: ProfileScreenProps) {
                 keyExtractor={(b) => b.id}
                 emptyText={t('profile.empty.favorites')}
                 renderItem={({ item }) => (
-                  <ProfileBookCard
+                  <BookCard
                     book={item}
-                    width={FAV_BOOK_CARD_WIDTH}
+                    isFavorited={item.isFavorite}
+                    onToggleFavorite={() =>
+                      toggleBook.mutate({ id: item.id, next: !item.isFavorite })
+                    }
                     onPress={() => openBook(item.id)}
                   />
                 )}
@@ -111,13 +112,26 @@ export function ProfileScreen({ userId }: ProfileScreenProps) {
             ) : null}
           </YStack>
         ) : tab === 'books' ? (
-          <Grid emptyText={t('profile.empty.books')} count={profile.books.length}>
-            {profile.books.map((b) => (
-              <Cell key={b.id}>
-                <ProfileBookCard book={b} onPress={() => openBook(b.id)} />
-              </Cell>
-            ))}
-          </Grid>
+          profile.books.length === 0 ? (
+            <YStack paddingHorizontal="$4" paddingVertical="$3">
+              <Text color="$textMuted" fontSize={13}>
+                {t('profile.empty.books')}
+              </Text>
+            </YStack>
+          ) : (
+            <YStack paddingHorizontal="$4" gap={14}>
+              {profile.books.map((b) => (
+                <BookCard
+                  key={b.id}
+                  book={b}
+                  width="100%"
+                  isFavorited={b.isFavorite}
+                  onToggleFavorite={() => toggleBook.mutate({ id: b.id, next: !b.isFavorite })}
+                  onPress={() => openBook(b.id)}
+                />
+              ))}
+            </YStack>
+          )
         ) : (
           <Grid emptyText={t('profile.empty.recipes')} count={profile.recipes.length}>
             {profile.recipes.map((r) => (
