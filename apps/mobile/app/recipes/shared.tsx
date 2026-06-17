@@ -1,34 +1,34 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { useToggleBookFavorite } from '@/features/home/hooks/useFavoriteMutations';
+import { useToggleRecipeFavorite } from '@/features/home/hooks/useFavoriteMutations';
 import { useHomeFeed } from '@/features/home/hooks/useHomeFeed';
-import { BookCard } from '@/shared/ui/BookCard';
+import { RecipeCard } from '@/shared/ui/RecipeCard';
 import { ShowAllScreen } from '@/shared/ui/ShowAllScreen';
 
 /**
- * "Shared with me" — currently derived from books I'm a viewer of. Will be
- * replaced with an explicit-shares-collection feed in the next iteration.
+ * "Shared with me" — recipes that live in books shared with me (books I'm a
+ * member of but don't own). Derived in useHomeFeed.
  */
 export default function RecipesSharedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const feed = useHomeFeed();
-  const toggleBook = useToggleBookFavorite();
+  const toggleRecipe = useToggleRecipeFavorite();
 
   return (
     <ShowAllScreen
       title={t('home.sharedWithMe')}
       data={feed.sharedWithMe}
-      keyExtractor={(b) => b.id}
+      keyExtractor={(r) => r.id}
       renderItem={({ item }) => (
-        <BookCard
-          book={item}
+        <RecipeCard
+          recipe={item}
           isFavorited={item.isFavorite}
           onToggleFavorite={() =>
-            toggleBook.mutate({ id: item.id, next: !item.isFavorite })
+            toggleRecipe.mutate({ id: item.id, next: !item.isFavorite })
           }
-          onPress={() => router.push(`/books/${item.id}`)}
+          onPress={() => router.push(`/recipes/${item.id}`)}
         />
       )}
     />
