@@ -71,4 +71,7 @@ export const feedApi = {
 
   deleteRecipe: (id: string) =>
     http<void>(`/recipes/${id}`, { method: 'DELETE' }),
+
+  addRecipeToBook: (bookId: string, recipeId: string) =>
+    http<RecipeBook>(`/recipe-books/${bookId}/recipes/${recipeId}`, { method: 'POST' }),
 };

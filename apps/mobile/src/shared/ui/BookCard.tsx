@@ -40,6 +40,10 @@ interface BookCardProps {
   onPress: () => void;
   /** Override the fixed feed width — e.g. "100%" to fill a profile list row. */
   width?: number | string;
+  /** Override the card height. Default 126 (the feed/profile size — leave as-is). */
+  height?: number;
+  /** Override the cover width. Default 116. Pair with `height` for compact rows. */
+  coverSize?: number;
   /** Stronger shadow so the card reads on a white surface (e.g. the wizard preview). */
   elevated?: boolean;
 }

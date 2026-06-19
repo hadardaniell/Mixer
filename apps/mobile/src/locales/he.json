@@ -244,6 +244,10 @@
       "share": "שיתוף",
       "saveToBook": "שמירה לספר",
       "shoppingList": "רשימת קניות"
+    },
+    "saveToBookSheet": {
+      "title": "שמירה לספר",
+      "empty": "אין לך ספרים עדיין"
     }
   },
   "add": {

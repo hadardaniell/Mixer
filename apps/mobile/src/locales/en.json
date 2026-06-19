@@ -247,6 +247,10 @@
       "share": "Share",
       "saveToBook": "Save to book",
       "shoppingList": "Shopping list"
+    },
+    "saveToBookSheet": {
+      "title": "Save to a book",
+      "empty": "You don't have any books yet"
     }
   },
   "add": {
