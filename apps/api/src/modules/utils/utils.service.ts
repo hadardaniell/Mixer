@@ -1,4 +1,53 @@
-import { INGREDIENTS_DATA, HEBREW_UNIT_MAP, GENERAL_VOLUMES, type UnitType } from './utils.data.js';
+import { INGREDIENTS_DATA, HEBREW_UNIT_MAP, GENERAL_VOLUMES, type UnitType, type IngredientData } from './utils.data.js';
+
+type ToGramsConverter = (amount: number, ingredientData: IngredientData) => number | null;
+type FromGramsConverter = (amountInGrams: number, ingredientData: IngredientData) => number | null;
+
+const TO_GRAMS_CONVERTERS: Partial<Record<UnitType, ToGramsConverter>> = {
+  g: (amount) => amount,
+  kg: (amount) => amount * 1000,
+};
+
+const FROM_GRAMS_CONVERTERS: Partial<Record<UnitType, FromGramsConverter>> = {
+  g: (amountInGrams) => amountInGrams,
+  kg: (amountInGrams) => amountInGrams / 1000,
+};
+
+const TO_GRAMS_STRATEGIES: {
+  match: (unit: UnitType, data: IngredientData) => boolean;
+  convert: (amount: number, unit: UnitType, data: IngredientData) => number;
+}[] = [
+  {
+    match: (unit) => unit in TO_GRAMS_CONVERTERS,
+    convert: (amount, unit, data) => TO_GRAMS_CONVERTERS[unit]!(amount, data)!,
+  },
+  {
+    match: (unit, data) => data.units[unit] !== undefined,
+    convert: (amount, unit, data) => amount * data.units[unit]!,
+  },
+  {
+    match: (unit, data) => data.units.ml !== undefined && GENERAL_VOLUMES[unit] !== undefined,
+    convert: (amount, unit, data) => amount * GENERAL_VOLUMES[unit]! * data.units.ml!,
+  },
+];
+
+const FROM_GRAMS_STRATEGIES: {
+  match: (unit: UnitType, data: IngredientData) => boolean;
+  convert: (amountInGrams: number, unit: UnitType, data: IngredientData) => number;
+}[] = [
+  {
+    match: (unit) => unit in FROM_GRAMS_CONVERTERS,
+    convert: (amountInGrams, unit, data) => FROM_GRAMS_CONVERTERS[unit]!(amountInGrams, data)!,
+  },
+  {
+    match: (unit, data) => data.units[unit] !== undefined,
+    convert: (amountInGrams, unit, data) => amountInGrams / data.units[unit]!,
+  },
+  {
+    match: (unit, data) => data.units.ml !== undefined && GENERAL_VOLUMES[unit] !== undefined,
+    convert: (amountInGrams, unit, data) => (amountInGrams / data.units.ml!) / GENERAL_VOLUMES[unit]!,
+  },
+];
 
 export class UtilsService {
   /**
@@ -22,10 +71,16 @@ export class UtilsService {
     const fromUnit: UnitType = HEBREW_UNIT_MAP[fromUnitStr] || (fromUnitStr as UnitType);
     const toUnit: UnitType = HEBREW_UNIT_MAP[toUnitStr] || (toUnitStr as UnitType);
 
-    // Find the closest matching ingredient based on aliases
-    const ingredientData = INGREDIENTS_DATA.find((item) =>
-      item.aliases.some((alias) => normalizedIngredient.includes(alias) || alias.includes(normalizedIngredient)),
+    // Find the closest matching ingredient based on aliases (exact match first, then partial match)
+    let ingredientData = INGREDIENTS_DATA.find((item) =>
+      item.aliases.some((alias) => alias === normalizedIngredient),
     );
+
+    if (!ingredientData) {
+      ingredientData = INGREDIENTS_DATA.find((item) =>
+        item.aliases.some((alias) => normalizedIngredient.includes(alias) || alias.includes(normalizedIngredient)),
+      );
+    }
 
     if (!ingredientData) {
       if (toUnit === 'ml' && GENERAL_VOLUMES[fromUnit]) {
@@ -35,41 +90,27 @@ export class UtilsService {
     }
 
     // Step 1: Convert from source unit to grams
-    let amountInGrams: number | null = null;
+    const toGramsStrategy = TO_GRAMS_STRATEGIES.find((s) => s.match(fromUnit, ingredientData));
 
-    if (fromUnit === 'g') {
-      amountInGrams = amount;
-    } else if (fromUnit === 'kg') {
-      amountInGrams = amount * 1000;
-    } else if (ingredientData.units[fromUnit]) {
-      amountInGrams = amount * ingredientData.units[fromUnit]!;
-    } else if (ingredientData.units.ml && GENERAL_VOLUMES[fromUnit]) {
-      const volumeInMl = amount * GENERAL_VOLUMES[fromUnit]!;
-      amountInGrams = volumeInMl * ingredientData.units.ml;
-    } else if (GENERAL_VOLUMES[fromUnit]) {
-      return { result: null, message: `Unit '${fromUnitHebrew}' is not supported for ingredient '${ingredientName}'` };
-    } else {
+    if (!toGramsStrategy) {
+      if (GENERAL_VOLUMES[fromUnit]) {
+        return { result: null, message: `Unit '${fromUnitHebrew}' is not supported for ingredient '${ingredientName}'` };
+      }
       return { result: null, message: `Unit '${fromUnitHebrew}' is not recognized` };
     }
 
+    const amountInGrams = toGramsStrategy.convert(amount, fromUnit, ingredientData);
+
     // Step 2: Convert from grams to target unit
-    if (toUnit === 'g') {
-      return { result: Number(amountInGrams.toFixed(2)), message: 'Success' };
-    } else if (toUnit === 'kg') {
-      return { result: Number((amountInGrams / 1000).toFixed(3)), message: 'Success' };
-    }
+    const fromGramsStrategy = FROM_GRAMS_STRATEGIES.find((s) => s.match(toUnit, ingredientData));
 
-    let finalAmount: number | null = null;
-
-    if (ingredientData.units[toUnit]) {
-      finalAmount = amountInGrams / ingredientData.units[toUnit]!;
-    } else if (ingredientData.units.ml && GENERAL_VOLUMES[toUnit]) {
-      const volumeInMl = amountInGrams / ingredientData.units.ml;
-      finalAmount = volumeInMl / GENERAL_VOLUMES[toUnit]!;
-    } else {
+    if (!fromGramsStrategy) {
       return { result: null, message: `Target unit '${toUnitHebrew}' is not supported for ingredient '${ingredientName}'` };
     }
 
-    return { result: Number(finalAmount.toFixed(2)), message: 'Success' };
+    const finalAmount = fromGramsStrategy.convert(amountInGrams, toUnit, ingredientData);
+    const decimalPlaces = toUnit === 'kg' ? 3 : 2;
+
+    return { result: Number(finalAmount.toFixed(decimalPlaces)), message: 'Success' };
   }
 }

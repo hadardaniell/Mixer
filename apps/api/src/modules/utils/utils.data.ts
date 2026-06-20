@@ -13,7 +13,11 @@ export type UnitType =
   | 'cube'
   | 'ml'
   | 'g'
-  | 'kg';
+  | 'kg'
+  | 'container'
+  | 'tub'
+  | 'pack'
+  | 'smallPack';
 
 export interface IngredientData {
   aliases: string[];
@@ -23,11 +27,15 @@ export interface IngredientData {
 export const INGREDIENTS_DATA: IngredientData[] = [
   {
     aliases: ['קמח מלא'],
-    units: { cup: 125, tbsp: 8 },
+    units: { cup: 125, tbsp: 8, pack: 1000 },
   },
   {
-    aliases: ['קמח', 'קמח לבן', 'קמח תופח', 'קמח רגיל'],
-    units: { cup: 140, tbsp: 10 },
+    aliases: ['קמח תופח'],
+    units: { cup: 140, tbsp: 10, pack: 1000, smallPack: 350 },
+  },
+  {
+    aliases: ['קמח', 'קמח לבן', 'קמח רגיל'],
+    units: { cup: 140, tbsp: 10, pack: 1000 },
   },
   {
     aliases: ['סוכר לבן', 'סוכר'],
@@ -106,8 +114,24 @@ export const INGREDIENTS_DATA: IngredientData[] = [
     units: { cup: 200, ml: 0.9 }, // 100 ml = 90g
   },
   {
-    aliases: ['מים', 'מיץ לימון', 'מיץ תפוזים', 'חלב', 'שמנת מתוקה', 'חומץ'],
+    aliases: ['מים', 'מיץ לימון', 'מיץ תפוזים', 'חלב', 'חומץ'],
     units: { cup: 240, tbsp: 15, ml: 1 },
+  },
+  {
+    aliases: ['שמנת מתוקה'],
+    units: { cup: 240, tbsp: 15, ml: 1, container: 250 },
+  },
+  {
+    aliases: ['יוגורט', 'לבן'],
+    units: { cup: 240, tbsp: 15, ml: 1, tub: 200 },
+  },
+  {
+    aliases: ['שמנת חמוצה'],
+    units: { cup: 240, tbsp: 15, ml: 1, tub: 200 },
+  },
+  {
+    aliases: ['גבינה לבנה', 'קוטג׳', 'קוטג'],
+    units: { cup: 250, tbsp: 15, tub: 250 },
   },
   {
     aliases: ['דבש', 'סילאן', 'מייפל'],
@@ -154,6 +178,8 @@ export const HEBREW_UNIT_MAP: Record<string, UnitType> = {
   'כפיות': 'tsp',
   'שקית': 'bag',
   'שקיות': 'bag',
+  'שקיק': 'bag',
+  'שקיקים': 'bag',
   'מ"ל': 'ml',
   'מל': 'ml',
   'מ״ל': 'ml',
@@ -175,4 +201,11 @@ export const HEBREW_UNIT_MAP: Record<string, UnitType> = {
   'm': 'medium',
   's': 'small',
   'מקל': 'stick',
+  'בר חמאה': 'stick',
+  'מיכל': 'container',
+  'גביע': 'tub',
+  'גביעים': 'tub',
+  'חבילה': 'pack',
+  'חבילות': 'pack',
+  'חבילה קטנה': 'smallPack',
 };
