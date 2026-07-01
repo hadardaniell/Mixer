@@ -122,6 +122,7 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   await collections.friendships.createIndex({ recipientId: 1, status: 1 });
 
   await collections.notifications.createIndex({ userId: 1, read: 1, createdAt: -1 });
+  await collections.notifications.createIndex({ userId: 1, type: 1 });
   await collections.notifications.createIndex(
     { expiresAt: 1 },
     { expireAfterSeconds: 0, sparse: true },

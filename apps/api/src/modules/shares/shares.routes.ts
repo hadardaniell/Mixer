@@ -180,12 +180,19 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
         app.collections.users.findOne({ _id: share.ownerId }, { projection: { displayName: 1 } }),
       ]);
 
-      await notificationService.send(share.ownerId.toString(), 'SHARE_ACCEPTED', {
-        fromUserId: req.user.id,
-        resourceType: share.resourceType,
-        resourceId: share.resourceId.toString(),
-        resourceName,
-      });
+      await Promise.all([
+        notificationService.send(share.ownerId.toString(), 'SHARE_ACCEPTED', {
+          fromUserId: req.user.id,
+          resourceType: share.resourceType,
+          resourceId: share.resourceId.toString(),
+          resourceName,
+        }),
+        app.collections.notifications.deleteOne({
+          userId: new ObjectId(req.user.id),
+          type: 'SHARE_REQUEST',
+          'payload.shareId': share._id.toString(),
+        }),
+      ]);
 
       return toSharedItem(updated!, resourceName, owner?.displayName ?? '');
     },
@@ -212,12 +219,19 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
         app.collections.users.findOne({ _id: share.ownerId }, { projection: { displayName: 1 } }),
       ]);
 
-      await notificationService.send(share.ownerId.toString(), 'SHARE_REJECTED', {
-        fromUserId: req.user.id,
-        resourceType: share.resourceType,
-        resourceId: share.resourceId.toString(),
-        resourceName,
-      });
+      await Promise.all([
+        notificationService.send(share.ownerId.toString(), 'SHARE_REJECTED', {
+          fromUserId: req.user.id,
+          resourceType: share.resourceType,
+          resourceId: share.resourceId.toString(),
+          resourceName,
+        }),
+        app.collections.notifications.deleteOne({
+          userId: new ObjectId(req.user.id),
+          type: 'SHARE_REQUEST',
+          'payload.shareId': share._id.toString(),
+        }),
+      ]);
 
       return toSharedItem(updated!, resourceName, owner?.displayName ?? '');
     },
