@@ -112,6 +112,8 @@ export function useProfile(userId?: string): ProfileData {
         id: b.id,
         name: b.name,
         recipeCount: b.recipeIds.length,
+        coverKey: b.coverKey,
+        coverImageUrl: b.coverImageUrl,
         members: b.members
           .filter((m) => m.userId !== myId)
           .slice(0, MAX_MEMBER_PREVIEWS + 1)

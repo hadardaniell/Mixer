@@ -15,7 +15,7 @@ export interface HomeFeed {
   isLoading: boolean;
   recentlyViewed: Array<RecipeCardData & { isFavorite: boolean }>;
   booksWithFriends: Array<BookCardData & { isFavorite: boolean }>;
-  sharedWithMe: Array<BookCardData & { isFavorite: boolean }>;
+  sharedWithMe: Array<RecipeCardData & { isFavorite: boolean }>;
   favorites: Array<RecipeCardData & { isFavorite: boolean }>;
 }
 
@@ -70,6 +70,22 @@ export function useHomeFeed(): HomeFeed {
     enabled: coverRecipeIds.length > 0,
   });
 
+  // Recipes that live in books shared with me (owner != me) — the "shared with
+  // me" feed. Fetched per id since there's no batch recipe endpoint yet.
+  const sharedRecipeIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const b of books) {
+      if (b.ownerId !== myId) for (const id of b.recipeIds) set.add(id);
+    }
+    return Array.from(set);
+  }, [books, myId]);
+
+  const sharedRecipesQ = useQuery({
+    queryKey: ['feed', 'shared-recipes', sharedRecipeIds.sort().join(',')],
+    queryFn: () => Promise.all(sharedRecipeIds.map((id) => feedApi.recipeById(id))),
+    enabled: sharedRecipeIds.length > 0,
+  });
+
   // Collect member user ids across all books
   const memberUserIds = useMemo(() => {
     const set = new Set<string>();
@@ -119,6 +135,8 @@ export function useHomeFeed(): HomeFeed {
       id: b.id,
       name: b.name,
       recipeCount: b.recipeIds.length,
+      coverKey: b.coverKey,
+      coverImageUrl: b.coverImageUrl,
       coverImages,
       members,
       isFavorite: b.isFavorite ?? false,
@@ -131,8 +149,11 @@ export function useHomeFeed(): HomeFeed {
   );
 
   const sharedWithMe = useMemo(
-    () => books.filter((b) => b.ownerId !== myId).map(buildBookCard),
-    [books, recipeById, userById, myId],
+    () =>
+      (sharedRecipesQ.data ?? [])
+        .filter((r) => r.ownerId !== myId) // only recipes others shared, not my own
+        .map(toRecipeCard),
+    [sharedRecipesQ.data, myId],
   );
 
   const favorites = useMemo(
@@ -146,7 +167,8 @@ export function useHomeFeed(): HomeFeed {
       booksQ.isLoading ||
       favRecipesQ.isLoading ||
       coverRecipesQ.isLoading ||
-      usersQ.isLoading,
+      usersQ.isLoading ||
+      sharedRecipesQ.isLoading,
     recentlyViewed: recentlyViewedQ.items,
     booksWithFriends,
     sharedWithMe,

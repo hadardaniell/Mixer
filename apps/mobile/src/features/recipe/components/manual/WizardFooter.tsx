@@ -1,0 +1,78 @@
+import { Pressable } from 'react-native';
+import { Text, XStack, YStack } from 'tamagui';
+
+import { useIsRtl } from '@/shared/lib/useIsRtl';
+
+interface WizardFooterProps {
+  backLabel: string;
+  nextLabel: string;
+  onBack: () => void;
+  onNext: () => void;
+  backDisabled?: boolean;
+  nextDisabled?: boolean;
+  /** Fill + shadow color of the primary (next) button. Defaults to orange. */
+  nextColor?: string;
+}
+
+/**
+ * Sticky two-button footer: an outlined "Back" on the start side and the violet
+ * primary "Next"/"Save" on the end side (positions follow the app direction).
+ */
+export function WizardFooter({
+  backLabel,
+  nextLabel,
+  onBack,
+  onNext,
+  backDisabled,
+  nextDisabled,
+  nextColor = '$accentOrange',
+}: WizardFooterProps) {
+  const isRtl = useIsRtl();
+  return (
+    <XStack gap="$3" style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}>
+      <YStack flex={1}>
+        <Pressable onPress={onBack} disabled={backDisabled} style={{ width: '100%' }}>
+          <YStack
+            width="100%"
+            height={54}
+            borderRadius={20}
+            alignItems="center"
+            justifyContent="center"
+            backgroundColor="$surface"
+            borderWidth={1}
+            borderColor="$border"
+            opacity={backDisabled ? 0.45 : 1}
+            pressStyle={{ backgroundColor: '$bgSubtle' }}
+          >
+            <Text color="$textMuted" fontSize={18} fontWeight="700">
+              {backLabel}
+            </Text>
+          </YStack>
+        </Pressable>
+      </YStack>
+      <YStack flex={1}>
+        <Pressable onPress={onNext} disabled={nextDisabled} style={{ width: '100%' }}>
+          <YStack
+            width="100%"
+            height={54}
+            borderRadius={20}
+            alignItems="center"
+            justifyContent="center"
+            backgroundColor={nextColor}
+            opacity={nextDisabled ? 0.55 : 1}
+            shadowColor={nextColor}
+            shadowOpacity={0.35}
+            shadowOffset={{ width: 0, height: 8 }}
+            shadowRadius={16}
+            elevation={6}
+            pressStyle={{ opacity: 0.9 }}
+          >
+            <Text color="$textOnPrimary" fontSize={18} fontWeight="700">
+              {nextLabel}
+            </Text>
+          </YStack>
+        </Pressable>
+      </YStack>
+    </XStack>
+  );
+}

@@ -3,6 +3,7 @@ import { ChefHat, Clock, Utensils, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
+import { formatDuration } from '@/shared/lib/formatDuration';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 
 interface RecipeMetaTagsProps {
@@ -47,7 +48,7 @@ export function RecipeMetaTags({ recipe }: RecipeMetaTagsProps) {
   if (totalTime)
     chips.push({
       key: 'time',
-      label: t('recipe.minutesShort', { count: totalTime }),
+      label: formatDuration(totalTime, t),
       bg: '$accentLavender',
       Icon: Clock,
     });

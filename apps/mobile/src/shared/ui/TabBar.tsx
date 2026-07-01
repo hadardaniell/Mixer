@@ -1,25 +1,32 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Home, Plus, User } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { CirclePlus, User } from 'lucide-react-native';
+import { useState } from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, XStack, YStack } from 'tamagui';
 
+import { AddSheet } from './AddSheet';
+import { HomeIcon } from './HomeIcon';
+
 type CustomTabBarProps = BottomTabBarProps;
 
-export function TabBar({ state, navigation }: CustomTabBarProps) {
+export function TabBar({ state }: CustomTabBarProps) {
   const theme = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
+  // The FAB reads as "active" while inside a create flow (new recipe or new book).
+  const onCreateFlow = current === 'new-recipe' || current === 'books';
+  const [addOpen, setAddOpen] = useState(false);
 
-  // Icons are dark ink whether active or not; the active state is shown via the
-  // lavender circle behind it plus a small violet dot underneath.
+  // Icons are dark ink whether active or not; the active state is shown by
+  // filling the icon (outline → solid) rather than any colored background.
   const iconColor = theme.text.val;
-  const dotColor = theme.primary.val;
-  const pill = theme.primarySubtle.val;
 
   const goTab = (routeName: string) => {
     if (routeName === current) return;
-    navigation.navigate(routeName);
+    router.navigate(`/${routeName}` as never);
   };
 
   return (
@@ -41,6 +48,7 @@ export function TabBar({ state, navigation }: CustomTabBarProps) {
           right={0}
           bottom={0}
           borderRadius={32}
+          opacity={0.9}
           backgroundColor="$surface"
           shadowColor="black"
           shadowOpacity={0.12}
@@ -62,30 +70,37 @@ export function TabBar({ state, navigation }: CustomTabBarProps) {
             <TabItem
               active={current === 'home'}
               iconColor={iconColor}
-              pillColor={pill}
-              dotColor={dotColor}
               onPress={() => goTab('home')}
             >
-              {(color) => <Home size={24} color={color} />}
+              {(color, fill) => <HomeIcon size={24} color={color} filled={fill !== 'none'} />}
             </TabItem>
           </XStack>
 
-          {/* Center FAB — violet, navigates to the create-recipe screen. */}
-          <Pressable onPress={() => goTab('new-recipe')} accessibilityRole="button">
+          {/* Center FAB — white circle with the same ink icon as the other tabs.
+              Opens the "add" sheet (new recipe / new recipe book). */}
+          <Pressable onPress={() => setAddOpen(true)} accessibilityRole="button">
             <YStack
               width={48}
               height={48}
               borderRadius={24}
-              backgroundColor="$primary"
+              backgroundColor="$surface"
               alignItems="center"
               justifyContent="center"
-              shadowColor="$primary"
-              shadowOpacity={0.3}
+              shadowColor="black"
+              shadowOpacity={0.18}
               shadowOffset={{ width: 0, height: 6 }}
               shadowRadius={12}
               elevation={6}
             >
-              <Plus size={22} color={theme.textOnPrimary.val} />
+              <CirclePlus
+                size={28}
+                // Active (on a create flow — new recipe or new book): fill the disc
+                // with ink and draw the plus in the surface color so it reads on the
+                // fill. Inactive: plain outlined plus-circle.
+                color={onCreateFlow ? theme.surface.val : iconColor}
+                fill={onCreateFlow ? iconColor : 'none'}
+                strokeWidth={1.8}
+              />
             </YStack>
           </Pressable>
 
@@ -94,15 +109,15 @@ export function TabBar({ state, navigation }: CustomTabBarProps) {
             <TabItem
               active={current === 'profile'}
               iconColor={iconColor}
-              pillColor={pill}
-              dotColor={dotColor}
               onPress={() => goTab('profile')}
             >
-              {(color) => <User size={24} color={color} />}
+              {(color, fill) => <User size={24} color={color} fill={fill} />}
             </TabItem>
           </XStack>
         </XStack>
       </YStack>
+
+      <AddSheet open={addOpen} onOpenChange={setAddOpen} />
     </YStack>
   );
 }
@@ -110,42 +125,22 @@ export function TabBar({ state, navigation }: CustomTabBarProps) {
 function TabItem({
   active,
   iconColor,
-  pillColor,
-  dotColor,
   onPress,
   children,
 }: {
   active: boolean;
   iconColor: string;
-  pillColor: string;
-  dotColor: string;
   onPress: () => void;
-  children: (color: string) => React.ReactNode;
+  /** Receives the stroke color and the fill ('none' when inactive, the ink
+   *  color when active) so the icon renders outlined → solid on selection. */
+  children: (color: string, fill: string) => React.ReactNode;
 }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button">
-      {/* The icon circle is the laid-out element, so its center lines up with
-          the FAB's center. The active dot is absolutely positioned below and
-          doesn't affect vertical alignment. */}
-      <YStack
-        width={44}
-        height={44}
-        borderRadius={999}
-        alignItems="center"
-        justifyContent="center"
-        backgroundColor={active ? pillColor : 'transparent'}
-      >
-        {children(iconColor)}
-        {active ? (
-          <YStack
-            position="absolute"
-            bottom={-9}
-            width={6}
-            height={6}
-            borderRadius={999}
-            backgroundColor={dotColor}
-          />
-        ) : null}
+      {/* The icon box is the laid-out element, so its center lines up with the
+          FAB's center. */}
+      <YStack width={44} height={44} borderRadius={999} alignItems="center" justifyContent="center">
+        {children(iconColor, active ? iconColor : 'none')}
       </YStack>
     </Pressable>
   );

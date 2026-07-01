@@ -57,7 +57,164 @@
       "title": "טיוטות אחרונות",
       "seeAll": "הצג הכל",
       "updatedDaysAgo": "עודכן לפני {{count}} ימים"
+    },
+    "creating": "יוצר מתכון...",
+    "errors": {
+      "extractFailed": "לא הצלחנו לחלץ את המתכון. נסי שוב.",
+      "notSameRecipe": "התמונות לא נראות מאותו מתכון. נסי תמונות של אותו מתכון."
+    },
+    "link": {
+      "title": "מתכון מקישור",
+      "subtitle": "הדביקי קישור ונצור ממנו מתכון מסודר",
+      "heroTitle": "כל מתכון מתחיל בקישור",
+      "heroSubtitle": "הדביקי קישור לתוכן שאת אוהבת – וניצור ממנו מתכון מסודר עבורך",
+      "inputPlaceholder": "הדביקי כאן קישור...",
+      "supportedTitle": "נתמך מקישורים של",
+      "supported": {
+        "web": "אתרי אינטרנט",
+        "video": "סרטוני וידאו",
+        "social": "פוסטים ברשתות"
+      },
+      "cta": "יצירת מתכון",
+      "comingSoon": "בקרוב"
+    },
+    "image": {
+      "title": "מתכון מתמונה",
+      "subtitle": "העלי תמונה ונחלץ ממנה את המתכון",
+      "dropzone": "גררי או העלי תמונה",
+      "replace": "החליפי תמונה",
+      "cta": "המשך"
+    },
+    "text": {
+      "title": "טקסט חופשי",
+      "subtitle": "כתבי מה שתרצי ואנחנו נסדר את זה למתכון",
+      "placeholder": "למשל: רעיון למתכון, מצרכים, שלבי הכנה או טקסט חופשי...",
+      "cta": "יצירת מתכון",
+      "inspireTitle": "מחפשת השראה?",
+      "inspire": {
+        "instructions": "הוראות",
+        "ingredients": "מצרכים",
+        "about": "על המתכון"
+      }
+    },
+    "manual": {
+      "title": "יצירת מתכון ידני",
+      "stepOf": "שלב {{current}} מתוך {{total}}",
+      "saving": "שומר...",
+      "buttons": {
+        "next": "הבא",
+        "back": "הקודם",
+        "save": "שמירת מתכון"
+      },
+      "step1": {
+        "title": "איך נקרא למתכון?",
+        "nameLabel": "שם המתכון",
+        "namePlaceholder": "למשל: פסטה ברוטב עגבניות",
+        "descLabel": "תיאור קצר",
+        "descPlaceholder": "כמה מילים על המתכון...",
+        "photoLabel": "הוספת תמונה (אופציונלי)",
+        "photoHint": "לחצי להוספת תמונה"
+      },
+      "step2": {
+        "title": "כמה פרטים קטנים",
+        "prepTime": "זמן הכנה",
+        "prepOther": "אחר",
+        "prepOtherPlaceholder": "דקות",
+        "difficulty": "רמת קושי",
+        "diffEasy": "קל",
+        "diffMedium": "בינוני",
+        "diffHard": "מתקדם",
+        "servings": "מספר מנות",
+        "servingsMany": "6+",
+        "category": "קטגוריה",
+        "catMain": "עיקרי",
+        "catDessert": "קינוח",
+        "catHealthy": "בריא",
+        "catQuick": "מהיר"
+      },
+      "step3": {
+        "title": "מה נכנס למתכון?",
+        "forServings": "ל-{{count}} מנות",
+        "addIngredient": "הוספת מצרך",
+        "updateIngredient": "עדכון מצרך",
+        "namePlaceholder": "למשל: פסטה",
+        "amountPlaceholder": "כמות",
+        "unitPlaceholder": "יחידה",
+        "empty": "עדיין לא הוספת מצרכים"
+      },
+      "step4": {
+        "subtitle": "נסדר את ההכנה שלב-שלב",
+        "title": "איך מכינים?",
+        "addStep": "הוספת שלב",
+        "updateStep": "עדכון שלב",
+        "stepPlaceholder": "מה השלב הבא ברשימת ההכנה?",
+        "durationPlaceholder": "דק'",
+        "empty": "עדיין לא הוספת שלבים"
+      },
+      "step5": {
+        "subtitle": "בדיקה אחרונה ויאללה לשמור",
+        "title": "כמעט מוכן",
+        "autosaveNote": "הטיוטה תישמר אוטומטית",
+        "ingredientsHeading": "רכיבים",
+        "stepsHeading": "אופן ההכנה"
+      },
+      "saveError": "לא הצלחנו לשמור את המתכון. נסי שוב."
     }
+  },
+  "createBook": {
+    "title": "יצירת ספר מתכונים",
+    "next": "הבא",
+    "back": "הקודם",
+    "create": "יצירת ספר",
+    "saving": "שומר...",
+    "saveError": "לא הצלחנו ליצור את הספר. נסי שוב.",
+    "loading": "טוען...",
+    "preview": {
+      "label": "תצוגה מקדימה",
+      "namePlaceholder": "שם הספר שלך"
+    },
+    "step1": {
+      "title": "ניצור ספר מתכונים חדש",
+      "subtitle": "נתחיל עם כמה פרטים בסיסיים",
+      "nameLabel": "שם הספר",
+      "namePlaceholder": "לדוגמה: מתכונים של שבת",
+      "descLabel": "תיאור קצר (אופציונלי)",
+      "descPlaceholder": "כמה מילים על האוסף שלך...",
+      "tagsLabel": "תגיות",
+      "tagsPlaceholder": "הוסיפי תגית ולחצי +"
+    },
+    "step2": {
+      "title": "בחרי מתכונים",
+      "subtitle": "אילו מתכונים ייכנסו לספר?",
+      "searchPlaceholder": "חיפוש מתכון...",
+      "selectedCount": "{{count}} נבחרו",
+      "selectAll": "בחרי הכל",
+      "clearAll": "ניקוי",
+      "empty": "אין מתכונים להצגה"
+    },
+    "step3": {
+      "title": "שיתוף והתחלה",
+      "subtitle": "מי יכול לראות את הספר?",
+      "private": "פרטי",
+      "privateDesc": "רק את/ה תראה/י את הספר",
+      "shared": "עם חברים",
+      "sharedDesc": "שתפי ותעלי יחד מתכונים",
+      "inviteLabel": "הזמנת חברים (אופציונלי)",
+      "invitePlaceholder": "חפשי חברים להזמנה...",
+      "inviteComingSoon": "הזמנת חברים תהיה זמינה בקרוב",
+      "skipHint": "אפשר לדלג על השלב הזה"
+    },
+    "step4": {
+      "title": "בחרי כריכה לספר",
+      "subtitle": "אפשר לשנות אותה גם אחר כך"
+    }
+  },
+  "time": {
+    "min": "{{count}} דק'",
+    "hour": "שעה",
+    "twoHours": "שעתיים",
+    "hours": "{{count}} שעות",
+    "and": " ו-"
   },
   "recipe": {
     "startCooking": "התחלת בישול",

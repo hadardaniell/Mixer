@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { MongoClient, type Db, type Collection } from 'mongodb';
 import { config } from '../config.js';
+import { collectionValidators } from '../db/validators/index.js';
 import type {
   UserDoc,
   RefreshTokenDoc,
@@ -32,7 +33,13 @@ declare module 'fastify' {
 }
 
 export async function mongoPlugin(app: FastifyInstance): Promise<void> {
-  const client = new MongoClient(config.mongoUrl);
+  if (!config.mongoUrl) throw new Error('MONGO_URL is not set');
+  // ignoreUndefined: the driver defaults this to false, which serializes
+  // `undefined` fields as BSON null. Optional fields left undefined when
+  // building docs (e.g. coverImageUrl, source.url/platform) would then be
+  // written as null and rejected by the collections' $jsonSchema validators
+  // (which expect string/enum/objectId when present). Omit them instead.
+  const client = new MongoClient(config.mongoUrl, { ignoreUndefined: true });
   await client.connect();
   const db = client.db(config.mongoDbName);
 
@@ -47,6 +54,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     notifications: db.collection<NotificationDoc>('notifications'),
   };
 
+  await ensureValidators(app, db);
   await ensureIndexes(collections);
 
   app.decorate('mongo', client);
@@ -56,6 +64,29 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
   app.addHook('onClose', async () => {
     await client.close();
   });
+}
+
+/**
+ * Reconcile each collection's `$jsonSchema` validator to the definitions in
+ * db/validators.ts. Idempotent: `collMod` is a no-op when the validator already
+ * matches, and a fresh database (collection missing, NamespaceNotFound / code
+ * 26) gets the collection created with the validator instead.
+ */
+async function ensureValidators(app: FastifyInstance, db: Db): Promise<void> {
+  for (const [name, { validator, validationLevel, validationAction }] of Object.entries(
+    collectionValidators,
+  )) {
+    try {
+      await db.command({ collMod: name, validator, validationLevel, validationAction });
+    } catch (e: any) {
+      if (e.code === 26 || e.codeName === 'NamespaceNotFound') {
+        await db.createCollection(name, { validator, validationLevel, validationAction });
+      } else {
+        throw e;
+      }
+    }
+    app.log.debug({ collection: name }, 'validator reconciled');
+  }
 }
 
 async function ensureIndexes(collections: Collections): Promise<void> {

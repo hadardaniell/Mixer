@@ -1,6 +1,7 @@
-import { Image as ImageIcon, Link as LinkIcon, Sparkles, Video } from 'lucide-react-native';
+import { Image as ImageIcon, Link as LinkIcon, Video } from 'lucide-react-native';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable } from 'react-native';
+import { Image, type LayoutChangeEvent, Pressable } from 'react-native';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 export type ImportRecipeSource = 'ai' | 'image' | 'video' | 'link';
@@ -11,6 +12,10 @@ interface ImportRecipeCardProps {
 }
 
 const CTA_ILLUSTRATION = require('../../../assets/images/CTA.png');
+
+// Approx. rendered width of one chip incl. the row gap — used to decide how
+// many chips fit on a single line before any would wrap.
+const CHIP_WIDTH = 92;
 
 /**
  * Home CTA — "Got a recipe link?" card.
@@ -23,7 +28,23 @@ export function ImportRecipeCard({ onCreatePress, onSourcePress }: ImportRecipeC
   const { t } = useTranslation();
   const theme = useTheme();
   const ink = theme.text?.val as string;
-  const primary = theme.primary?.val as string;
+
+  const sources = [
+    { key: 'image' as const, icon: <ImageIcon size={16} color={ink} />, label: t('home.cta.sources.image') },
+    { key: 'video' as const, icon: <Video size={16} color={ink} />, label: t('home.cta.sources.video') },
+    { key: 'link' as const, icon: <LinkIcon size={16} color={ink} />, label: t('home.cta.sources.link') },
+  ];
+
+  // How many chips fit on one line at the current column width — drop the
+  // overflow rather than wrapping to a second row.
+  const [rowWidth, setRowWidth] = useState(0);
+  const fitCount = rowWidth > 0 ? Math.max(2, Math.floor((rowWidth + 8) / CHIP_WIDTH)) : sources.length;
+  const visibleSources = sources.slice(0, Math.min(sources.length, fitCount));
+
+  const onRowLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    if (Math.abs(w - rowWidth) > 1) setRowWidth(w);
+  };
 
   return (
     <YStack
@@ -63,29 +84,19 @@ export function ImportRecipeCard({ onCreatePress, onSourcePress }: ImportRecipeC
             </YStack>
           </Pressable>
 
-          {/* Source chips */}
-          <XStack flexWrap="wrap" justifyContent="center" gap="$2">
-            <SourceChip
-              icon={<Sparkles size={16} color={primary} />}
-              label={t('home.cta.sources.ai')}
-              onPress={() => onSourcePress?.('ai')}
-            />
-            <SourceChip
-              icon={<ImageIcon size={16} color={ink} />}
-              label={t('home.cta.sources.image')}
-              onPress={() => onSourcePress?.('image')}
-            />
-            <SourceChip
-              icon={<Video size={16} color={ink} />}
-              label={t('home.cta.sources.video')}
-              onPress={() => onSourcePress?.('video')}
-            />
-            <SourceChip
-              icon={<LinkIcon size={16} color={ink} />}
-              label={t('home.cta.sources.link')}
-              onPress={() => onSourcePress?.('link')}
-            />
-          </XStack>
+          {/* Source chips — only as many as fit on one line (no wrapping). */}
+          {/* <YStack width="100%" onLayout={onRowLayout}>
+            <XStack flexWrap="nowrap" justifyContent="center" gap="$2">
+              {visibleSources.map((s) => (
+                <SourceChip
+                  key={s.key}
+                  icon={s.icon}
+                  label={s.label}
+                  onPress={() => onSourcePress?.(s.key)}
+                />
+              ))}
+            </XStack>
+          </YStack> */}
         </YStack>
 
         <Image

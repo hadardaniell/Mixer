@@ -21,27 +21,39 @@ export class HttpError extends Error {
   }
 }
 
-let refreshInFlight: Promise<boolean> | null = null;
+/**
+ * - `ok`: got a fresh session.
+ * - `invalid`: the server definitively rejected the refresh token (revoked,
+ *   expired, or missing) — the user really is logged out.
+ * - `error`: transient failure (offline, timeout, 5xx). Keep the session; a
+ *   later request will refresh successfully. We must NOT log the user out here.
+ */
+type RefreshResult = 'ok' | 'invalid' | 'error';
 
-async function performRefresh(): Promise<boolean> {
+let refreshInFlight: Promise<RefreshResult> | null = null;
+
+async function performRefresh(): Promise<RefreshResult> {
   const refreshToken = tokens.getRefreshToken();
-  if (!refreshToken) return false;
+  if (!refreshToken) return 'invalid';
   try {
     const res = await fetch(`${env.apiUrl}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     });
-    if (!res.ok) return false;
-    const data = (await res.json()) as AuthResponse;
-    tokens.setSession(data.accessToken, data.refreshToken, data.user);
-    return true;
+    if (res.ok) {
+      const data = (await res.json()) as AuthResponse;
+      tokens.setSession(data.accessToken, data.refreshToken, data.user);
+      return 'ok';
+    }
+    // Only 401/403 mean the token itself is no good; treat 5xx/others as transient.
+    return res.status === 401 || res.status === 403 ? 'invalid' : 'error';
   } catch {
-    return false;
+    return 'error';
   }
 }
 
-function refreshOnce(): Promise<boolean> {
+function refreshOnce(): Promise<RefreshResult> {
   if (!refreshInFlight) {
     refreshInFlight = performRefresh().finally(() => {
       refreshInFlight = null;
@@ -69,12 +81,15 @@ export async function http<T>(path: string, opts: HttpOptions = {}): Promise<T> 
   let res = await doFetch();
 
   if (res.status === 401 && !skipAuth && tokens.getRefreshToken()) {
-    const refreshed = await refreshOnce();
-    if (refreshed) {
+    const result = await refreshOnce();
+    if (result === 'ok') {
       res = await doFetch();
-    } else {
+    } else if (result === 'invalid') {
+      // Genuinely rejected — clear so the app falls back to the login screen.
       tokens.clear();
     }
+    // 'error' (offline / 5xx): keep the session and let the original 401 throw
+    // below; the user stays logged in and the next call will retry the refresh.
   }
 
   if (!res.ok) {

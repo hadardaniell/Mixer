@@ -1,3 +1,4 @@
+// apps/api/src/modules/favorites/favorites.routes.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';

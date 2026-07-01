@@ -1,3 +1,4 @@
+// apps/api/src/modules/favorites/favorites.service.ts
 import { ObjectId } from 'mongodb';
 import type { Collections } from '../../plugins/mongo.js';
 import type { FavoriteKind } from '@mixer/contracts';

@@ -43,9 +43,10 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         name: req.body.name,
         description: req.body.description,
         coverImageUrl: req.body.coverImageUrl,
+        coverKey: req.body.coverKey,
         type: req.body.type,
         members: [{ userId: ownerId, role: 'owner', addedAt: now }],
-        recipeIds: [],
+        recipeIds: req.body.recipeIds.map((id) => new ObjectId(id)),
         tags: req.body.tags,
         createdAt: now,
         updatedAt: now,
@@ -101,9 +102,12 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       if (role !== 'owner' && role !== 'editor') {
         return reply.code(403).send({ error: 'editor or owner only' });
       }
+      // recipeIds are managed via the dedicated add/remove-recipe endpoints, not this
+      // generic update (and the input carries them as strings, not ObjectIds).
+      const { recipeIds: _ignored, ...patch } = req.body;
       const updated = await app.collections.recipeBooks.findOneAndUpdate(
         { _id },
-        { $set: { ...req.body, updatedAt: new Date() } },
+        { $set: { ...patch, updatedAt: new Date() } },
         { returnDocument: 'after' },
       );
       return toRecipeBook(updated!);

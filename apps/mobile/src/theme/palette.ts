@@ -180,6 +180,7 @@ const accentsLight = {
   mint: '#E6F7F1',
   lime: '#D9F99D',
   limeBright: '#BFED39',
+  limeVivid: '#B2E330',
   teal: '#14B8A6',
   blue: '#2563EB',
   coral: '#FF4D6D',
@@ -191,6 +192,8 @@ const accentsLight = {
   purple: '#BA68C8',
   brown: '#A1887F',
   blueGray: '#90A4AE',
+  charcoal: '#454344',
+  cloud: '#F5F5F5',
 } as const;
 
 // Slightly deepened so the same hues read on dark surfaces.
@@ -201,6 +204,7 @@ const accentsDark = {
   mint: '#143029',
   lime: '#2C3915',
   limeBright: '#BFED39',
+  limeVivid: '#B2E330',
   teal: '#0F8C7F',
   blue: '#3B74E8',
   coral: '#E84566',
@@ -212,6 +216,8 @@ const accentsDark = {
   purple: '#A65BB3',
   brown: '#8E776F',
   blueGray: '#7E909C',
+  charcoal: '#454344',
+  cloud: '#F5F5F5',
 } as const;
 
 // ─── Surfaces ───────────────────────────────────────────────────────────────

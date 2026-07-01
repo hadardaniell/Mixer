@@ -57,7 +57,167 @@
       "title": "Recent drafts",
       "seeAll": "See all",
       "updatedDaysAgo": "Updated {{count}} days ago"
+    },
+    "creating": "Creating recipe...",
+    "errors": {
+      "extractFailed": "We couldn't extract the recipe. Please try again.",
+      "notSameRecipe": "These photos don't look like the same recipe. Try photos of one recipe."
+    },
+    "link": {
+      "title": "Recipe from a link",
+      "subtitle": "Paste a link and we'll turn it into a structured recipe",
+      "heroTitle": "Every recipe starts with a link",
+      "heroSubtitle": "Paste a link to content you love – and we'll build a structured recipe for you",
+      "inputPlaceholder": "Paste a link here...",
+      "supportedTitle": "Supported links from",
+      "supported": {
+        "web": "Websites",
+        "video": "Videos",
+        "social": "Social posts"
+      },
+      "cta": "Create recipe",
+      "comingSoon": "Coming soon"
+    },
+    "image": {
+      "title": "Recipe from a photo",
+      "subtitle": "Upload a photo and we'll extract the recipe",
+      "dropzone": "Drag or upload a photo",
+      "replace": "Replace photo",
+      "cta": "Continue"
+    },
+    "text": {
+      "title": "Free text",
+      "subtitle": "Write whatever you like and we'll shape it into a recipe",
+      "placeholder": "e.g. a recipe idea, ingredients, prep steps or free text...",
+      "cta": "Create recipe",
+      "inspireTitle": "Looking for inspiration?",
+      "inspire": {
+        "instructions": "Instructions",
+        "ingredients": "Ingredients",
+        "about": "About the recipe"
+      }
+    },
+    "manual": {
+      "title": "Manual recipe",
+      "stepOf": "Step {{current}} of {{total}}",
+      "saving": "Saving...",
+      "buttons": {
+        "next": "Next",
+        "back": "Back",
+        "save": "Save recipe"
+      },
+      "step1": {
+        "subtitle": "Let's build your recipe together",
+        "title": "What's the recipe called?",
+        "nameLabel": "Recipe name",
+        "namePlaceholder": "e.g. Pasta in tomato sauce",
+        "descLabel": "Short description",
+        "descPlaceholder": "A few words about the recipe...",
+        "photoLabel": "Add a photo (optional)",
+        "photoHint": "Tap to add a photo"
+      },
+      "step2": {
+        "subtitle": "A few small details and we move on",
+        "title": "A few small details",
+        "prepTime": "Prep time",
+        "prepOther": "Other",
+        "prepOtherPlaceholder": "minutes",
+        "difficulty": "Difficulty",
+        "diffEasy": "Easy",
+        "diffMedium": "Medium",
+        "diffHard": "Advanced",
+        "servings": "Servings",
+        "servingsMany": "6+",
+        "category": "Category",
+        "catMain": "Main",
+        "catDessert": "Dessert",
+        "catHealthy": "Healthy",
+        "catQuick": "Quick"
+      },
+      "step3": {
+        "subtitle": "Let's gather all the ingredients",
+        "title": "What goes into the recipe?",
+        "forServings": "for {{count}} servings",
+        "addIngredient": "Add ingredient",
+        "updateIngredient": "Update ingredient",
+        "namePlaceholder": "e.g. Pasta",
+        "amountPlaceholder": "Amount",
+        "unitPlaceholder": "Unit",
+        "empty": "No ingredients added yet"
+      },
+      "step4": {
+        "subtitle": "Let's lay out the prep step by step",
+        "title": "How is it made?",
+        "addStep": "Add step",
+        "updateStep": "Update step",
+        "stepPlaceholder": "What's the next step in the prep?",
+        "durationPlaceholder": "min",
+        "empty": "No steps added yet"
+      },
+      "step5": {
+        "subtitle": "One last check and let's save",
+        "title": "Almost ready",
+        "autosaveNote": "The draft is saved automatically",
+        "ingredientsHeading": "Ingredients",
+        "stepsHeading": "Preparation"
+      },
+      "saveError": "We couldn't save the recipe. Please try again."
     }
+  },
+  "createBook": {
+    "title": "Create recipe book",
+    "next": "Next",
+    "back": "Back",
+    "create": "Create book",
+    "saving": "Saving...",
+    "saveError": "We couldn't create the book. Please try again.",
+    "loading": "Loading...",
+    "preview": {
+      "label": "Preview",
+      "namePlaceholder": "Your book name"
+    },
+    "step1": {
+      "title": "Create a new recipe book",
+      "subtitle": "Let's start with a few basics",
+      "nameLabel": "Book name",
+      "namePlaceholder": "e.g. Shabbat recipes",
+      "descLabel": "Short description (optional)",
+      "descPlaceholder": "A few words about your collection...",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "Add a tag and tap +"
+    },
+    "step2": {
+      "title": "Pick recipes",
+      "subtitle": "Which recipes go into the book?",
+      "searchPlaceholder": "Search a recipe...",
+      "selectedCount": "{{count}} selected",
+      "selectAll": "Select all",
+      "clearAll": "Clear",
+      "empty": "No recipes to show"
+    },
+    "step3": {
+      "title": "Share & start",
+      "subtitle": "Who can see the book?",
+      "private": "Private",
+      "privateDesc": "Only you can see the book",
+      "shared": "With friends",
+      "sharedDesc": "Share and add recipes together",
+      "inviteLabel": "Invite friends (optional)",
+      "invitePlaceholder": "Search friends to invite...",
+      "inviteComingSoon": "Friend invites coming soon",
+      "skipHint": "You can skip this step"
+    },
+    "step4": {
+      "title": "Pick a cover",
+      "subtitle": "You can change it later too"
+    }
+  },
+  "time": {
+    "min": "{{count}} min",
+    "hour": "1 hr",
+    "twoHours": "2 hr",
+    "hours": "{{count}} hr",
+    "and": " "
   },
   "recipe": {
     "startCooking": "Start cooking",

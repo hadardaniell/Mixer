@@ -1,3 +1,4 @@
+//apps/api/src/db/types.ts
 import type { ObjectId } from 'mongodb';
 
 export type UserDoc = {
@@ -94,6 +95,7 @@ export type RecipeBookDoc = {
   name: string;
   description?: string;
   coverImageUrl?: string;
+  coverKey?: string;
   type: 'personal' | 'shared' | 'meal';
   members: RecipeBookMember[];
   recipeIds: ObjectId[];

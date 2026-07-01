@@ -4,14 +4,16 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
 
+import { formatDuration } from '@/shared/lib/formatDuration';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 
 interface PreparationStepsProps {
   steps: Recipe['steps'];
 }
 
-/** Cycled per-step number-badge accents — matches the design's varied blobs. */
-const STEP_ACCENTS = ['$accentLavender', '$accentPeach', '$accentMint', '$accentPink'] as const;
+/** Cycled per-step number-badge accents — matches the design's varied blobs.
+ *  Exported so the manual wizard's step editor uses the exact same colors. */
+export const STEP_ACCENTS = ['$accentLavender', '$accentPeach', '$accentMint', '$accentPink'] as const;
 
 /**
  * The "הוראות הכנה" section: numbered step cards with an optional per-step
@@ -89,7 +91,7 @@ export function PreparationSteps({ steps }: PreparationStepsProps) {
               >
                 <Clock size={12} color={ink} />
                 <Text fontSize={11} fontWeight="600" color="$text">
-                  {t('recipe.minutesShort', { count: step.durationMinutes })}
+                  {formatDuration(step.durationMinutes, t)}
                 </Text>
               </XStack>
             ) : null}

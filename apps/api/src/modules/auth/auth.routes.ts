@@ -12,8 +12,8 @@ import {
   GoogleLinkRequiresPasswordError,
   hashPassword,
   issueTokens,
+  refreshSession,
   revokeRefreshToken,
-  rotateRefreshToken,
   verifyGoogleIdToken,
   verifyPassword,
 } from './auth.service.js';
@@ -54,6 +54,23 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       };
       try {
         await app.collections.users.insertOne(doc);
+        await app.collections.recipeBooks.insertOne({
+          _id: new ObjectId(),
+          ownerId: doc._id,
+          name: 'My Recipes',
+          type: 'personal',
+          members: [
+            {
+              userId: doc._id,
+              role: 'owner',
+              addedAt: now,
+            },
+          ],
+          recipeIds: [],
+          tags: [],
+          createdAt: now,
+          updatedAt: now,
+        });
       } catch (e) {
         // Race condition fallback: the unique index caught what the pre-check
         // missed (two concurrent registrations with the same email/phone).
@@ -130,10 +147,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     '/auth/refresh',
     { schema: { body: RefreshInputSchema, tags: ['auth'] } },
     async (req, reply) => {
-      const tokens = await rotateRefreshToken(app.collections, req.body.refreshToken, {
-        userAgent: req.headers['user-agent'],
-        ipAddress: req.ip,
-      });
+      const tokens = await refreshSession(app.collections, req.body.refreshToken);
       if (!tokens) return reply.code(401).send({ error: 'invalid refresh token' });
       return tokens;
     },

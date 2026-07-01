@@ -1,4 +1,12 @@
-﻿import type { PublicUser, Recipe, RecipeBook } from '@mixer/contracts';
+﻿import type {
+  CreateRecipeBookInput,
+  CreateRecipeInput,
+  ExtractFromImageInput,
+  ExtractFromTextResult,
+  PublicUser,
+  Recipe,
+  RecipeBook,
+} from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';
 
@@ -16,6 +24,14 @@ export const feedApi = {
 
   myBooks: () => http<ListResponse<RecipeBook>>('/recipe-books'),
 
+  allMyRecipes: () => http<ListResponse<Recipe>>('/recipes?owner=me&limit=100'),
+
+  createBook: (input: CreateRecipeBookInput) =>
+    http<RecipeBook>('/recipe-books', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
   favoriteRecipes: () => http<ListResponse<Recipe>>('/favorites?kind=recipe'),
 
   favoriteBooks: () => http<ListResponse<RecipeBook>>('/favorites?kind=book'),
@@ -26,5 +42,30 @@ export const feedApi = {
     http<ListResponse<PublicUser>>('/users/by-ids', {
       method: 'POST',
       body: JSON.stringify({ ids }),
+    }),
+
+  // --- recipe creation / AI import ---
+  importText: (text: string) =>
+    http<ExtractFromTextResult>('/recipes/import/text', {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
+
+  importImage: (images: ExtractFromImageInput['images']) =>
+    http<ExtractFromTextResult>('/recipes/import/image', {
+      method: 'POST',
+      body: JSON.stringify({ images }),
+    }),
+
+  createRecipe: (input: CreateRecipeInput) =>
+    http<Recipe>('/recipes', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  updateRecipe: (id: string, input: Partial<CreateRecipeInput>) =>
+    http<Recipe>(`/recipes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
     }),
 };

@@ -1,3 +1,4 @@
+// apps/api/src/app.ts
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
@@ -19,9 +20,13 @@ import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
 import { sharesRoutes } from './modules/shares/shares.routes.js';
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
 import { notificationService } from './services/notification.service.js';
+import multipart from '@fastify/multipart';
+import firebasePlugin from './plugins/firebase.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
-  const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
+  // `warn`: silence Fastify's startup ("Server listening at…") and per-request
+  // info logs; real warnings/errors still surface. Startup banner is printed in server.ts.
+  const app = Fastify({ logger: { level: 'warn' } }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
@@ -52,6 +57,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
     transform: jsonSchemaTransform,
   });
+
+  await app.register(multipart);
+  await app.register(firebasePlugin);
 
   await app.register(swaggerUi, {
     routePrefix: '/docs',
