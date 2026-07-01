@@ -17,6 +17,9 @@ import { usersRoutes } from './modules/users/users.routes.js';
 import { recipesRoutes } from './modules/recipes/recipes.routes.js';
 import { recipeBooksRoutes } from './modules/recipe-books/recipe-books.routes.js';
 import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
+import { sharesRoutes } from './modules/shares/shares.routes.js';
+import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
+import { notificationService } from './services/notification.service.js';
 import multipart from '@fastify/multipart';
 import firebasePlugin from './plugins/firebase.js';
 
@@ -63,6 +66,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await mongoPlugin(app);
+  notificationService.init(app.collections);
   await authPlugin(app);
 
   await app.register(helloRoute);
@@ -71,6 +75,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(recipesRoutes);
   await app.register(recipeBooksRoutes);
   await app.register(favoritesRoutes);
+  await app.register(sharesRoutes);
+  await app.register(notificationsRoutes);
 
   return app;
 }

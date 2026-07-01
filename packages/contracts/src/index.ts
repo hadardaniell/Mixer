@@ -310,3 +310,95 @@ export const EmbedQueryInputSchema = z.object({
   query: z.string().min(1),
 });
 export type EmbedQueryInput = z.infer<typeof EmbedQueryInputSchema>;
+
+// --- shares ---
+export const ShareResourceTypeSchema = z.enum(['recipe', 'book']);
+export type ShareResourceType = z.infer<typeof ShareResourceTypeSchema>;
+
+export const ShareStatusSchema = z.enum(['pending', 'accepted', 'rejected']);
+export type ShareStatus = z.infer<typeof ShareStatusSchema>;
+
+export const SharedItemSchema = z.object({
+  id: ObjectIdString,
+  resourceType: ShareResourceTypeSchema,
+  resourceId: ObjectIdString,
+  resourceName: z.string(),
+  ownerId: ObjectIdString,
+  ownerName: z.string(),
+  friendId: ObjectIdString,
+  status: ShareStatusSchema,
+  savedAt: IsoDate.nullable(),
+  savedResourceId: ObjectIdString.nullable(),
+  createdAt: IsoDate,
+});
+export type SharedItem = z.infer<typeof SharedItemSchema>;
+
+export const CreateShareInputSchema = z.object({
+  resourceType: ShareResourceTypeSchema,
+  resourceId: ObjectIdString,
+  friendId: ObjectIdString,
+});
+export type CreateShareInput = z.infer<typeof CreateShareInputSchema>;
+
+export const ShareListQuerySchema = z.object({
+  status: ShareStatusSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  skip: z.coerce.number().int().nonnegative().default(0),
+});
+export type ShareListQuery = z.infer<typeof ShareListQuerySchema>;
+
+// --- friendships ---
+export const FriendshipStatusSchema = z.enum(['pending', 'accepted']);
+export type FriendshipStatus = z.infer<typeof FriendshipStatusSchema>;
+
+export const FriendshipSchema = z.object({
+  id: ObjectIdString,
+  requesterId: ObjectIdString,
+  requesterName: z.string(),
+  recipientId: ObjectIdString,
+  recipientName: z.string(),
+  status: FriendshipStatusSchema,
+  createdAt: IsoDate,
+  acceptedAt: IsoDate.optional(),
+});
+export type Friendship = z.infer<typeof FriendshipSchema>;
+
+export const SendFriendRequestInputSchema = z.object({
+  recipientId: ObjectIdString,
+});
+export type SendFriendRequestInput = z.infer<typeof SendFriendRequestInputSchema>;
+
+export const UnfriendResponseSchema = z.object({
+  forkedRecipeIds: z.array(ObjectIdString),
+  forkedBookIds: z.array(ObjectIdString),
+});
+export type UnfriendResponse = z.infer<typeof UnfriendResponseSchema>;
+
+// --- notifications ---
+export const NotificationTypeSchema = z.enum([
+  'SHARE_REQUEST',
+  'SHARE_ACCEPTED',
+  'SHARE_REJECTED',
+  'OWNER_DELETED_RESOURCE',
+  'FRIEND_REQUEST',
+  'FRIEND_ACCEPTED',
+  'FRIEND_UNFRIENDED',
+]);
+export type NotificationType = z.infer<typeof NotificationTypeSchema>;
+
+export const NotificationSchema = z.object({
+  id: ObjectIdString,
+  type: NotificationTypeSchema,
+  payload: z.record(z.unknown()),
+  read: z.boolean(),
+  createdAt: IsoDate,
+  expiresAt: IsoDate.nullable(),
+});
+export type Notification = z.infer<typeof NotificationSchema>;
+
+export const NotificationListQuerySchema = z.object({
+  read: z.coerce.boolean().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  skip: z.coerce.number().int().nonnegative().default(0),
+});
+export type NotificationListQuery = z.infer<typeof NotificationListQuerySchema>;
