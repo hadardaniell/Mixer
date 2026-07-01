@@ -84,19 +84,19 @@ export function HomeFeedScreen() {
           )}
         />
 
-        <FeedSection<BookCardData & { isFavorite: boolean }>
+        <FeedSection<RecipeCardData & { isFavorite: boolean }>
           title={t('home.sharedWithMe')}
           data={feed.sharedWithMe}
-          keyExtractor={(b) => b.id}
+          keyExtractor={(r) => r.id}
           onSeeMore={() => router.push('/recipes/shared' as never)}
           renderItem={({ item }) => (
-            <BookCard
-              book={item}
+            <RecipeCard
+              recipe={item}
               isFavorited={item.isFavorite}
               onToggleFavorite={() =>
-                toggleBook.mutate({ id: item.id, next: !item.isFavorite })
+                toggleRecipe.mutate({ id: item.id, next: !item.isFavorite })
               }
-              onPress={() => openBook(item.id)}
+              onPress={() => openRecipe(item.id)}
             />
           )}
         />

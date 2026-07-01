@@ -127,10 +127,16 @@ export async function issueTokens(
   };
 }
 
-export async function rotateRefreshToken(
+/**
+ * Refresh the access token without rotating the refresh token. The same refresh
+ * token stays valid (we only slide its expiry) so concurrent requests, multiple
+ * devices, and app reloads can't invalidate each other and log the user out.
+ * The refresh token is still revocable on logout and expires after the TTL of
+ * inactivity.
+ */
+export async function refreshSession(
   collections: Collections,
   refreshToken: string,
-  meta: { userAgent?: string; ipAddress?: string } = {},
 ): Promise<AuthResponse | null> {
   const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
   const existing = await collections.refreshTokens.findOne({ tokenHash });
@@ -138,15 +144,17 @@ export async function rotateRefreshToken(
   if (existing.revokedAt) return null;
   if (existing.expiresAt.getTime() < Date.now()) return null;
 
-  await collections.refreshTokens.updateOne(
-    { _id: existing._id },
-    { $set: { revokedAt: new Date() } },
-  );
-
   const user = await collections.users.findOne({ _id: existing.userId });
   if (!user) return null;
 
-  return issueTokens(collections, user, meta);
+  // Sliding expiry — keep active sessions alive.
+  await collections.refreshTokens.updateOne(
+    { _id: existing._id },
+    { $set: { expiresAt: new Date(Date.now() + config.refreshTtlSeconds * 1000) } },
+  );
+
+  const accessToken = signAccessToken({ id: user._id.toString(), role: user.role });
+  return { user: toPublicUser(user), accessToken, refreshToken };
 }
 
 export async function revokeRefreshToken(

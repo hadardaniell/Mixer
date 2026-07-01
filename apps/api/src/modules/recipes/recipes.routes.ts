@@ -14,6 +14,7 @@ import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
+import { notificationService } from '../../services/notification.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -305,6 +306,225 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (!req.user) return toRecipe(doc);
       const favSet = await favoritedIds(app.collections, req.user.id, 'recipe', [doc._id]);
       return toRecipe(doc, { isFavorite: favSet.has(doc._id.toString()) });
+    },
+  );
+
+  app.patch(
+    '/recipes/:id',
+    {
+      onRequest: [app.authenticate],
+      schema: { params: IdParam, body: UpdateRecipeInputSchema, tags: ['recipes'] },
+    },
+    async (req, reply) => {
+      const _id = new ObjectId(req.params.id);
+      const existing = await app.collections.recipes.findOne({ _id });
+      if (!existing) return reply.code(404).send({ error: 'recipe not found' });
+      if (existing.ownerId.toString() !== req.user.id) {
+        return reply.code(403).send({ error: 'not the owner' });
+      }
+      const { source, ...rest } = req.body;
+      const $set: Partial<RecipeDoc> & { updatedAt: Date } = { ...rest, updatedAt: new Date() };
+      if (source) {
+        $set.source = {
+          type: source.type,
+          url: source.url,
+          platform: source.platform,
+          importTaskId: source.importTaskId ? new ObjectId(source.importTaskId) : undefined,
+        };
+      }
+      const updated = await app.collections.recipes.findOneAndUpdate(
+        { _id },
+        { $set },
+        { returnDocument: 'after' },
+      );
+      generateAndStoreEmbedding(app.collections, _id, updated!);
+      return toRecipe(updated!);
+    },
+  );
+
+  app.delete(
+    '/recipes/:id',
+    {
+      onRequest: [app.authenticate],
+      schema: { params: IdParam, tags: ['recipes'] },
+    },
+    async (req, reply) => {
+      const _id = new ObjectId(req.params.id);
+      const existing = await app.collections.recipes.findOne({ _id });
+      if (!existing) return reply.code(404).send({ error: 'recipe not found' });
+      if (existing.ownerId.toString() !== req.user.id) {
+        return reply.code(403).send({ error: 'not the owner' });
+      }
+
+      // Auto-fork for friends who have a live link (accepted share, not yet saved)
+      const liveShares = await app.collections.sharedItems
+        .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
+        .toArray();
+
+      await Promise.all(
+        liveShares.map(async (share) => {
+          const now = new Date();
+          const fork: RecipeDoc = {
+            ...existing,
+            _id: new ObjectId(),
+            ownerId: share.friendId,
+            visibility: 'private',
+            forkedFrom: existing._id,
+            forkedAt: now,
+            createdAt: now,
+            updatedAt: now,
+          };
+          await app.collections.recipes.insertOne(fork);
+          await app.collections.sharedItems.updateOne(
+            { _id: share._id },
+            { $set: { savedAt: now, savedResourceId: fork._id } },
+          );
+          await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+            fromUserId: req.user.id,
+            resourceType: 'recipe',
+            resourceName: existing.title,
+            savedCopyId: fork._id.toString(),
+          });
+        }),
+      );
+
+      await app.collections.sharedItems.deleteMany({ resourceId: _id, resourceType: 'recipe' });
+      await app.collections.recipes.deleteOne({ _id });
+      return reply.code(204).send();
+    },
+  );
+
+  app.post(
+    '/recipes/:id/fork',
+    {
+      onRequest: [app.authenticate],
+      schema: { params: IdParam, tags: ['recipes'] },
+    },
+    async (req, reply) => {
+      const source = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
+      if (!source) return reply.code(404).send({ error: 'recipe not found' });
+      if (!canRead(req, source)) return reply.code(403).send({ error: 'forbidden' });
+
+      const now = new Date();
+      const fork: RecipeDoc = {
+        ...source,
+        _id: new ObjectId(),
+        ownerId: new ObjectId(req.user.id),
+        visibility: 'private',
+        status: 'published',
+        forkedFrom: source._id,
+        forkedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await app.collections.recipes.insertOne(fork);
+      return reply.code(201).send(toRecipe(fork));
+    },
+  );
+
+  app.post(
+    '/recipes/import/text',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: ExtractFromTextInputSchema,
+        response: { 200: ExtractFromTextResultSchema },
+        tags: ['recipes'],
+      },
+    },
+    async (req) => {
+      const response = await fetch(`${config.aiBaseUrl}/extract/text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: req.body.text }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI service failed to extract recipe');
+      }
+
+      const data = await response.json();
+      const result = ExtractFromTextResultSchema.parse(data);
+      return result;
+    },
+  );
+
+  app.post(
+    '/recipes/import/image',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: ExtractFromImageInputSchema,
+        response: { 200: ExtractFromTextResultSchema },
+        tags: ['recipes'],
+      },
+    },
+    async (req) => {
+      const response = await fetch(`${config.aiBaseUrl}/extract/image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: req.body.images }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json() as { message?: string };
+        if (data?.message === 'images_not_same_recipe') {
+          throw new Error('images_not_same_recipe');
+        }
+        throw new Error('AI service failed to extract recipe from image');
+      }
+
+      const data = await response.json();
+      const result = ExtractFromTextResultSchema.parse(data);
+      return result;
+    },
+  );
+
+  app.get(
+    '/recipes/semantic-search',
+    {
+      schema: {
+        querystring: z.object({ q: z.string().min(1) }),
+        tags: ['recipes'],
+      },
+    },
+    async (req, reply) => {
+      const { q } = req.query;
+
+      const embedResponse = await fetch(`${config.aiBaseUrl}/embed/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      });
+
+      if (!embedResponse.ok) {
+        return reply.code(503).send({ error: 'embedding service unavailable' });
+      }
+
+      const { embedding: queryEmbedding } = await embedResponse.json() as { embedding: number[] };
+
+      const visibilityFilter: Filter<RecipeDoc> = req.user
+        ? { $or: [{ ownerId: new ObjectId(req.user.id) }, { visibility: { $in: ['public', 'unlisted'] } }] }
+        : { visibility: { $in: ['public', 'unlisted'] } };
+
+      const recipes = await app.collections.recipes
+        .find({ ...visibilityFilter, embedding: { $exists: true } })
+        .toArray();
+
+      const scored = recipes
+        .map((r) => ({ recipe: r, score: cosineSimilarity(queryEmbedding, r.embedding!) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+
+      const favSet = req.user
+        ? await favoritedIds(app.collections, req.user.id, 'recipe', scored.map((s) => s.recipe._id))
+        : null;
+
+      return {
+        items: scored.map(({ recipe }) =>
+          favSet ? toRecipe(recipe, { isFavorite: favSet.has(recipe._id.toString()) }) : toRecipe(recipe),
+        ),
+      };
     },
   );
 };

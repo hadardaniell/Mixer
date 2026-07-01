@@ -1,10 +1,12 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
 import { CirclePlus, User } from 'lucide-react-native';
+import { useState } from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, XStack, YStack } from 'tamagui';
 
+import { AddSheet } from './AddSheet';
 import { HomeIcon } from './HomeIcon';
 
 type CustomTabBarProps = BottomTabBarProps;
@@ -14,6 +16,9 @@ export function TabBar({ state }: CustomTabBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const current = state.routes[state.index]?.name;
+  // The FAB reads as "active" while inside a create flow (new recipe or new book).
+  const onCreateFlow = current === 'new-recipe' || current === 'books';
+  const [addOpen, setAddOpen] = useState(false);
 
   // Icons are dark ink whether active or not; the active state is shown by
   // filling the icon (outline → solid) rather than any colored background.
@@ -72,9 +77,8 @@ export function TabBar({ state }: CustomTabBarProps) {
           </XStack>
 
           {/* Center FAB — white circle with the same ink icon as the other tabs.
-              Always lands on the create-recipe chooser, even when already inside
-              a new-recipe sub-screen. */}
-          <Pressable onPress={() => router.navigate('/new-recipe')} accessibilityRole="button">
+              Opens the "add" sheet (new recipe / new recipe book). */}
+          <Pressable onPress={() => setAddOpen(true)} accessibilityRole="button">
             <YStack
               width={48}
               height={48}
@@ -90,11 +94,11 @@ export function TabBar({ state }: CustomTabBarProps) {
             >
               <CirclePlus
                 size={28}
-                // Active (on the new-recipe tab): fill the disc with ink and draw
-                // the plus in the surface color so it reads on the fill. Inactive:
-                // plain outlined plus-circle.
-                color={current === 'new-recipe' ? theme.surface.val : iconColor}
-                fill={current === 'new-recipe' ? iconColor : 'none'}
+                // Active (on a create flow — new recipe or new book): fill the disc
+                // with ink and draw the plus in the surface color so it reads on the
+                // fill. Inactive: plain outlined plus-circle.
+                color={onCreateFlow ? theme.surface.val : iconColor}
+                fill={onCreateFlow ? iconColor : 'none'}
                 strokeWidth={1.8}
               />
             </YStack>
@@ -112,6 +116,8 @@ export function TabBar({ state }: CustomTabBarProps) {
           </XStack>
         </XStack>
       </YStack>
+
+      <AddSheet open={addOpen} onOpenChange={setAddOpen} />
     </YStack>
   );
 }

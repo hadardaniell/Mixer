@@ -8,6 +8,9 @@ import type {
   RecipeDoc,
   RecipeBookDoc,
   FavoriteDoc,
+  SharedItemDoc,
+  FriendshipDoc,
+  NotificationDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -16,6 +19,9 @@ export type Collections = {
   recipes: Collection<RecipeDoc>;
   recipeBooks: Collection<RecipeBookDoc>;
   favorites: Collection<FavoriteDoc>;
+  sharedItems: Collection<SharedItemDoc>;
+  friendships: Collection<FriendshipDoc>;
+  notifications: Collection<NotificationDoc>;
 };
 
 declare module 'fastify' {
@@ -43,6 +49,9 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     recipes: db.collection<RecipeDoc>('recipes'),
     recipeBooks: db.collection<RecipeBookDoc>('recipe_books'),
     favorites: db.collection<FavoriteDoc>('favorites'),
+    sharedItems: db.collection<SharedItemDoc>('shared_items'),
+    friendships: db.collection<FriendshipDoc>('friendships'),
+    notifications: db.collection<NotificationDoc>('notifications'),
   };
 
   await ensureValidators(app, db);
@@ -103,5 +112,19 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   await collections.users.createIndex(
     { 'providers.google.sub': 1 },
     { unique: true, sparse: true },
+  );
+
+  await collections.sharedItems.createIndex({ resourceId: 1, friendId: 1 });
+  await collections.sharedItems.createIndex({ friendId: 1, status: 1 });
+  await collections.sharedItems.createIndex({ ownerId: 1, status: 1 });
+
+  await collections.friendships.createIndex({ requesterId: 1, recipientId: 1 }, { unique: true });
+  await collections.friendships.createIndex({ recipientId: 1, status: 1 });
+
+  await collections.notifications.createIndex({ userId: 1, read: 1, createdAt: -1 });
+  await collections.notifications.createIndex({ userId: 1, type: 1 });
+  await collections.notifications.createIndex(
+    { expiresAt: 1 },
+    { expireAfterSeconds: 0, sparse: true },
   );
 }

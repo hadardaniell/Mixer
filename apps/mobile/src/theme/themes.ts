@@ -67,6 +67,8 @@ type ThemeShape = {
   accentPurple: string;
   accentBrown: string;
   accentBlueGray: string;
+  accentCharcoal: string;
+  accentCloud: string;
 
   // Inputs
   inputBg: string;
@@ -169,6 +171,8 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     accentPurple: c[k('purple')],
     accentBrown: c[k('brown')],
     accentBlueGray: c[k('blueGray')],
+    accentCharcoal: c[k('charcoal')],
+    accentCloud: c[k('cloud')],
 
     // Inputs
     inputBg: c[k('surface')],

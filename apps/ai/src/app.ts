@@ -13,8 +13,10 @@ import { extractImageRoutes } from './modules/extract-image/extract-image.routes
 import { embedRoutes } from './modules/embed/embed.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
+  // `warn`: silence Fastify's startup ("Server listening at…") and per-request
+  // info logs; real warnings/errors still surface. Startup banner is printed in server.ts.
   const app = Fastify({
-    logger: true,
+    logger: { level: 'warn' },
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);

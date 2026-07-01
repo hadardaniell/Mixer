@@ -9,6 +9,7 @@ export function toRecipeBook(doc: RecipeBookDoc, opts: { isFavorite?: boolean } 
     name: doc.name,
     description: doc.description,
     coverImageUrl: doc.coverImageUrl,
+    coverKey: doc.coverKey,
     type: doc.type,
     members: doc.members.map((m) => ({
       userId: m.userId.toString(),
