@@ -17,37 +17,37 @@ const TO_GRAMS_STRATEGIES: {
   match: (unit: UnitType, data: IngredientData) => boolean;
   convert: (amount: number, unit: UnitType, data: IngredientData) => number;
 }[] = [
-  {
-    match: (unit) => unit in TO_GRAMS_CONVERTERS,
-    convert: (amount, unit, data) => TO_GRAMS_CONVERTERS[unit]!(amount, data)!,
-  },
-  {
-    match: (unit, data) => data.units[unit] !== undefined,
-    convert: (amount, unit, data) => amount * data.units[unit]!,
-  },
-  {
-    match: (unit, data) => data.units.ml !== undefined && GENERAL_VOLUMES[unit] !== undefined,
-    convert: (amount, unit, data) => amount * GENERAL_VOLUMES[unit]! * data.units.ml!,
-  },
-];
+    {
+      match: (unit) => unit in TO_GRAMS_CONVERTERS,
+      convert: (amount, unit, data) => TO_GRAMS_CONVERTERS[unit]!(amount, data)!,
+    },
+    {
+      match: (unit, data) => data.units[unit] !== undefined,
+      convert: (amount, unit, data) => amount * data.units[unit]!,
+    },
+    {
+      match: (unit, data) => data.units.ml !== undefined && GENERAL_VOLUMES[unit] !== undefined,
+      convert: (amount, unit, data) => amount * GENERAL_VOLUMES[unit]! * data.units.ml!,
+    },
+  ];
 
 const FROM_GRAMS_STRATEGIES: {
   match: (unit: UnitType, data: IngredientData) => boolean;
   convert: (amountInGrams: number, unit: UnitType, data: IngredientData) => number;
 }[] = [
-  {
-    match: (unit) => unit in FROM_GRAMS_CONVERTERS,
-    convert: (amountInGrams, unit, data) => FROM_GRAMS_CONVERTERS[unit]!(amountInGrams, data)!,
-  },
-  {
-    match: (unit, data) => data.units[unit] !== undefined,
-    convert: (amountInGrams, unit, data) => amountInGrams / data.units[unit]!,
-  },
-  {
-    match: (unit, data) => data.units.ml !== undefined && GENERAL_VOLUMES[unit] !== undefined,
-    convert: (amountInGrams, unit, data) => (amountInGrams / data.units.ml!) / GENERAL_VOLUMES[unit]!,
-  },
-];
+    {
+      match: (unit) => unit in FROM_GRAMS_CONVERTERS,
+      convert: (amountInGrams, unit, data) => FROM_GRAMS_CONVERTERS[unit]!(amountInGrams, data)!,
+    },
+    {
+      match: (unit, data) => data.units[unit] !== undefined,
+      convert: (amountInGrams, unit, data) => amountInGrams / data.units[unit]!,
+    },
+    {
+      match: (unit, data) => data.units.ml !== undefined && GENERAL_VOLUMES[unit] !== undefined,
+      convert: (amountInGrams, unit, data) => (amountInGrams / data.units.ml!) / GENERAL_VOLUMES[unit]!,
+    },
+  ];
 
 export class UtilsService {
   /**
