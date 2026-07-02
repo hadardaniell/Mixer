@@ -125,6 +125,13 @@ export type FriendshipDoc = {
   acceptedAt?: Date;
 };
 
+export type UrlExtractionCacheDoc = {
+  _id: ObjectId;
+  url: string;
+  extraction: Record<string, unknown>;
+  extractedAt: Date;
+};
+
 export type NotificationDoc = {
   _id: ObjectId;
   userId: ObjectId;

@@ -11,6 +11,7 @@ import type {
   SharedItemDoc,
   FriendshipDoc,
   NotificationDoc,
+  UrlExtractionCacheDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -22,6 +23,7 @@ export type Collections = {
   sharedItems: Collection<SharedItemDoc>;
   friendships: Collection<FriendshipDoc>;
   notifications: Collection<NotificationDoc>;
+  urlExtractionCache: Collection<UrlExtractionCacheDoc>;
 };
 
 declare module 'fastify' {
@@ -52,6 +54,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     sharedItems: db.collection<SharedItemDoc>('shared_items'),
     friendships: db.collection<FriendshipDoc>('friendships'),
     notifications: db.collection<NotificationDoc>('notifications'),
+    urlExtractionCache: db.collection<UrlExtractionCacheDoc>('url_extraction_cache'),
   };
 
   await ensureValidators(app, db);
@@ -120,6 +123,8 @@ async function ensureIndexes(collections: Collections): Promise<void> {
 
   await collections.friendships.createIndex({ requesterId: 1, recipientId: 1 }, { unique: true });
   await collections.friendships.createIndex({ recipientId: 1, status: 1 });
+
+  await collections.urlExtractionCache.createIndex({ url: 1 }, { unique: true });
 
   await collections.notifications.createIndex({ userId: 1, read: 1, createdAt: -1 });
   await collections.notifications.createIndex({ userId: 1, type: 1 });
