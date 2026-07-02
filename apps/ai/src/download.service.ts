@@ -8,7 +8,25 @@ import ffmpeg from 'ffmpeg-static';
 
 const execAsync = promisify(exec);
 
+export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90s), Shorts (3min), TikToks
+
 export const downloadService = {
+  async getVideoInfo(url: string): Promise<{ duration: number; title: string }> {
+    const info = await ytDlp(url, {
+      dumpSingleJson: true,
+      skipDownload: true,
+      noWarnings: true,
+      noCheckCertificate: true,
+      impersonate: 'chrome',
+    } as any);
+
+    const parsed = typeof info === 'string' ? JSON.parse(info) : info as any;
+    return {
+      duration: parsed.duration ?? 0,
+      title: parsed.title ?? '',
+    };
+  },
+
   async getTopComments(url: string): Promise<string> {
     try {
       console.log(`[download.service] Fetching metadata and comments for: ${url}`);

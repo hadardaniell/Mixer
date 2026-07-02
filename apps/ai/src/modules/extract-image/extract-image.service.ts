@@ -9,9 +9,12 @@ const ocr = new TesseractOcrProvider();
 // To switch to Google Vision: const ocr = new GoogleVisionOcrProvider();
 
 const RECIPE_EXTRACTION_PROMPT = `You are a recipe extraction assistant.
-The user will give you raw text extracted from a recipe image — it may contain some OCR noise or extra content from the webpage.
-Extract the recipe and return it as valid JSON matching this structure:
+The user will give you raw text extracted from an image — it may contain some OCR noise or extra content.
+First decide if the text contains a recipe. Then return a valid JSON object:
+
+If it IS a recipe:
 {
+  "isRecipe": true,
   "title": string,
   "description": string (optional),
   "ingredients": [{ "name": string, "amount": number (optional), "unit": string (optional) }],
@@ -23,6 +26,10 @@ Extract the recipe and return it as valid JSON matching this structure:
   "cuisine": string (optional),
   "tags": string[] (optional)
 }
+
+If it is NOT a recipe (e.g. a meme, screenshot, product photo, random text):
+{ "isRecipe": false }
+
 IMPORTANT RULES:
 - Ignore ALL advertisements, sponsored content, social media links, blog links, or calls to action.
 - The recipe title must come ONLY from the main heading of the recipe.
@@ -79,11 +86,15 @@ export async function extractRecipeFromImages(
 
   const raw = completion.choices[0]?.message?.content ?? '{}';
 
-  let parsed: unknown;
+  let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(raw);
   } catch {
     throw new Error('AI returned invalid JSON');
+  }
+
+  if (parsed.isRecipe === false) {
+    throw new Error('not_a_recipe');
   }
 
   return ExtractFromTextResultSchema.parse(parsed);
