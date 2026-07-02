@@ -56,7 +56,9 @@ export async function sendFriendRequest(db: Db, currentUserId: ObjectId, targetU
     a.toString().localeCompare(b.toString())
   );
 
+  const friendshipId = new ObjectId();
   await db.collection('friendships').insertOne({
+    _id: friendshipId,
     requesterId: currentUserId,
     addresseeId: targetUserId,
     participants,
@@ -65,7 +67,7 @@ export async function sendFriendRequest(db: Db, currentUserId: ObjectId, targetU
     updatedAt: new Date(),
   });
 
-  return { status: 'pending' };
+  return { status: 'pending', friendshipId };
 }
 
 export async function acceptFriendRequest(db: Db, currentUserId: ObjectId, requesterId: ObjectId) {

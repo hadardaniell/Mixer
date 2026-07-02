@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ObjectId } from 'mongodb';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import * as friendshipsService from './friendships.service.js';
+import { notificationService } from '../../services/notification.service.js';
 
 export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
   // Helper to safely access the DB based on fastify decorators
@@ -67,10 +68,21 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       const db = getDb(request.server);
 
       const result = await friendshipsService.sendFriendRequest(db, currentUserId, targetUserId);
-      
+
       if ('error' in result) {
         return reply.code(result.code as 400).send({ message: result.error as string });
       }
+
+      const sender = await app.collections.users.findOne(
+        { _id: currentUserId },
+        { projection: { displayName: 1 } },
+      );
+      await notificationService.send(targetUserId.toString(), 'FRIEND_REQUEST', {
+        fromUserId: request.user.id,
+        fromUserName: sender?.displayName ?? '',
+        friendshipId: result.friendshipId.toString(),
+      });
+
       return { status: result.status as 'pending' };
     }
   );
@@ -99,12 +111,27 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       const db = getDb(request.server);
 
       const result = await friendshipsService.acceptFriendRequest(db, currentUserId, requesterId);
-      
-      // TODO: Call push notification service here!
 
       if ('error' in result) {
         return reply.code(result.code as 404).send({ message: result.error as string });
       }
+
+      const accepter = await app.collections.users.findOne(
+        { _id: currentUserId },
+        { projection: { displayName: 1 } },
+      );
+      await Promise.all([
+        notificationService.send(requesterId.toString(), 'FRIEND_ACCEPTED', {
+          fromUserId: request.user.id,
+          fromUserName: accepter?.displayName ?? '',
+        }),
+        app.collections.notifications.deleteOne({
+          userId: currentUserId,
+          type: 'FRIEND_REQUEST',
+          'payload.fromUserId': requesterId.toString(),
+        }),
+      ]);
+
       return { status: result.status as 'accepted' };
     }
   );
@@ -137,6 +164,24 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       if ('error' in result) {
         return reply.code(result.code as 404).send({ message: result.error as string });
       }
+
+      // Delete the FRIEND_REQUEST notification from whichever inbox holds it.
+      // One of these two queries will match; the other is a safe no-op.
+      await Promise.all([
+        // Case: currentUser is rejecting an incoming request (notification in their inbox)
+        app.collections.notifications.deleteOne({
+          userId: currentUserId,
+          type: 'FRIEND_REQUEST',
+          'payload.fromUserId': targetId.toString(),
+        }),
+        // Case: currentUser is cancelling their own outgoing request (notification in target's inbox)
+        app.collections.notifications.deleteOne({
+          userId: targetId,
+          type: 'FRIEND_REQUEST',
+          'payload.fromUserId': request.user.id,
+        }),
+      ]);
+
       return { status: result.status as 'deleted' };
     }
   );
@@ -234,6 +279,16 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
       if ('error' in result) {
         return reply.code(result.code as 404).send({ message: result.error as string });
       }
+
+      const unfriender = await app.collections.users.findOne(
+        { _id: currentUserId },
+        { projection: { displayName: 1 } },
+      );
+      await notificationService.send(friendId.toString(), 'FRIEND_UNFRIENDED', {
+        fromUserId: request.user.id,
+        fromUserName: unfriender?.displayName ?? '',
+      });
+
       return { status: result.status as 'unfriended', forkedCount: result.forkedCount! };
     }
   );
