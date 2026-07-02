@@ -423,6 +423,56 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   app.post(
+    '/recipes/import/url',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: z.object({ url: z.string().url() }),
+        response: {
+          200: ExtractFromTextResultSchema,
+          422: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+        tags: ['recipes'],
+      },
+    },
+    async (req, reply) => {
+      const { url } = req.body;
+
+      // Check global cache first — if any user already extracted this URL, reuse it
+      const cached = await app.collections.urlExtractionCache.findOne({ url });
+      if (cached) {
+        app.log.info(`[import/url] Cache hit for ${url}`);
+        return ExtractFromTextResultSchema.parse(cached.extraction);
+      }
+
+      // Cache miss — call the AI service
+      app.log.info(`[import/url] Cache miss — calling AI for ${url}`);
+      const response = await fetch(`${config.aiBaseUrl}/extract/video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json() as { error?: string };
+        return reply.code(response.status === 422 ? 422 : 500).send({
+          error: data?.error ?? 'AI service failed to extract recipe from URL',
+        });
+      }
+
+      const extraction = await response.json() as Record<string, unknown>;
+
+      // Save to cache so future requests skip the AI call
+      await app.collections.urlExtractionCache
+        .insertOne({ _id: new ObjectId(), url, extraction, extractedAt: new Date() })
+        .catch(() => {}); // ignore duplicate-key race (two simultaneous requests for same URL)
+
+      return ExtractFromTextResultSchema.parse(extraction);
+    },
+  );
+
+  app.post(
     '/recipes/import/text',
     {
       onRequest: [app.authenticate],
