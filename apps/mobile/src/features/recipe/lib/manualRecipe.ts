@@ -1,8 +1,10 @@
-import type { CreateRecipeInput } from '@mixer/contracts';
+import type { CreateRecipeInput, Recipe } from '@mixer/contracts';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 /** Category chips in step 2 — stored as a single recipe tag. */
 export type Category = 'main' | 'dessert' | 'healthy' | 'quick';
+
+const CATEGORIES: Category[] = ['main', 'dessert', 'healthy', 'quick'];
 
 export interface ManualIngredient {
   name: string;
@@ -35,6 +37,7 @@ export const initialManualForm: ManualForm = {
 };
 
 export type ManualFormAction =
+  | { type: 'reset'; value: ManualForm }
   | { type: 'patch'; value: Partial<ManualForm> }
   | { type: 'addIngredient'; value: ManualIngredient }
   | { type: 'updateIngredient'; index: number; value: ManualIngredient }
@@ -45,6 +48,8 @@ export type ManualFormAction =
 
 export function manualFormReducer(state: ManualForm, action: ManualFormAction): ManualForm {
   switch (action.type) {
+    case 'reset':
+      return action.value;
     case 'patch':
       return { ...state, ...action.value };
     case 'addIngredient':
@@ -108,6 +113,32 @@ export function stepPatch(step: number, form: ManualForm): Partial<CreateRecipeI
     default:
       return {};
   }
+}
+
+/** Seed the wizard form from an existing recipe (edit mode). Inverse of the
+ *  per-step patches above: pulls the single known category tag back out, and
+ *  orders steps by their stored `order`. */
+export function recipeToManualForm(r: Recipe): ManualForm {
+  const category = r.tags.find((tag): tag is Category =>
+    (CATEGORIES as string[]).includes(tag),
+  );
+  return {
+    title: r.title,
+    description: r.description ?? '',
+    prepTimeMinutes: r.prepTimeMinutes,
+    difficulty: r.difficulty,
+    servings: r.servings,
+    category,
+    ingredients: r.ingredients.map((it) => ({
+      name: it.name,
+      amount: it.amount,
+      unit: it.unit,
+      note: it.note,
+    })),
+    steps: [...r.steps]
+      .sort((a, b) => a.order - b.order)
+      .map((s) => ({ text: s.text, durationMinutes: s.durationMinutes })),
+  };
 }
 
 /** Whether the user can advance from a given step. */

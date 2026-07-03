@@ -8,6 +8,7 @@ import type {
   RecipeDoc,
   RecipeBookDoc,
   FavoriteDoc,
+  CategoryDoc,
   SharedItemDoc,
   FriendshipDoc,
   NotificationDoc,
@@ -20,6 +21,7 @@ export type Collections = {
   recipes: Collection<RecipeDoc>;
   recipeBooks: Collection<RecipeBookDoc>;
   favorites: Collection<FavoriteDoc>;
+  categories: Collection<CategoryDoc>;
   sharedItems: Collection<SharedItemDoc>;
   friendships: Collection<FriendshipDoc>;
   notifications: Collection<NotificationDoc>;
@@ -51,6 +53,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     recipes: db.collection<RecipeDoc>('recipes'),
     recipeBooks: db.collection<RecipeBookDoc>('recipe_books'),
     favorites: db.collection<FavoriteDoc>('favorites'),
+    categories: db.collection<CategoryDoc>('categories'),
     sharedItems: db.collection<SharedItemDoc>('shared_items'),
     friendships: db.collection<FriendshipDoc>('friendships'),
     notifications: db.collection<NotificationDoc>('notifications'),
@@ -117,6 +120,24 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     { unique: true, sparse: true },
   );
 
+  // Category slugs are stable identifiers — one doc per slug.
+  await collections.categories.createIndex({ slug: 1 }, { unique: true });
+  // Filtering recipes by category (GET /recipes?categoryId=).
+  await collections.recipes.createIndex({ categoryIds: 1 });
+  // Free-text recipe search (GET /recipes?q=). A collection allows only one text
+  // index, so if one already exists (possibly created by hand with different
+  // weights/name) we keep it — its mere existence is what $text needs. A fresh
+  // DB gets this weighted one instead.
+  try {
+    await collections.recipes.createIndex(
+      { title: 'text', description: 'text', tags: 'text' },
+      { name: 'recipe_text', weights: { title: 10, tags: 4, description: 1 } },
+    );
+  } catch (e: any) {
+    // 85 IndexOptionsConflict / 86 IndexKeySpecsConflict: an equivalent text
+    // index already exists under another name — fine, leave it in place.
+    if (e?.code !== 85 && e?.code !== 86) throw e;
+  }
   await collections.sharedItems.createIndex({ resourceId: 1, friendId: 1 });
   await collections.sharedItems.createIndex({ friendId: 1, status: 1 });
   await collections.sharedItems.createIndex({ ownerId: 1, status: 1 });

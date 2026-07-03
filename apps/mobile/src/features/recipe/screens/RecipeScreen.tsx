@@ -13,6 +13,7 @@ import { isRTL } from '@/shared/lib/i18n';
 import { IngredientsList } from '../components/IngredientsList';
 import { PreparationSteps } from '../components/PreparationSteps';
 import { RecipeActionBar } from '../components/RecipeActionBar';
+import { SaveToBookSheet } from '../components/SaveToBookSheet';
 import { RecipeHeader } from '../components/RecipeHeader';
 import { RecipeSourceNote } from '../components/RecipeSourceNote';
 import { RecipeTip } from '../components/RecipeTip';
@@ -37,6 +38,7 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
   const [multiplier, setMultiplier] = useState(1);
   const [checked, setChecked] = useState<Set<number>>(() => new Set());
   const [addedNotice, setAddedNotice] = useState(false);
+  const [bookSheetOpen, setBookSheetOpen] = useState(false);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tipNotes = useMemo(
@@ -88,7 +90,8 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
   };
 
   return (
-    <ScrollView
+    <>
+      <ScrollView
       style={{ backgroundColor: theme.bg?.val as string, width: "100%" }}
       contentContainerStyle={{
         paddingTop: insets.top + 8,
@@ -115,7 +118,7 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
         <YStack gap="$1">
           <RecipeActionBar
             onShare={() => {}}
-            onSaveToBook={() => {}}
+            onSaveToBook={() => setBookSheetOpen(true)}
             onShoppingList={handleAddToShoppingList}
           />
           {addedNotice ? (
@@ -141,7 +144,14 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
 
         <RecipeSourceNote recipe={recipe} />
       </YStack>
-    </ScrollView>
+      </ScrollView>
+
+      <SaveToBookSheet
+        open={bookSheetOpen}
+        onOpenChange={setBookSheetOpen}
+        recipeId={recipe.id}
+      />
+    </>
   );
 }
 

@@ -10,11 +10,14 @@ import { useLanguage } from '@/features/settings/hooks/useLanguage';
  * a `status:'draft'` recipe (so it shows up in the drafts row and survives the
  * user leaving), each later step PATCHes that draft, and `publish` flips it to
  * `status:'published'` on the final step. Returns the draft id once it exists.
+ *
+ * In edit mode an existing recipe id is passed in, so every step PATCHes it
+ * from the first save instead of creating a new draft.
  */
-export function useManualRecipeDraft() {
+export function useManualRecipeDraft(initialDraftId: string | null = null) {
   const { language } = useLanguage();
   const qc = useQueryClient();
-  const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState<string | null>(initialDraftId);
   const [isSaving, setIsSaving] = useState(false);
 
   const invalidate = useCallback(() => {
@@ -32,6 +35,7 @@ export function useManualRecipeDraft() {
             ingredients: [],
             steps: [],
             tags: [],
+            categoryIds: [],
             ...patch,
             language,
             source: { type: 'manual' },
@@ -40,10 +44,14 @@ export function useManualRecipeDraft() {
           };
           const created = await feedApi.createRecipe(input);
           setDraftId(created.id);
+          // Keep the recipe-detail cache fresh so re-opening this draft in edit
+          // mode seeds the just-saved values, not a stale snapshot.
+          qc.setQueryData(['recipe', created.id], created);
           invalidate();
           return created;
         }
         const updated = await feedApi.updateRecipe(draftId, patch);
+        qc.setQueryData(['recipe', draftId], updated);
         invalidate();
         return updated;
       } finally {
@@ -59,6 +67,7 @@ export function useManualRecipeDraft() {
     setIsSaving(true);
     try {
       const published = await feedApi.updateRecipe(draftId, { status: 'published' });
+      qc.setQueryData(['recipe', draftId], published);
       invalidate();
       return published;
     } finally {

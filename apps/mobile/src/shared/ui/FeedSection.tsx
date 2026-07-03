@@ -112,7 +112,7 @@ export function FeedSection<T>({
           data={items}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 12 }}
           scrollEventThrottle={16}
           onScroll={onSeeMore ? handleScroll : undefined}
           onScrollEndDrag={onSeeMore ? handleEndDrag : undefined}

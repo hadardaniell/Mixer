@@ -3,8 +3,10 @@ import { useMemo } from 'react';
 import type { PublicUser, Recipe, RecipeBook } from '@mixer/contracts';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useRecipeCategoryTag } from '@/features/categories/hooks/useCategories';
 import { feedApi } from '@/features/home/api/feedApi';
 import { useRecentlyViewed } from '@/features/home/hooks/useRecentlyViewed';
+import { recipeToCard } from '@/shared/lib/recipeToCard';
 import type { BookCardData } from '@/shared/ui/BookCard';
 import type { RecipeCardData } from '@/shared/ui/RecipeCard';
 
@@ -19,21 +21,11 @@ export interface HomeFeed {
   favorites: Array<RecipeCardData & { isFavorite: boolean }>;
 }
 
-function toRecipeCard(r: Recipe): RecipeCardData & { isFavorite: boolean } {
-  const totalTime = (r.prepTimeMinutes ?? 0) + (r.cookTimeMinutes ?? 0) || undefined;
-  return {
-    id: r.id,
-    name: r.title,
-    imageUrl: r.coverImageUrl,
-    durationMinutes: totalTime,
-    tag: r.tags[0],
-    isFavorite: r.isFavorite ?? false,
-  };
-}
-
 export function useHomeFeed(): HomeFeed {
   const { user } = useAuth();
   const myId = user?.id;
+  const tagOf = useRecipeCategoryTag();
+  const toRecipeCard = (r: Recipe) => recipeToCard(r, tagOf(r));
 
   // Recently viewed comes from the local MMKV ring, hydrated via per-id fetch.
   const recentlyViewedQ = useRecentlyViewed();
@@ -153,12 +145,12 @@ export function useHomeFeed(): HomeFeed {
       (sharedRecipesQ.data ?? [])
         .filter((r) => r.ownerId !== myId) // only recipes others shared, not my own
         .map(toRecipeCard),
-    [sharedRecipesQ.data, myId],
+    [sharedRecipesQ.data, myId, tagOf],
   );
 
   const favorites = useMemo(
     () => (favRecipesQ.data?.items ?? []).map(toRecipeCard),
-    [favRecipesQ.data],
+    [favRecipesQ.data, tagOf],
   );
 
   return {

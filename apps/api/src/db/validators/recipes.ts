@@ -71,6 +71,7 @@ export const recipesValidator: CollectionValidator = {
         difficulty: { enum: ['easy', 'medium', 'hard'] },
         cuisine: { bsonType: 'string' },
         tags: { bsonType: 'array', items: { bsonType: 'string' } },
+        categoryIds: { bsonType: 'array', items: { bsonType: 'objectId' } },
         language: { enum: ['he', 'en'] },
         source,
         visibility: { enum: ['private', 'unlisted', 'public'] },

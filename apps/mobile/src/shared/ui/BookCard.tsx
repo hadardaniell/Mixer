@@ -4,8 +4,7 @@ import { Text, XStack, YStack } from 'tamagui';
 
 import { resolveBookCover } from '@/shared/lib/coverImages';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
-import { FEED_CARD_RADIUS } from '@/shared/ui/RecipeCard';
-import { dir } from 'i18next';
+import { FEED_CARD_RADIUS, FEED_CARD_SHADOW } from '@/shared/ui/RecipeCard';
 
 const AVATAR_SIZE = 28;
 const AVATAR_OVERLAP = -10;
@@ -40,6 +39,10 @@ interface BookCardProps {
   onPress: () => void;
   /** Override the fixed feed width — e.g. "100%" to fill a profile list row. */
   width?: number | string;
+  /** Override the card height. Default 126 (the feed/profile size — leave as-is). */
+  height?: number;
+  /** Override the cover width. Default 116. Pair with `height` for compact rows. */
+  coverSize?: number;
   /** Stronger shadow so the card reads on a white surface (e.g. the wizard preview). */
   elevated?: boolean;
 }
@@ -71,73 +74,87 @@ export function BookCard({
   const extra = Math.max(0, book.members.length - visible.length);
 
   return (
-    <XStack
+    <YStack
       onPress={onPress}
       width={width}
       height={BOOK_CARD_HEIGHT}
       borderRadius={FEED_CARD_RADIUS}
       backgroundColor="$surface"
-      overflow="hidden"
-      paddingRight={14}
-      alignItems="center"
-      shadowColor="black"
-      shadowOpacity={elevated ? 0.24 : 0.08}
-      shadowRadius={elevated ? 32 : 18}
-      shadowOffset={{ width: 0, height: elevated ? 14 : 6 }}
-      elevation={elevated ? 14 : 4}
+      {...(elevated
+        ? {
+            shadowColor: 'black' as const,
+            shadowOpacity: 0.24,
+            shadowRadius: 32,
+            shadowOffset: { width: 0, height: 14 },
+            elevation: 14,
+          }
+        : FEED_CARD_SHADOW)}
       pressStyle={{ opacity: 0.92, scale: 0.98 }}
-      style={{ direction: 'ltr' } as never}
     >
-      {/* Cover bleeds to the card's left/top/bottom edges — bigger art, same card size. */}
-      <YStack width={COVER_SIZE} height="100%" alignItems="center" justifyContent="center" overflow="hidden">
-        <Image source={cover} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-      </YStack>
-
-      {/* Text + avatars: padding on top/bottom and the cover side only — no right padding. */}
-      <YStack
+      {/* Inner layer clips the content to rounded corners. The shadow lives on
+          the outer layer so iOS doesn't clip it (overflow:hidden + shadow on the
+          same view drops the shadow on iOS). */}
+      <XStack
         flex={1}
-        height="100%"
-        paddingVertical={14}
-        paddingStart={12}
-        justifyContent="space-between"
-        alignItems="flex-end"
+        width="100%"
+        borderRadius={FEED_CARD_RADIUS}
+        overflow="hidden"
+        backgroundColor="$surface"
+        paddingRight={14}
+        alignItems="center"
+        style={{ direction: 'ltr' } as never}
       >
-        <YStack gap={4} width="100%" alignItems="flex-end">
-          <Text
-            width="100%"
-            textAlign="right"
-            fontSize={15}
-            fontWeight="700"
-            numberOfLines={1}
-            color="$text"
-          >
-            {book.name}
-          </Text>
-          {book.recipeCount != null ? (
+        {/* Cover bleeds to the card's left/top/bottom edges — bigger art, same card size. */}
+        <YStack width={COVER_SIZE} height="100%" alignItems="center" justifyContent="center" overflow="hidden">
+          <Image source={cover} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        </YStack>
+
+        {/* Text + avatars: padding on top/bottom and the cover side only — no right padding. */}
+        <YStack
+          flex={1}
+          height="100%"
+          paddingVertical={14}
+          paddingStart={12}
+          justifyContent="space-between"
+          alignItems="flex-end"
+        >
+          <YStack gap={4} width="100%" alignItems="flex-end">
             <Text
               width="100%"
               textAlign="right"
-              fontSize={13}
-              color="$textMuted"
-              style={{ direction: isRtl ? 'rtl' : 'ltr', writingDirection: isRtl ? 'rtl' : 'ltr' } as never}
+              fontSize={15}
+              fontWeight="700"
+              numberOfLines={1}
+              color="$text"
             >
-              {t('home.recipesCount', { count: book.recipeCount })}
+              {book.name}
             </Text>
+            {book.recipeCount != null ? (
+              <Text
+                width="100%"
+                textAlign="right"
+                fontSize={13}
+                color="$textMuted"
+                style={{ direction: isRtl ? 'rtl' : 'ltr', writingDirection: isRtl ? 'rtl' : 'ltr' } as never}
+              >
+                {t('home.recipesCount', { count: book.recipeCount })}
+              </Text>
+            ) : null}
+          </YStack>
+
+          {/* Overlapping avatar stack, hugging the cover (start) edge. Forced LTR so
+              the overlap direction is predictable regardless of the app's RTL mode. */}
+          {visible.length > 0 ? (
+            <XStack alignItems="center" alignSelf="flex-start" style={{ direction: 'ltr' } as never}>
+              {visible.map((m, idx) => (
+                <Avatar key={m.id} member={m} overlap={idx > 0} />
+              ))}
+              {extra > 0 ? <MoreChip count={extra} /> : null}
+            </XStack>
           ) : null}
         </YStack>
-
-        {/* Overlapping avatar stack, hugging the cover (start) edge. Forced LTR so
-            the overlap direction is predictable regardless of the app's RTL mode. */}
-        {visible.length > 0 ? (
-          <XStack alignItems="center" alignSelf="flex-start" style={{ direction: 'ltr' } as never}>
-            {visible.map((m, idx) => (
-              <Avatar key={m.id} member={m} overlap={idx > 0} />
-            ))}
-            {extra > 0 ? <MoreChip count={extra} /> : null}
-          </XStack>
-        ) : null}
-      </YStack>
-    </XStack>
+      </XStack>
+    </YStack>
   );
 }
 

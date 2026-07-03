@@ -40,6 +40,14 @@
     "seeMore": "הצג  הכל",
     "emptySection": "אין מה להציג עדיין"
   },
+  "categories": {
+    "sheetTitle": "עיון לפי קטגוריה"
+  },
+  "search": {
+    "recipes": "מתכונים",
+    "books": "ספרים",
+    "noResults": "אין תוצאות עבור \"{{query}}\""
+  },
   "newRecipe": {
     "title": "יצירת מתכון",
     "subtitle": "איך תרצי להתחיל?",
@@ -56,7 +64,9 @@
     "drafts": {
       "title": "טיוטות אחרונות",
       "seeAll": "הצג הכל",
-      "updatedDaysAgo": "עודכן לפני {{count}} ימים"
+      "updatedDaysAgo": "עודכן לפני {{count}} ימים",
+      "delete": "מחיקת מתכון",
+      "empty": "אין טיוטות עדיין"
     },
     "creating": "יוצר מתכון...",
     "errors": {
@@ -99,6 +109,7 @@
     },
     "manual": {
       "title": "יצירת מתכון ידני",
+      "editTitle": "עריכת מתכון ידני",
       "stepOf": "שלב {{current}} מתוך {{total}}",
       "saving": "שומר...",
       "buttons": {
@@ -241,6 +252,10 @@
       "share": "שיתוף",
       "saveToBook": "שמירה לספר",
       "shoppingList": "רשימת קניות"
+    },
+    "saveToBookSheet": {
+      "title": "שמירה לספר",
+      "empty": "אין לך ספרים עדיין"
     }
   },
   "add": {

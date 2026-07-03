@@ -91,20 +91,27 @@ export async function authPlugin(app: FastifyInstance): Promise<void> {
     }
   });
 
-  // Populates req.user when a valid Bearer token is present, but never rejects.
-  // Used by visibility-aware public routes (recipe list / detail) so they can
-  // tell "my private recipe" / isFavorite apart for signed-in callers.
-  app.decorate('optionalAuthenticate', async (req) => {
+  // Populates req.user when a valid Bearer token is present. Used by
+  // visibility-aware public routes (recipe list / detail) so they can tell
+  // "my private recipe" / isFavorite apart for signed-in callers.
+  //
+  // No token → proceed anonymously. But a token that IS present yet expired or
+  // invalid must 401 (not silently degrade to anonymous): otherwise a signed-in
+  // caller with a stale access token would get the anonymous view of their own
+  // data — e.g. their private drafts vanish — and the client never refreshes
+  // because nothing returned 401.
+  app.decorate('optionalAuthenticate', async (req, reply) => {
     const header = req.headers.authorization;
     if (!header?.startsWith('Bearer ')) return;
     const token = header.slice('Bearer '.length).trim();
     try {
       const payload = verifyAccessToken(token);
-      if (ObjectId.isValid(payload.sub)) {
-        req.user = { id: payload.sub, role: payload.role };
+      if (!ObjectId.isValid(payload.sub)) {
+        return reply.code(401).send({ error: 'invalid token subject' });
       }
+      req.user = { id: payload.sub, role: payload.role };
     } catch {
-      // Anonymous / bad token — fall through unauthenticated.
+      return reply.code(401).send({ error: 'invalid or expired token' });
     }
   });
 
