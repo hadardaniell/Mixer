@@ -40,6 +40,14 @@
     "seeMore": "הצג  הכל",
     "emptySection": "אין מה להציג עדיין"
   },
+  "categories": {
+    "sheetTitle": "עיון לפי קטגוריה"
+  },
+  "search": {
+    "recipes": "מתכונים",
+    "books": "ספרים",
+    "noResults": "אין תוצאות עבור \"{{query}}\""
+  },
   "newRecipe": {
     "title": "יצירת מתכון",
     "subtitle": "איך תרצי להתחיל?",

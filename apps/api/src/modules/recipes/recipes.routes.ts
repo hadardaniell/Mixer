@@ -136,6 +136,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         difficulty: body.difficulty,
         cuisine: body.cuisine,
         tags: body.tags,
+        categoryIds: body.categoryIds.map((id) => new ObjectId(id)),
         language: body.language,
         source: {
           type: body.source.type,
@@ -184,7 +185,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: { querystring: RecipeListQuerySchema, tags: ['recipes'] },
     },
     async (req) => {
-      const { owner, tag, q, visibility, status, limit, skip } = req.query;
+      const { owner, tag, categoryId, q, visibility, status, limit, skip } = req.query;
       const filter: Filter<RecipeDoc> = {};
 
       const isOwnerSelf = owner === 'me' && !!req.user?.id;
@@ -214,6 +215,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       if (visibility) filter.visibility = visibility;
       if (tag) filter.tags = tag;
+      if (categoryId && ObjectId.isValid(categoryId)) {
+        filter.categoryIds = new ObjectId(categoryId);
+      }
       if (q) filter.$text = { $search: q };
 
       const cursor = app.collections.recipes.find(filter, {
@@ -266,8 +270,11 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (existing.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'not the owner' });
       }
-      const { source, ...rest } = req.body;
+      const { source, categoryIds, ...rest } = req.body;
       const $set: Partial<RecipeDoc> & { updatedAt: Date } = { ...rest, updatedAt: new Date() };
+      if (categoryIds) {
+        $set.categoryIds = categoryIds.map((id) => new ObjectId(id));
+      }
       if (source) {
         $set.source = {
           type: source.type,

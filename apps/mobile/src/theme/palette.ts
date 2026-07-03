@@ -225,6 +225,7 @@ const accentsDark = {
 const surfacesLight = {
   background: '#FCFCFC', // app canvas — rgb(252, 252, 252)
   surface: '#FFFFFF', // cards, inputs, sheets, nav bar
+  searchBar: '#F5F7F8', // search field fill (feed + search page)
   surfaceElevated: '#FFFFFF', // modals, menus
   overlay: 'rgba(17, 24, 39, 0.50)', // modal/sheet scrim
   // Foregrounds used on top of `background`. With a light canvas these are the
@@ -238,6 +239,7 @@ const surfacesLight = {
 const surfacesDark = {
   background: '#0E1117',
   surface: '#1B2230',
+  searchBar: '#1B2230', // search field fill (feed + search page)
   surfaceElevated: '#232C3C',
   overlay: 'rgba(0, 0, 0, 0.6)',
   onBackground: '#F1F3F7',

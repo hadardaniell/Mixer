@@ -40,6 +40,14 @@
     "seeMore": "See more",
     "emptySection": "Nothing here yet"
   },
+  "categories": {
+    "sheetTitle": "Browse by category"
+  },
+  "search": {
+    "recipes": "Recipes",
+    "books": "Books",
+    "noResults": "No results for \"{{query}}\""
+  },
   "newRecipe": {
     "title": "Create recipe",
     "subtitle": "How would you like to start?",

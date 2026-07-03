@@ -25,6 +25,7 @@ export function mapExtraction(
     difficulty: result.difficulty,
     cuisine: result.cuisine,
     tags: result.tags ?? [],
+    categoryIds: [],
     language,
     source: { type: sourceType },
     visibility: 'private',

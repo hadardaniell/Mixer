@@ -18,6 +18,7 @@ export function toRecipe(doc: RecipeDoc, opts: { isFavorite?: boolean } = {}): R
     difficulty: doc.difficulty,
     cuisine: doc.cuisine,
     tags: doc.tags,
+    categoryIds: (doc.categoryIds ?? []).map((id) => id.toString()),
     language: doc.language,
     source: {
       type: doc.source.type,

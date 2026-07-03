@@ -13,6 +13,9 @@ type ThemeShape = {
   bg: string;
   bgSubtle: string;
   surface: string;
+  searchBarBg: string;
+  categoryChipBg: string;
+  categoryChipText: string;
   surfaceElevated: string;
   overlay: string;
 
@@ -116,6 +119,10 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     bg: c[k('background')],
     bgSubtle: c[k('gray2')],
     surface: c[k('surface')],
+    searchBarBg: c[k('searchBar')],
+    // Category chip (search page): fixed lavender fill + slate ink, both modes.
+    categoryChipBg: c.primary12Dark,
+    categoryChipText: c.gray12Light,
     surfaceElevated: c[k('surfaceElevated')],
     overlay: c[k('overlay')],
 

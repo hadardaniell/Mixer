@@ -4,6 +4,7 @@ import { refreshTokensValidator } from './refresh-tokens.js';
 import { recipesValidator } from './recipes.js';
 import { recipeBooksValidator } from './recipe-books.js';
 import { favoritesValidator } from './favorites.js';
+import { categoriesValidator } from './categories.js';
 
 /**
  * Source of truth for the MongoDB collection `$jsonSchema` validators.
@@ -28,6 +29,7 @@ export const collectionValidators: Record<string, CollectionValidator> = {
   recipes: recipesValidator,
   recipe_books: recipeBooksValidator,
   favorites: favoritesValidator,
+  categories: categoriesValidator,
 };
 
 export type { CollectionValidator } from './types.js';

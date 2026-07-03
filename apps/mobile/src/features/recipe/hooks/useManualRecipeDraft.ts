@@ -35,6 +35,7 @@ export function useManualRecipeDraft(initialDraftId: string | null = null) {
             ingredients: [],
             steps: [],
             tags: [],
+            categoryIds: [],
             ...patch,
             language,
             source: { type: 'manual' },
