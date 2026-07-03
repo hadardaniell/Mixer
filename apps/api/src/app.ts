@@ -18,6 +18,11 @@ import { recipesRoutes } from './modules/recipes/recipes.routes.js';
 import { recipeBooksRoutes } from './modules/recipe-books/recipe-books.routes.js';
 import { favoritesRoutes } from './modules/favorites/favorites.routes.js';
 import { categoriesRoutes } from './modules/categories/categories.routes.js';
+import { friendsRoutes } from './modules/friendships/friendships.routes.js';
+import { utilsRoutes } from './modules/utils/utils.routes.js';
+import { sharesRoutes } from './modules/shares/shares.routes.js';
+import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
+import { notificationService } from './services/notification.service.js';
 import multipart from '@fastify/multipart';
 import firebasePlugin from './plugins/firebase.js';
 
@@ -64,6 +69,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
 
   await mongoPlugin(app);
+  notificationService.init(app.collections);
   await authPlugin(app);
 
   await app.register(helloRoute);
@@ -73,6 +79,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(recipeBooksRoutes);
   await app.register(favoritesRoutes);
   await app.register(categoriesRoutes);
+  await app.register(friendsRoutes, { prefix: '/friends' });
+  await app.register(utilsRoutes, { prefix: '/utils' });
+  await app.register(sharesRoutes);
+  await app.register(notificationsRoutes);
 
   return app;
 }

@@ -9,6 +9,10 @@ import type {
   RecipeBookDoc,
   FavoriteDoc,
   CategoryDoc,
+  SharedItemDoc,
+  FriendshipDoc,
+  NotificationDoc,
+  UrlExtractionCacheDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -18,6 +22,10 @@ export type Collections = {
   recipeBooks: Collection<RecipeBookDoc>;
   favorites: Collection<FavoriteDoc>;
   categories: Collection<CategoryDoc>;
+  sharedItems: Collection<SharedItemDoc>;
+  friendships: Collection<FriendshipDoc>;
+  notifications: Collection<NotificationDoc>;
+  urlExtractionCache: Collection<UrlExtractionCacheDoc>;
 };
 
 declare module 'fastify' {
@@ -46,6 +54,10 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     recipeBooks: db.collection<RecipeBookDoc>('recipe_books'),
     favorites: db.collection<FavoriteDoc>('favorites'),
     categories: db.collection<CategoryDoc>('categories'),
+    sharedItems: db.collection<SharedItemDoc>('shared_items'),
+    friendships: db.collection<FriendshipDoc>('friendships'),
+    notifications: db.collection<NotificationDoc>('notifications'),
+    urlExtractionCache: db.collection<UrlExtractionCacheDoc>('url_extraction_cache'),
   };
 
   await ensureValidators(app, db);
@@ -126,4 +138,19 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     // index already exists under another name — fine, leave it in place.
     if (e?.code !== 85 && e?.code !== 86) throw e;
   }
+  await collections.sharedItems.createIndex({ resourceId: 1, friendId: 1 });
+  await collections.sharedItems.createIndex({ friendId: 1, status: 1 });
+  await collections.sharedItems.createIndex({ ownerId: 1, status: 1 });
+
+  await collections.friendships.createIndex({ requesterId: 1, recipientId: 1 }, { unique: true });
+  await collections.friendships.createIndex({ recipientId: 1, status: 1 });
+
+  await collections.urlExtractionCache.createIndex({ url: 1 }, { unique: true });
+
+  await collections.notifications.createIndex({ userId: 1, read: 1, createdAt: -1 });
+  await collections.notifications.createIndex({ userId: 1, type: 1 });
+  await collections.notifications.createIndex(
+    { expiresAt: 1 },
+    { expireAfterSeconds: 0, sparse: true },
+  );
 }

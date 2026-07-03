@@ -14,6 +14,7 @@ import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
+import { notificationService } from '../../services/notification.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -178,6 +179,61 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     },
   );
 
+  app.post(
+    '/recipes/:id/save-as',
+    {
+      onRequest: [app.authenticate],
+      schema: { 
+        params: IdParam, 
+        tags: ['recipes'],
+        summary: 'Save As (Duplicate Recipe)',
+        description: 'Creates a private copy of an existing recipe and automatically adds it to your personal recipe book.',
+      },
+    },
+    async (req, reply) => {
+      try {
+        const original = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
+        if (!original) return reply.code(404).send({ error: 'recipe not found' });
+        if (!canRead(req, original)) return reply.code(403).send({ error: 'forbidden' });
+
+        const now = new Date();
+        const doc: RecipeDoc = {
+          ...original,
+          _id: new ObjectId(),
+          ownerId: new ObjectId(req.user.id),
+          forkedFrom: original._id,
+          forkedAt: now,
+          visibility: 'private',
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        await app.collections.recipes.insertOne(doc);
+
+        const personalBook = await app.collections.recipeBooks.findOne({
+          ownerId: doc.ownerId,
+          type: 'personal',
+        });
+
+        if (personalBook) {
+          await app.collections.recipeBooks.updateOne(
+            { _id: personalBook._id },
+            {
+              $addToSet: { recipeIds: doc._id },
+              $set: { updatedAt: now },
+            },
+          );
+        }
+
+        generateAndStoreEmbedding(app.collections, doc._id, doc);
+        return reply.code(201).send(toRecipe(doc));
+      } catch (error) {
+        app.log.error(error, 'Error during recipe save-as (forking) process');
+        return reply.code(500).send({ error: 'Failed to duplicate recipe due to an internal error' });
+      }
+    },
+  );
+
   app.get(
     '/recipes',
     {
@@ -306,6 +362,40 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (existing.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'not the owner' });
       }
+
+      // Auto-fork for friends who have a live link (accepted share, not yet saved)
+      const liveShares = await app.collections.sharedItems
+        .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
+        .toArray();
+
+      await Promise.all(
+        liveShares.map(async (share) => {
+          const now = new Date();
+          const fork: RecipeDoc = {
+            ...existing,
+            _id: new ObjectId(),
+            ownerId: share.friendId,
+            visibility: 'private',
+            forkedFrom: existing._id,
+            forkedAt: now,
+            createdAt: now,
+            updatedAt: now,
+          };
+          await app.collections.recipes.insertOne(fork);
+          await app.collections.sharedItems.updateOne(
+            { _id: share._id },
+            { $set: { savedAt: now, savedResourceId: fork._id } },
+          );
+          await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+            fromUserId: req.user.id,
+            resourceType: 'recipe',
+            resourceName: existing.title,
+            savedCopyId: fork._id.toString(),
+          });
+        }),
+      );
+
+      await app.collections.sharedItems.deleteMany({ resourceId: _id, resourceType: 'recipe' });
       await app.collections.recipes.deleteOne({ _id });
       return reply.code(204).send();
     },
@@ -336,6 +426,56 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       };
       await app.collections.recipes.insertOne(fork);
       return reply.code(201).send(toRecipe(fork));
+    },
+  );
+
+  app.post(
+    '/recipes/import/url',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: z.object({ url: z.string().url() }),
+        response: {
+          200: ExtractFromTextResultSchema,
+          422: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+        tags: ['recipes'],
+      },
+    },
+    async (req, reply) => {
+      const { url } = req.body;
+
+      // Check global cache first — if any user already extracted this URL, reuse it
+      const cached = await app.collections.urlExtractionCache.findOne({ url });
+      if (cached) {
+        app.log.info(`[import/url] Cache hit for ${url}`);
+        return ExtractFromTextResultSchema.parse(cached.extraction);
+      }
+
+      // Cache miss — call the AI service
+      app.log.info(`[import/url] Cache miss — calling AI for ${url}`);
+      const response = await fetch(`${config.aiBaseUrl}/extract/video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json() as { error?: string };
+        return reply.code(response.status === 422 ? 422 : 500).send({
+          error: data?.error ?? 'AI service failed to extract recipe from URL',
+        });
+      }
+
+      const extraction = await response.json() as Record<string, unknown>;
+
+      // Save to cache so future requests skip the AI call
+      await app.collections.urlExtractionCache
+        .insertOne({ _id: new ObjectId(), url, extraction, extractedAt: new Date() })
+        .catch(() => {}); // ignore duplicate-key race (two simultaneous requests for same URL)
+
+      return ExtractFromTextResultSchema.parse(extraction);
     },
   );
 

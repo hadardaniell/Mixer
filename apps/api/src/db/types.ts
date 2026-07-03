@@ -14,6 +14,7 @@ export type UserDoc = {
     google?: { sub: string; email: string; linkedAt: Date };
   };
   emailVerifiedAt?: Date;
+  expoPushToken?: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -114,4 +115,49 @@ export type RecipeBookDoc = {
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type SharedItemDoc = {
+  _id: ObjectId;
+  resourceType: 'recipe' | 'book';
+  resourceId: ObjectId;
+  ownerId: ObjectId;
+  friendId: ObjectId;
+  status: 'pending' | 'accepted' | 'rejected';
+  savedAt: Date | null;
+  savedResourceId: ObjectId | null;
+  createdAt: Date;
+};
+
+export type FriendshipDoc = {
+  _id: ObjectId;
+  requesterId: ObjectId;
+  recipientId: ObjectId;
+  status: 'pending' | 'accepted';
+  createdAt: Date;
+  acceptedAt?: Date;
+};
+
+export type UrlExtractionCacheDoc = {
+  _id: ObjectId;
+  url: string;
+  extraction: Record<string, unknown>;
+  extractedAt: Date;
+};
+
+export type NotificationDoc = {
+  _id: ObjectId;
+  userId: ObjectId;
+  type:
+    | 'SHARE_REQUEST'
+    | 'SHARE_ACCEPTED'
+    | 'SHARE_REJECTED'
+    | 'OWNER_DELETED_RESOURCE'
+    | 'FRIEND_REQUEST'
+    | 'FRIEND_ACCEPTED'
+    | 'FRIEND_UNFRIENDED';
+  payload: Record<string, unknown>;
+  read: boolean;
+  createdAt: Date;
+  expiresAt: Date | null;
 };
