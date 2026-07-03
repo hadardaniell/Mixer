@@ -74,7 +74,8 @@ export function HomeSearchBar({
             color: ink,
             paddingVertical: 0,
             textAlign: isRtl ? 'right' : 'left',
-          }}
+            outlineStyle: 'none',
+          } as never}
         />
         {active && value.length > 0 ? (
           <Pressable onPress={() => onChangeText('')} hitSlop={8} accessibilityRole="button">
