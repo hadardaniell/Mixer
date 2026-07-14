@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   CreateRecipeBookInput,
   CreateRecipeInput,
   ExtractFromImageInput,
@@ -55,6 +55,12 @@ export const feedApi = {
     http<ExtractFromTextResult>('/recipes/import/image', {
       method: 'POST',
       body: JSON.stringify({ images }),
+    }),
+
+  importUrl: (url: string) =>
+    http<ExtractFromTextResult>('/recipes/import/url', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
     }),
 
   createRecipe: (input: CreateRecipeInput) =>

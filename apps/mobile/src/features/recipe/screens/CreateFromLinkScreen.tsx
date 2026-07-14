@@ -1,11 +1,15 @@
 import { Globe, Link as LinkIcon, MessageCircle, Play } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
+import { AuthPrimaryButton } from '@/features/auth/components/AuthPrimaryButton';
+import { feedApi } from '@/features/home/api/feedApi';
 import { CreateFlowHeader } from '@/features/recipe/components/CreateFlowHeader';
+import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromExtraction';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { isRTL } from '@/shared/lib/i18n';
 import { IconChip } from '@/shared/ui/IconChip';
@@ -17,11 +21,30 @@ export function CreateFromLinkScreen() {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const theme = useTheme();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const isRtl = isRTL(language);
   const ink = theme.text?.val as string;
 
   const [url, setUrl] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const create = useCreateFromExtraction();
+  const busy = create.isPending;
+
+  const submit = async () => {
+    if (!url || busy) return;
+    setError(null);
+    try {
+      const recipe = await create.mutateAsync({
+        extract: () => feedApi.importUrl(url),
+        sourceType: 'url',
+        sourceUrl: url,
+      });
+      router.replace(`/recipes/${recipe.id}` as never);
+    } catch (e) {
+      setError(t('newRecipe.errors.extractFailed'));
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -129,24 +152,17 @@ export function CreateFromLinkScreen() {
         {/* Spacer pushes the CTA to the bottom on tall screens */}
         <YStack flex={1} minHeight="$2" />
 
-        {/* CTA — stubbed until the link backend exists */}
-        <YStack gap="$1" alignItems="center">
-          <YStack
-            width="100%"
-            height={54}
-            borderRadius={20}
-            alignItems="center"
-            justifyContent="center"
-            backgroundColor="$accentCoral"
-            opacity={0.55}
-          >
-            <XStack alignItems="center" gap="$2">
-              <Text color="$textOnPrimary" fontSize={18} fontWeight="700">
-                {t('newRecipe.link.cta')}
-              </Text>
-            </XStack>
-          </YStack>
-        </YStack>
+        {error ? (
+          <Text color="$danger" fontSize={13} textAlign="center">
+            {error}
+          </Text>
+        ) : null}
+
+        <AuthPrimaryButton
+          label={busy ? t('newRecipe.creating') : t('newRecipe.link.cta')}
+          onPress={submit}
+          disabled={!url || busy}
+        />
       </YStack>
     </KeyboardAvoidingView>
   );

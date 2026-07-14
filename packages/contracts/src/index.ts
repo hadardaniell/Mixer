@@ -291,6 +291,11 @@ export const ExtractFromImageInputSchema = z.object({
 });
 export type ExtractFromImageInput = z.infer<typeof ExtractFromImageInputSchema>;
 
+export const ExtractFromUrlInputSchema = z.object({
+  url: z.string().url(),
+});
+export type ExtractFromUrlInput = z.infer<typeof ExtractFromUrlInputSchema>;
+
 // --- embeddings ---
 export const EmbedRecipeInputSchema = z.object({
   title: z.string(),

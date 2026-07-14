@@ -14,6 +14,7 @@ interface CreateArgs {
   /** Runs the AI extraction (text or image) and returns the partial recipe. */
   extract: () => Promise<ExtractFromTextResult>;
   sourceType: SourceType;
+  sourceUrl?: string;
 }
 
 /**
@@ -27,9 +28,9 @@ export function useCreateFromExtraction() {
   const qc = useQueryClient();
 
   return useMutation<Recipe, Error, CreateArgs>({
-    mutationFn: async ({ extract, sourceType }) => {
+    mutationFn: async ({ extract, sourceType, sourceUrl }) => {
       const result = await extract();
-      const input = mapExtraction(result, language, sourceType, t('newRecipe.title'));
+      const input = mapExtraction(result, language, sourceType, t('newRecipe.title'), sourceUrl);
       return feedApi.createRecipe(input);
     },
     onSuccess: () => {
