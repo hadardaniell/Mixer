@@ -364,9 +364,15 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       }
 
       // Auto-fork for friends who have a live link (accepted share, not yet saved)
-      const liveShares = await app.collections.sharedItems
-        .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
-        .toArray();
+      const [liveShares, owner] = await Promise.all([
+        app.collections.sharedItems
+          .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
+          .toArray(),
+        app.collections.users.findOne(
+          { _id: new ObjectId(req.user.id) },
+          { projection: { displayName: 1 } },
+        ),
+      ]);
 
       await Promise.all(
         liveShares.map(async (share) => {
@@ -388,6 +394,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
           );
           await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
             fromUserId: req.user.id,
+            fromUserName: owner?.displayName ?? '',
             resourceType: 'recipe',
             resourceName: existing.title,
             savedCopyId: fork._id.toString(),

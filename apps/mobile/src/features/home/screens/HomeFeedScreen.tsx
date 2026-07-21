@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { YStack } from 'tamagui';
@@ -20,7 +21,7 @@ export function HomeFeedScreen() {
   return (
     <YStack flex={1} backgroundColor="$bg" paddingTop={insets.top + 16}>
       <YStack paddingHorizontal="$4" gap="$3" paddingBottom="$3">
-        <HomeHeader onNotificationsPress={() => {}} />
+        <HomeHeader onNotificationsPress={() => router.push('/notifications')} />
         <HomeSearchBar
           value={query}
           onChangeText={setQuery}

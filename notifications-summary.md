@@ -75,13 +75,13 @@ All routes require authentication. Users can only see and modify their own notif
 
 | Type | Sent to | Payload fields |
 |---|---|---|
-| `SHARE_REQUEST` | recipient | `fromUserId, resourceType, resourceId, resourceName, shareId` |
-| `SHARE_ACCEPTED` | owner | `fromUserId, resourceType, resourceId, resourceName` |
-| `SHARE_REJECTED` | owner | `fromUserId, resourceType, resourceId, resourceName` |
-| `OWNER_DELETED_RESOURCE` | friend | `fromUserId, resourceType, resourceName, savedCopyId` |
-| `FRIEND_REQUEST` | recipient | `fromUserId, fromUserName, friendshipId` — actionable, no TTL, deleted on accept/reject |
-| `FRIEND_ACCEPTED` | requester | `fromUserId, fromUserName` — informational, 30-day TTL |
-| `FRIEND_UNFRIENDED` | the other user | `fromUserId, fromUserName` — informational, 30-day TTL |
+| `SHARE_REQUEST` | recipient | `fromUserId, fromUserName, resourceType, resourceId, resourceName, shareId` |
+| `SHARE_ACCEPTED` | owner | `fromUserId, fromUserName, resourceType, resourceId, resourceName` |
+| `SHARE_REJECTED` | owner | `fromUserId, fromUserName, resourceType, resourceId, resourceName` |
+| `OWNER_DELETED_RESOURCE` | friend | `fromUserId, fromUserName, resourceType, resourceName, savedCopyId` |
+| `FRIEND_REQUEST` | recipient | `fromUserId, fromUserName, fromUserAvatar, friendshipId` — actionable, no TTL, deleted on accept/reject |
+| `FRIEND_ACCEPTED` | requester | `fromUserId, fromUserName, fromUserAvatar` — informational, 30-day TTL |
+| `FRIEND_UNFRIENDED` | the other user | `fromUserId, fromUserName, fromUserAvatar` — informational, 30-day TTL |
 
 ---
 

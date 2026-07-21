@@ -75,11 +75,12 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
 
       const sender = await app.collections.users.findOne(
         { _id: currentUserId },
-        { projection: { displayName: 1 } },
+        { projection: { displayName: 1, avatarUrl: 1 } },
       );
       await notificationService.send(targetUserId.toString(), 'FRIEND_REQUEST', {
         fromUserId: request.user.id,
         fromUserName: sender?.displayName ?? '',
+        fromUserAvatar: sender?.avatarUrl ?? null,
         friendshipId: result.friendshipId.toString(),
       });
 
@@ -118,12 +119,13 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
 
       const accepter = await app.collections.users.findOne(
         { _id: currentUserId },
-        { projection: { displayName: 1 } },
+        { projection: { displayName: 1, avatarUrl: 1 } },
       );
       await Promise.all([
         notificationService.send(requesterId.toString(), 'FRIEND_ACCEPTED', {
           fromUserId: request.user.id,
           fromUserName: accepter?.displayName ?? '',
+          fromUserAvatar: accepter?.avatarUrl ?? null,
         }),
         app.collections.notifications.deleteOne({
           userId: currentUserId,
@@ -282,11 +284,12 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
 
       const unfriender = await app.collections.users.findOne(
         { _id: currentUserId },
-        { projection: { displayName: 1 } },
+        { projection: { displayName: 1, avatarUrl: 1 } },
       );
       await notificationService.send(friendId.toString(), 'FRIEND_UNFRIENDED', {
         fromUserId: request.user.id,
         fromUserName: unfriender?.displayName ?? '',
+        fromUserAvatar: unfriender?.avatarUrl ?? null,
       });
 
       return { status: result.status as 'unfriended', forkedCount: result.forkedCount! };
