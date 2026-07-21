@@ -149,6 +149,7 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       await notificationService.send(friendIdStr, 'SHARE_REQUEST', {
         fromUserId: req.user.id,
+        fromUserName: owner?.displayName ?? '',
         resourceType,
         resourceId: resourceIdStr,
         resourceName,
@@ -175,14 +176,19 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
         { returnDocument: 'after' },
       );
 
-      const [resourceName, owner] = await Promise.all([
+      const [resourceName, owner, accepter] = await Promise.all([
         resolveResourceName(app.collections, share.resourceType, share.resourceId),
         app.collections.users.findOne({ _id: share.ownerId }, { projection: { displayName: 1 } }),
+        app.collections.users.findOne(
+          { _id: new ObjectId(req.user.id) },
+          { projection: { displayName: 1 } },
+        ),
       ]);
 
       await Promise.all([
         notificationService.send(share.ownerId.toString(), 'SHARE_ACCEPTED', {
           fromUserId: req.user.id,
+          fromUserName: accepter?.displayName ?? '',
           resourceType: share.resourceType,
           resourceId: share.resourceId.toString(),
           resourceName,
@@ -214,14 +220,19 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
         { returnDocument: 'after' },
       );
 
-      const [resourceName, owner] = await Promise.all([
+      const [resourceName, owner, rejecter] = await Promise.all([
         resolveResourceName(app.collections, share.resourceType, share.resourceId),
         app.collections.users.findOne({ _id: share.ownerId }, { projection: { displayName: 1 } }),
+        app.collections.users.findOne(
+          { _id: new ObjectId(req.user.id) },
+          { projection: { displayName: 1 } },
+        ),
       ]);
 
       await Promise.all([
         notificationService.send(share.ownerId.toString(), 'SHARE_REJECTED', {
           fromUserId: req.user.id,
+          fromUserName: rejecter?.displayName ?? '',
           resourceType: share.resourceType,
           resourceId: share.resourceId.toString(),
           resourceName,
@@ -290,11 +301,13 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (!isFriend && !isOwner) return reply.code(403).send({ error: 'forbidden' });
 
       if (isOwner && share.status === 'accepted' && share.savedAt === null) {
-        const resourceName = await resolveResourceName(
-          app.collections,
-          share.resourceType,
-          share.resourceId,
-        );
+        const [resourceName, deletingOwner] = await Promise.all([
+          resolveResourceName(app.collections, share.resourceType, share.resourceId),
+          app.collections.users.findOne(
+            { _id: new ObjectId(req.user.id) },
+            { projection: { displayName: 1 } },
+          ),
+        ]);
         try {
           const savedCopyId =
             share.resourceType === 'recipe'
@@ -303,6 +316,7 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
 
           await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
             fromUserId: req.user.id,
+            fromUserName: deletingOwner?.displayName ?? '',
             resourceType: share.resourceType,
             resourceName,
             savedCopyId: savedCopyId.toString(),
