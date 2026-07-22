@@ -16,7 +16,19 @@ interface UserSearchResponse {
   users: UserSearchResult[];
 }
 
+export interface Friend {
+  id: string;
+  displayName?: string;
+  avatarUrl?: string | null;
+}
+
+interface FriendsListResponse {
+  friends: Friend[];
+}
+
 export const friendsApi = {
+  list: () => http<FriendsListResponse>('/friends'),
+
   search: (q: string, limit = 20) =>
     http<UserSearchResponse>(
       `/friends/search?q=${encodeURIComponent(q)}&limit=${limit}`,
@@ -36,4 +48,11 @@ export const friendsApi = {
   // Accepts an incoming request. `userId` is the requester's id.
   acceptRequest: (userId: string) =>
     http<{ status: 'accepted' }>(`/friends/${userId}/accept`, { method: 'PUT' }),
+
+  // Removes an accepted friend. The server also auto-forks their live-link
+  // recipes the current user had favorited (`forkedCount`).
+  unfriend: (userId: string) =>
+    http<{ status: 'unfriended'; forkedCount: number }>(`/friends/${userId}`, {
+      method: 'DELETE',
+    }),
 };

@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { friendsApi, type FriendshipStatus, type UserSearchResult } from '@/features/friends/api/friendsApi';
+import {
+  friendsApi,
+  type Friend,
+  type FriendshipStatus,
+  type UserSearchResult,
+} from '@/features/friends/api/friendsApi';
 
 type Patch = Pick<UserSearchResult, 'friendshipStatus' | 'isRequester'>;
 
@@ -47,6 +52,12 @@ export function useFriendActions() {
     qc.invalidateQueries({ queryKey: ['notifications'] });
   };
 
+  // Unfriending also forks recipes, so the feed/library caches must refresh too.
+  const reconcileUnfriend = () => {
+    reconcile();
+    qc.invalidateQueries({ queryKey: ['feed'] });
+  };
+
   const sendRequest = useMutation({
     mutationFn: (userId: string) => friendsApi.sendRequest(userId),
     onMutate: (userId) =>
@@ -71,7 +82,28 @@ export function useFriendActions() {
     onSettled: reconcile,
   });
 
-  return { sendRequest, cancelRequest, acceptRequest };
+  const unfriend = useMutation({
+    mutationFn: (userId: string) => friendsApi.unfriend(userId),
+    onMutate: (userId) => {
+      // Optimistically drop the friend from the list...
+      const listSnapshots = qc.getQueriesData<{ friends: Friend[] }>({ queryKey: ['friends'] });
+      qc.setQueriesData<{ friends: Friend[] }>({ queryKey: ['friends'] }, (old) =>
+        old ? { friends: old.friends.filter((f) => f.id !== userId) } : old,
+      );
+      // ...and reset the button back to "add friend" in any open search results.
+      const rollbackSearch = optimistic(userId, { friendshipStatus: 'none', isRequester: false });
+      return {
+        rollback: () => {
+          for (const [key, data] of listSnapshots) qc.setQueryData(key, data);
+          rollbackSearch();
+        },
+      };
+    },
+    onError: (_e, _userId, ctx) => ctx?.rollback(),
+    onSettled: reconcileUnfriend,
+  });
+
+  return { sendRequest, cancelRequest, acceptRequest, unfriend };
 }
 
 /** Resolves which action a row's primary button should trigger for a status. */

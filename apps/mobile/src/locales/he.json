@@ -87,6 +87,8 @@
   },
   "friends": {
     "addTitle": "הוספת חברים",
+    "listTitle": "החברים שלי",
+    "empty": "אין חברים עדיין",
     "searchPlaceholder": "חיפוש לפי שם או טלפון",
     "searchHint": "חפשו חברים לפי שם או מספר טלפון",
     "keepTyping": "המשיכו להקליד...",
@@ -95,7 +97,10 @@
     "send": "שלח בקשה",
     "requested": "בקשה נשלחה",
     "accept": "אישור",
-    "friends": "חברים"
+    "friends": "חברים",
+    "remove": "הסרה",
+    "removeTitle": "הסרת חבר",
+    "removeMessage": "להסיר את {{name}} מרשימת החברים?"
   },
   "categories": {
     "sheetTitle": "עיון לפי קטגוריה"

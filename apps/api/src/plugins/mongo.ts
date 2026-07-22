@@ -142,8 +142,11 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   await collections.sharedItems.createIndex({ friendId: 1, status: 1 });
   await collections.sharedItems.createIndex({ ownerId: 1, status: 1 });
 
-  await collections.friendships.createIndex({ requesterId: 1, recipientId: 1 }, { unique: true });
-  await collections.friendships.createIndex({ recipientId: 1, status: 1 });
+  // Friendship docs use `addresseeId` (not `recipientId`). The unique pair index
+  // dedupes same-direction requests; the reverse direction is guarded in the
+  // service before insert. `addresseeId + status` backs the incoming-requests query.
+  await collections.friendships.createIndex({ requesterId: 1, addresseeId: 1 }, { unique: true });
+  await collections.friendships.createIndex({ addresseeId: 1, status: 1 });
 
   await collections.urlExtractionCache.createIndex({ url: 1 }, { unique: true });
 

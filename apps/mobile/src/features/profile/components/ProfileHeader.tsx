@@ -11,6 +11,7 @@ interface ProfileHeaderProps {
   onSettings: () => void;
   onEditProfile: () => void;
   onAddFriends: () => void;
+  onFriends: () => void;
 }
 
 function initials(name?: string): string {
@@ -26,6 +27,7 @@ export function ProfileHeader({
   onSettings,
   onEditProfile,
   onAddFriends,
+  onFriends,
 }: ProfileHeaderProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -89,7 +91,7 @@ export function ProfileHeader({
         <Divider />
         <Stat value={stats.books} label={t('profile.stats.books')} />
         <Divider />
-        <Stat value={stats.friends} label={t('profile.stats.friends')} />
+        <Stat value={stats.friends} label={t('profile.stats.friends')} onPress={onFriends} />
       </XStack>
 
       {isSelf ? (
@@ -120,9 +122,22 @@ export function ProfileHeader({
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({
+  value,
+  label,
+  onPress,
+}: {
+  value: number;
+  label: string;
+  onPress?: () => void;
+}) {
   return (
-    <YStack alignItems="center" minWidth={56}>
+    <YStack
+      alignItems="center"
+      minWidth={56}
+      onPress={onPress}
+      pressStyle={onPress ? { opacity: 0.6 } : undefined}
+    >
       <Text fontSize={22} fontWeight="700" color="$text">
         {value}
       </Text>

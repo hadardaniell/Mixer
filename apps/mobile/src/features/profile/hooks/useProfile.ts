@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { PublicUser, Recipe, RecipeBook } from '@mixer/contracts';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { friendsApi } from '@/features/friends/api/friendsApi';
 import { feedApi } from '@/features/home/api/feedApi';
 import type { BookCardData } from '@/shared/ui/BookCard';
 import type { RecipeCardData } from '@/shared/ui/RecipeCard';
@@ -42,7 +43,8 @@ function toRecipeCard(r: Recipe): RecipeCard {
  * Other users' libraries have no list endpoints yet, so books/recipes/favorites
  * are only fetched for the authenticated user (`isSelf`). A non-self profile
  * still resolves its header from `usersByIds`, and the tabs render empty until a
- * social/profile API exists. Friends have no backend at all — count is always 0.
+ * social/profile API exists. The friends count is fetched for the self profile;
+ * other users' friend lists aren't exposed yet, so their count shows 0.
  */
 export function useProfile(userId?: string): ProfileData {
   const { user: authUser } = useAuth();
@@ -78,6 +80,15 @@ export function useProfile(userId?: string): ProfileData {
     queryKey: ['feed', 'favorite-books'],
     queryFn: () => feedApi.favoriteBooks(),
     enabled: isSelf && !!authUser?.id,
+  });
+
+  // Shares the `['friends']` key with the friends list + social mutations so the
+  // count reconciles when a request is accepted or someone is unfriended.
+  const friendsQ = useQuery({
+    queryKey: ['friends'],
+    queryFn: () => friendsApi.list(),
+    enabled: isSelf && !!authUser?.id,
+    staleTime: 30_000,
   });
 
   const allBooks = useMemo(
@@ -154,7 +165,11 @@ export function useProfile(userId?: string): ProfileData {
       myBooksQ.isLoading ||
       favRecipesQ.isLoading ||
       favBooksQ.isLoading,
-    stats: { recipes: recipes.length, books: books.length, friends: 0 },
+    stats: {
+      recipes: recipes.length,
+      books: books.length,
+      friends: friendsQ.data?.friends.length ?? 0,
+    },
     favoriteRecipes,
     favoriteBooks,
     recipes,
