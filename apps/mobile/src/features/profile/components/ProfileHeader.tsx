@@ -1,5 +1,5 @@
 import type { PublicUser } from '@mixer/contracts';
-import { Pencil, Settings, type LucideIcon } from 'lucide-react-native';
+import { Pencil, Settings, UserPlus, type LucideIcon } from 'lucide-react-native';
 import { Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
@@ -10,6 +10,7 @@ interface ProfileHeaderProps {
   stats: { recipes: number; books: number; friends: number };
   onSettings: () => void;
   onEditProfile: () => void;
+  onAddFriends: () => void;
 }
 
 function initials(name?: string): string {
@@ -24,6 +25,7 @@ export function ProfileHeader({
   stats,
   onSettings,
   onEditProfile,
+  onAddFriends,
 }: ProfileHeaderProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -34,11 +36,14 @@ export function ProfileHeader({
       {/* Action bar — forced LTR so settings stays on the left in every language. */}
       <XStack
         width="100%"
-        justifyContent="flex-start"
+        justifyContent="space-between"
         alignItems="center"
         style={{ direction: 'ltr' } as never}
       >
         <IconButton icon={Settings} accent="$accentLavender" color={ink} onPress={onSettings} />
+        {isSelf ? (
+          <IconButton icon={UserPlus} accent="$accentLime" color={ink} onPress={onAddFriends} />
+        ) : null}
       </XStack>
 
       {/* Avatar with soft accent blob */}

@@ -85,6 +85,18 @@
       }
     }
   },
+  "friends": {
+    "addTitle": "Add friends",
+    "searchPlaceholder": "Search by name or phone",
+    "searchHint": "Search people by name or phone number",
+    "keepTyping": "Keep typing...",
+    "noResults": "No results for \"{{query}}\"",
+    "error": "Couldn't search. Please try again.",
+    "send": "Add friend",
+    "requested": "Requested",
+    "accept": "Accept",
+    "friends": "Friends"
+  },
   "categories": {
     "sheetTitle": "Browse by category"
   },

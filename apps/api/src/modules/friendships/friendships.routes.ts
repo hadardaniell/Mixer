@@ -44,6 +44,43 @@ export const friendsRoutes: FastifyPluginAsyncZod = async (app) => {
     }
   );
 
+  // 1b. GET /search - Search all users by name or phone
+  app.get(
+    '/search',
+    {
+      schema: {
+        tags: ['Friends'],
+        summary: 'Search users',
+        description: 'Finds registered users by display name or phone number, with friendship status.',
+        querystring: z.object({
+          q: z.string(),
+          limit: z.coerce.number().int().min(1).max(50).default(20),
+        }),
+        response: {
+          200: z.object({
+            users: z.array(
+              z.object({
+                id: z.string(),
+                displayName: z.string().optional(),
+                avatarUrl: z.string().nullable().optional(),
+                friendshipStatus: z.string(),
+                isRequester: z.boolean(),
+              })
+            ),
+          }),
+        },
+      },
+      onRequest: [app.authenticate],
+    },
+    async (request) => {
+      const currentUserId = new ObjectId(request.user.id);
+      const db = getDb(request.server);
+      const { q, limit } = request.query;
+
+      return friendshipsService.searchUsers(db, currentUserId, q, limit);
+    }
+  );
+
   // 2. POST /request - Send a friend request
   app.post(
     '/request',

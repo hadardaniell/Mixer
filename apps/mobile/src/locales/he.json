@@ -85,6 +85,18 @@
       }
     }
   },
+  "friends": {
+    "addTitle": "הוספת חברים",
+    "searchPlaceholder": "חיפוש לפי שם או טלפון",
+    "searchHint": "חפשו חברים לפי שם או מספר טלפון",
+    "keepTyping": "המשיכו להקליד...",
+    "noResults": "אין תוצאות עבור \"{{query}}\"",
+    "error": "לא הצלחנו לחפש. נסו שוב.",
+    "send": "שלח בקשה",
+    "requested": "בקשה נשלחה",
+    "accept": "אישור",
+    "friends": "חברים"
+  },
   "categories": {
     "sheetTitle": "עיון לפי קטגוריה"
   },
