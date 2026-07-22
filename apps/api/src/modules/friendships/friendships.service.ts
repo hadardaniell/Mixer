@@ -36,6 +36,56 @@ export async function syncContacts(db: Db, currentUserId: ObjectId, contacts: st
   return { users: results };
 }
 
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export async function searchUsers(
+  db: Db,
+  currentUserId: ObjectId,
+  query: string,
+  limit: number,
+) {
+  const term = query.trim();
+  if (term.length === 0) return { users: [] };
+
+  // Match by display name (case-insensitive substring) or exact phone number, so
+  // a pasted number finds someone even when their name is unknown.
+  const nameRegex = new RegExp(escapeRegex(term), 'i');
+  const users = await db.collection('users').find({
+    _id: { $ne: currentUserId },
+    $or: [{ displayName: nameRegex }, { phoneNumber: term }],
+  }).project({ displayName: 1, phoneNumber: 1, avatarUrl: 1 }).limit(limit).toArray();
+
+  if (users.length === 0) return { users: [] };
+
+  const userIds = users.map((u: any) => u._id);
+
+  const friendships = await db.collection('friendships').find({
+    participants: currentUserId,
+    $or: [
+      { requesterId: { $in: userIds } },
+      { addresseeId: { $in: userIds } },
+    ],
+  }).toArray();
+
+  const results = users.map((user: any) => {
+    const friendship = friendships.find(
+      (f: any) => f.requesterId.equals(user._id) || f.addresseeId.equals(user._id)
+    );
+
+    return {
+      id: user._id.toString(),
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      friendshipStatus: friendship ? friendship.status : 'none',
+      isRequester: friendship ? friendship.requesterId.equals(currentUserId) : false,
+    };
+  });
+
+  return { users: results };
+}
+
 export async function sendFriendRequest(db: Db, currentUserId: ObjectId, targetUserId: ObjectId) {
   if (currentUserId.equals(targetUserId)) {
     return { error: 'Cannot add yourself as a friend', code: 400 };

@@ -1,5 +1,5 @@
 import type { PublicUser } from '@mixer/contracts';
-import { Pencil, Settings, type LucideIcon } from 'lucide-react-native';
+import { Pencil, Settings, UserPlus, type LucideIcon } from 'lucide-react-native';
 import { Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
@@ -10,6 +10,8 @@ interface ProfileHeaderProps {
   stats: { recipes: number; books: number; friends: number };
   onSettings: () => void;
   onEditProfile: () => void;
+  onAddFriends: () => void;
+  onFriends: () => void;
 }
 
 function initials(name?: string): string {
@@ -24,6 +26,8 @@ export function ProfileHeader({
   stats,
   onSettings,
   onEditProfile,
+  onAddFriends,
+  onFriends,
 }: ProfileHeaderProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -34,11 +38,14 @@ export function ProfileHeader({
       {/* Action bar — forced LTR so settings stays on the left in every language. */}
       <XStack
         width="100%"
-        justifyContent="flex-start"
+        justifyContent="space-between"
         alignItems="center"
         style={{ direction: 'ltr' } as never}
       >
         <IconButton icon={Settings} accent="$accentLavender" color={ink} onPress={onSettings} />
+        {isSelf ? (
+          <IconButton icon={UserPlus} accent="$accentLime" color={ink} onPress={onAddFriends} />
+        ) : null}
       </XStack>
 
       {/* Avatar with soft accent blob */}
@@ -84,7 +91,7 @@ export function ProfileHeader({
         <Divider />
         <Stat value={stats.books} label={t('profile.stats.books')} />
         <Divider />
-        <Stat value={stats.friends} label={t('profile.stats.friends')} />
+        <Stat value={stats.friends} label={t('profile.stats.friends')} onPress={onFriends} />
       </XStack>
 
       {isSelf ? (
@@ -115,9 +122,22 @@ export function ProfileHeader({
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({
+  value,
+  label,
+  onPress,
+}: {
+  value: number;
+  label: string;
+  onPress?: () => void;
+}) {
   return (
-    <YStack alignItems="center" minWidth={56}>
+    <YStack
+      alignItems="center"
+      minWidth={56}
+      onPress={onPress}
+      pressStyle={onPress ? { opacity: 0.6 } : undefined}
+    >
       <Text fontSize={22} fontWeight="700" color="$text">
         {value}
       </Text>

@@ -56,6 +56,8 @@ export function ProfileScreen({ userId }: ProfileScreenProps) {
             stats={profile.stats}
             onSettings={() => router.push('/settings')}
             onEditProfile={() => router.push('/profile/edit' as never)}
+            onAddFriends={() => router.push('/friends/add' as never)}
+            onFriends={() => router.push('/friends' as never)}
           />
         </YStack>
 

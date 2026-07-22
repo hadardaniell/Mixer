@@ -85,6 +85,23 @@
       }
     }
   },
+  "friends": {
+    "addTitle": "Add friends",
+    "listTitle": "My friends",
+    "empty": "No friends yet",
+    "searchPlaceholder": "Search by name or phone",
+    "searchHint": "Search people by name or phone number",
+    "keepTyping": "Keep typing...",
+    "noResults": "No results for \"{{query}}\"",
+    "error": "Couldn't search. Please try again.",
+    "send": "Add friend",
+    "requested": "Requested",
+    "accept": "Accept",
+    "friends": "Friends",
+    "remove": "Remove",
+    "removeTitle": "Remove friend",
+    "removeMessage": "Remove {{name}} from your friends?"
+  },
   "categories": {
     "sheetTitle": "Browse by category"
   },

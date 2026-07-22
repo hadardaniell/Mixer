@@ -132,10 +132,12 @@ export type SharedItemDoc = {
 export type FriendshipDoc = {
   _id: ObjectId;
   requesterId: ObjectId;
-  recipientId: ObjectId;
+  addresseeId: ObjectId;
+  /** Both participant ids, sorted by their string form — used for pair lookups. */
+  participants: ObjectId[];
   status: 'pending' | 'accepted';
   createdAt: Date;
-  acceptedAt?: Date;
+  updatedAt: Date;
 };
 
 export type UrlExtractionCacheDoc = {
