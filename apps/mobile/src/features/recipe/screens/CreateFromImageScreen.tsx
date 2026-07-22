@@ -100,21 +100,23 @@ export function CreateFromImageScreen() {
           alignItems="center"
           justifyContent="center"
           gap="$3"
-          padding="$4"
+          padding={image ? '$2' : '$4'}
           style={{ borderStyle: 'dashed' }}
           pressStyle={{ backgroundColor: '$bgSubtle' }}
         >
           {image ? (
-            <>
+            <YStack flex={1} width="100%" alignItems="center" justifyContent="center" gap="$2">
+              {/* Fill the available height and show the whole photo (no crop) so
+                  the user can verify the full recipe is captured. */}
               <Image
                 source={{ uri: image.uri }}
-                style={{ width: '100%', height: 220, borderRadius: 16 }}
-                resizeMode="cover"
+                style={{ width: '100%', flex: 1, borderRadius: 16 }}
+                resizeMode="contain"
               />
               <Text color="$primary" fontSize={14} fontWeight="600">
                 {t('newRecipe.image.replace')}
               </Text>
-            </>
+            </YStack>
           ) : (
             <>
               <Image source={IMAGE_BLOB} style={{ width: 150, height: 150 }} resizeMode="contain" />
