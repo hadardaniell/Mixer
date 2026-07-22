@@ -68,10 +68,14 @@ export async function http<T>(path: string, opts: HttpOptions = {}): Promise<T> 
 
   const doFetch = () => {
     const accessToken = skipAuth ? null : tokens.getAccessToken();
+    // Only advertise a JSON body when we actually send one. Fastify rejects an
+    // empty body when Content-Type is application/json (FST_ERR_CTP_EMPTY_JSON_BODY),
+    // which would break bodyless mutations like PUT /notifications/:id/read.
+    const hasBody = init.body != null;
     return fetch(`${baseUrl}${path}`, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
+        ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...headers,
       },

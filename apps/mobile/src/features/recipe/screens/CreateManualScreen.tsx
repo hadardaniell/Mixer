@@ -1,15 +1,17 @@
 import { useRouter } from 'expo-router';
-import { useReducer, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, YStack } from 'tamagui';
+import { Text, useTheme, YStack } from 'tamagui';
 
 import { useManualRecipeDraft } from '@/features/recipe/hooks/useManualRecipeDraft';
+import { useRecipe } from '@/features/recipe/hooks/useRecipe';
 import {
   canAdvance,
   initialManualForm,
   manualFormReducer,
+  recipeToManualForm,
   stepPatch,
 } from '@/features/recipe/lib/manualRecipe';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
@@ -24,16 +26,30 @@ import { WizardFooter } from '../components/manual/WizardFooter';
 
 const TOTAL_STEPS = 5;
 
-export function CreateManualScreen() {
+export function CreateManualScreen({ recipeId }: { recipeId?: string } = {}) {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isRtl = useIsRtl();
+  const theme = useTheme();
+
+  const isEdit = !!recipeId;
+  const recipeQ = useRecipe(recipeId ?? '');
 
   const [form, dispatch] = useReducer(manualFormReducer, initialManualForm);
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const { isSaving, saveStep, publish } = useManualRecipeDraft();
+  // In edit mode the draft id is the recipe being edited, so saves PATCH it.
+  const { isSaving, saveStep, publish } = useManualRecipeDraft(recipeId ?? null);
+
+  // Seed the form once the recipe loads (edit mode). Create mode starts seeded.
+  const [seeded, setSeeded] = useState(!isEdit);
+  useEffect(() => {
+    if (isEdit && recipeQ.data && !seeded) {
+      dispatch({ type: 'reset', value: recipeToManualForm(recipeQ.data) });
+      setSeeded(true);
+    }
+  }, [isEdit, recipeQ.data, seeded]);
 
   const goBack = () => {
     if (step > 1) {
@@ -82,6 +98,14 @@ export function CreateManualScreen() {
       ? t('newRecipe.manual.buttons.save')
       : t('newRecipe.manual.buttons.next');
 
+  if (isEdit && !seeded) {
+    return (
+      <YStack flex={1} alignItems="center" justifyContent="center">
+        <ActivityIndicator color={theme.primary?.val as string} />
+      </YStack>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -99,7 +123,7 @@ export function CreateManualScreen() {
           gap="$4"
           style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
         >
-          <ManualStepper current={step} total={TOTAL_STEPS} onBack={goBack} />
+          <ManualStepper current={step} total={TOTAL_STEPS} onBack={goBack} isEdit={isEdit} />
 
           {renderStep()}
 

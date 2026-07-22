@@ -24,8 +24,8 @@ These are "FYI" alerts — no action needed.
 - `SHARE_ACCEPTED` — your share was accepted
 - `SHARE_REJECTED` — your share was rejected
 - `OWNER_DELETED_RESOURCE` — owner deleted something shared with you, we auto-saved a copy
-- `FRIEND_ACCEPTED` — your friend request was accepted *(not yet triggered — see below)*
-- `FRIEND_UNFRIENDED` — someone removed you as a friend *(not yet triggered — see below)*
+- `FRIEND_ACCEPTED` — your friend request was accepted
+- `FRIEND_UNFRIENDED` — someone removed you as a friend
 
 These **expire automatically after 30 days** via a MongoDB TTL index. They are **marked read** (not deleted) when acknowledged.
 
@@ -75,13 +75,13 @@ All routes require authentication. Users can only see and modify their own notif
 
 | Type | Sent to | Payload fields |
 |---|---|---|
-| `SHARE_REQUEST` | recipient | `fromUserId, resourceType, resourceId, resourceName, shareId` |
-| `SHARE_ACCEPTED` | owner | `fromUserId, resourceType, resourceId, resourceName` |
-| `SHARE_REJECTED` | owner | `fromUserId, resourceType, resourceId, resourceName` |
-| `OWNER_DELETED_RESOURCE` | friend | `fromUserId, resourceType, resourceName, savedCopyId` |
-| `FRIEND_REQUEST` | recipient | `fromUserId, fromUserName, friendshipId` |
-| `FRIEND_ACCEPTED` | requester | `fromUserId, fromUserName` |
-| `FRIEND_UNFRIENDED` | the other user | `fromUserId, fromUserName` |
+| `SHARE_REQUEST` | recipient | `fromUserId, fromUserName, resourceType, resourceId, resourceName, shareId` |
+| `SHARE_ACCEPTED` | owner | `fromUserId, fromUserName, resourceType, resourceId, resourceName` |
+| `SHARE_REJECTED` | owner | `fromUserId, fromUserName, resourceType, resourceId, resourceName` |
+| `OWNER_DELETED_RESOURCE` | friend | `fromUserId, fromUserName, resourceType, resourceName, savedCopyId` |
+| `FRIEND_REQUEST` | recipient | `fromUserId, fromUserName, fromUserAvatar, friendshipId` — actionable, no TTL, deleted on accept/reject |
+| `FRIEND_ACCEPTED` | requester | `fromUserId, fromUserName, fromUserAvatar` — informational, 30-day TTL |
+| `FRIEND_UNFRIENDED` | the other user | `fromUserId, fromUserName, fromUserAvatar` — informational, 30-day TTL |
 
 ---
 
@@ -98,38 +98,36 @@ Sending is done via `notificationService.send(userId, type, payload)` in `apps/a
 | `PUT /shares/:id/reject` | `SHARE_REJECTED` → owner | `SHARE_REQUEST` deleted from rejecter's inbox |
 | `DELETE /shares/:id` *(owner revokes)* | `OWNER_DELETED_RESOURCE` → friend | — |
 
-**Friend routes — NOT YET WIRED** (see below).
+**Friend routes** (`modules/friendships/friendships.routes.ts`) — all wired and tested:
+
+| Action | Notification fired | Side effect |
+|---|---|---|
+| `POST /friends/request` | `FRIEND_REQUEST` → target user | — |
+| `PUT /friends/:id/accept` | `FRIEND_ACCEPTED` → requester | `FRIEND_REQUEST` deleted from accepter's inbox |
+| `DELETE /friends/request/:id` | nothing | `FRIEND_REQUEST` deleted from the right inbox (reject or cancel) |
+| `DELETE /friends/:id` *(unfriend)* | `FRIEND_UNFRIENDED` → the other user | — |
 
 ---
-
-## What still needs to be done — Friend requests
-
-The 3 friend notification types are fully defined in the service and contracts, but the friendship routes haven't been merged into this branch yet. They exist in `origin/friends-branch`.
-
-When the friendship module is integrated, the following needs to be wired **to match the same accept/dismiss pattern as shares**:
-
-| Action | Notification to send | Notification to dismiss |
-|---|---|---|
-| Send friend request | `FRIEND_REQUEST` → recipient | — |
-| Accept friend request | `FRIEND_ACCEPTED` → requester | `FRIEND_REQUEST` deleted from accepter's inbox |
-| Reject/cancel request | nothing | `FRIEND_REQUEST` deleted from recipient's inbox |
-| Unfriend | `FRIEND_UNFRIENDED` → the other user | — |
-
-### Known issues in `friends-branch` that need fixing before merging
-1. Field name mismatch — service uses `addresseeId` but our `FriendshipDoc` uses `recipientId`
-2. Service uses a `participants[]` array field that doesn't exist in our schema
-3. Notifications are not wired at all (there is a `// TODO` comment in the accept handler)
-4. Service accesses raw `db` instead of the typed `app.collections`
 
 ---
 
 ## What was tested
 
-All share + notification scenarios were manually tested against a running server:
+All scenarios were manually tested against a running server:
+
+**Shares:**
 - ✅ Share request creates a `SHARE_REQUEST` notification for recipient
 - ✅ Accepting a share sends `SHARE_ACCEPTED` to owner and deletes `SHARE_REQUEST` from inbox
 - ✅ Rejecting a share sends `SHARE_REJECTED` to owner and deletes `SHARE_REQUEST` from inbox
 - ✅ Owner deleting an accepted share sends `OWNER_DELETED_RESOURCE` to friend
+
+**Friend requests:**
+- ✅ Sending a friend request creates `FRIEND_REQUEST` in recipient's inbox with sender name and friendshipId
+- ✅ Accepting a friend request sends `FRIEND_ACCEPTED` to requester and deletes `FRIEND_REQUEST` from accepter's inbox
+- ✅ Rejecting/cancelling a request deletes `FRIEND_REQUEST` from the correct inbox
+- ✅ Unfriending sends `FRIEND_UNFRIENDED` to the other user
+
+**Notification endpoints:**
 - ✅ `GET /notifications` returns correct `unreadCount`
 - ✅ `PUT /notifications/read-all` clears inbox correctly
 - ✅ `PUT /notifications/:id/read` deletes actionable, marks informational as read

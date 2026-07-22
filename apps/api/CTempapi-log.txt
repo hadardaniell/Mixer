@@ -1,0 +1,211 @@
+
+> @mixer/api@0.0.0 dev
+> tsx watch --env-file=.env src/server.ts
+
+{"level":30,"time":1780757118338,"pid":20220,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1780757118338,"pid":20220,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.181.1:3000"}
+{"level":30,"time":1780757118338,"pid":20220,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.47.1:3000"}
+{"level":30,"time":1780757118338,"pid":20220,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://10.0.0.12:3000"}
+{"level":30,"time":1780757118338,"pid":20220,"hostname":"DESKTOP-TS6A61E","msg":"[api] listening on http://0.0.0.0:3000"}
+{"level":30,"time":1780757119932,"pid":20220,"hostname":"DESKTOP-TS6A61E","reqId":"req-1","req":{"method":"GET","url":"/hello","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":56101},"msg":"incoming request"}
+{"level":30,"time":1780757119937,"pid":20220,"hostname":"DESKTOP-TS6A61E","reqId":"req-1","res":{"statusCode":200},"responseTime":4.592599868774414,"msg":"request completed"}
+{"level":30,"time":1780757133937,"pid":20220,"hostname":"DESKTOP-TS6A61E","reqId":"req-2","req":{"method":"PUT","url":"/shares/6a2432346a57f14e62342a6e/accept","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":61566},"msg":"incoming request"}
+[NotificationService] Sending 'SHARE_ACCEPTED' notification to user: 6a24251d4e2e1e178faca587
+[NotificationService] Payload: {
+  fromUserId: '6a2425234e2e1e178faca589',
+  resourceType: 'recipe',
+  resourceId: '6a2432346a57f14e62342a6d',
+  resourceName: 'Smoke Test Recipe'
+}
+{"level":30,"time":1780757133948,"pid":20220,"hostname":"DESKTOP-TS6A61E","reqId":"req-2","res":{"statusCode":200},"responseTime":11.22189998626709,"msg":"request completed"}
+{"level":30,"time":1780757157950,"pid":20220,"hostname":"DESKTOP-TS6A61E","reqId":"req-3","req":{"method":"POST","url":"/shares/6a2432346a57f14e62342a6e/save","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":65188},"msg":"incoming request"}
+{"level":30,"time":1780757157956,"pid":20220,"hostname":"DESKTOP-TS6A61E","reqId":"req-3","res":{"statusCode":201},"responseTime":5.588199853897095,"msg":"request completed"}
+20:53:49 [tsx] change in ./src\plugins\mongo.ts Restarting...
+c{"level":30,"time":1780768433899,"pid":48712,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1780768433899,"pid":48712,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.181.1:3000"}
+{"level":30,"time":1780768433899,"pid":48712,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.47.1:3000"}
+{"level":30,"time":1780768433899,"pid":48712,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://10.0.0.12:3000"}
+{"level":30,"time":1780768433900,"pid":48712,"hostname":"DESKTOP-TS6A61E","msg":"[api] listening on http://0.0.0.0:3000"}
+20:54:01 [tsx] change in ./src\plugins\mongo.ts Restarting...
+c{"level":30,"time":1780768446463,"pid":56408,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1780768446464,"pid":56408,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.181.1:3000"}
+{"level":30,"time":1780768446464,"pid":56408,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.47.1:3000"}
+{"level":30,"time":1780768446464,"pid":56408,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://10.0.0.12:3000"}
+{"level":30,"time":1780768446465,"pid":56408,"hostname":"DESKTOP-TS6A61E","msg":"[api] listening on http://0.0.0.0:3000"}
+20:54:43 [tsx] change in ./src\plugins\mongo.ts Restarting...
+c[api] failed to start Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}
+20:57:08 [tsx] change in ./..\..\packages\contracts\dist\index.js Rerunning...
+c{"level":30,"time":1780768632493,"pid":56572,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1780768632494,"pid":56572,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.181.1:3000"}
+{"level":30,"time":1780768632494,"pid":56572,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.47.1:3000"}
+{"level":30,"time":1780768632494,"pid":56572,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://10.0.0.12:3000"}
+{"level":30,"time":1780768632494,"pid":56572,"hostname":"DESKTOP-TS6A61E","msg":"[api] listening on http://0.0.0.0:3000"}
+20:58:33 [tsx] change in ./src\services\notification.service.ts Restarting...
+c[api] failed to start Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}
+20:58:49 [tsx] change in ./src\app.ts Rerunning...
+c{"level":30,"time":1780768735348,"pid":65072,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1780768735350,"pid":65072,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.181.1:3000"}
+{"level":30,"time":1780768735350,"pid":65072,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.47.1:3000"}
+{"level":30,"time":1780768735350,"pid":65072,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://10.0.0.12:3000"}
+{"level":30,"time":1780768735350,"pid":65072,"hostname":"DESKTOP-TS6A61E","msg":"[api] listening on http://0.0.0.0:3000"}
+20:59:02 [tsx] change in ./src\app.ts Restarting...
+c[api] failed to start Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}
+21:03:38 [tsx] change in ./src\app.ts Rerunning...
+c[api] failed to start Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}
+21:03:50 [tsx] change in ./src\app.ts Rerunning...
+c{"level":30,"time":1780769034991,"pid":39992,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1780769034992,"pid":39992,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.181.1:3000"}
+{"level":30,"time":1780769034992,"pid":39992,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.47.1:3000"}
+{"level":30,"time":1780769034992,"pid":39992,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://10.0.0.12:3000"}
+{"level":30,"time":1780769034993,"pid":39992,"hostname":"DESKTOP-TS6A61E","msg":"[api] listening on http://0.0.0.0:3000"}
+12:35:50 [tsx] change in ./src\modules\recipes\recipes.routes.ts Rerunning...
+c[api] failed to start Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}
+12:36:34 [tsx] change in ./..\..\packages\contracts\dist\index.js Rerunning...
+c[api] failed to start Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}
+12:41:38 [tsx] change in ./src\config.ts Rerunning...
+c{"level":30,"time":1780911703082,"pid":19248,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://127.0.0.1:3000"}
+{"level":30,"time":1780911703083,"pid":19248,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.181.1:3000"}
+{"level":30,"time":1780911703083,"pid":19248,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://192.168.47.1:3000"}
+{"level":30,"time":1780911703083,"pid":19248,"hostname":"DESKTOP-TS6A61E","msg":"Server listening at http://10.0.0.12:3000"}
+{"level":30,"time":1780911703083,"pid":19248,"hostname":"DESKTOP-TS6A61E","msg":"[api] listening on http://0.0.0.0:3000"}
+{"level":30,"time":1780912607025,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-1","req":{"method":"GET","url":"/docs","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":63337},"msg":"incoming request"}
+{"level":30,"time":1780912607064,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-1","res":{"statusCode":200},"responseTime":36.68149995803833,"msg":"request completed"}
+{"level":30,"time":1780912607102,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-2","req":{"method":"GET","url":"/docs/static/swagger-ui.css","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":63337},"msg":"incoming request"}
+{"level":30,"time":1780912607105,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-3","req":{"method":"GET","url":"/docs/static/index.css","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64973},"msg":"incoming request"}
+{"level":30,"time":1780912607111,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-3","res":{"statusCode":200},"responseTime":5.593699932098389,"msg":"request completed"}
+{"level":30,"time":1780912607114,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-4","req":{"method":"GET","url":"/docs/static/swagger-ui-bundle.js","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64973},"msg":"incoming request"}
+{"level":30,"time":1780912607129,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-2","res":{"statusCode":200},"responseTime":25.832299947738647,"msg":"request completed"}
+{"level":30,"time":1780912607132,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-5","req":{"method":"GET","url":"/docs/static/swagger-ui-standalone-preset.js","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":63337},"msg":"incoming request"}
+{"level":30,"time":1780912607151,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-5","res":{"statusCode":200},"responseTime":18.59629988670349,"msg":"request completed"}
+{"level":30,"time":1780912607216,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-6","req":{"method":"GET","url":"/docs/static/swagger-initializer.js","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":63337},"msg":"incoming request"}
+{"level":30,"time":1780912607217,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-6","res":{"statusCode":200},"responseTime":1.148900032043457,"msg":"request completed"}
+{"level":30,"time":1780912607240,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-4","res":{"statusCode":200},"responseTime":125.5336000919342,"msg":"request completed"}
+{"level":30,"time":1780912607455,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-7","req":{"method":"GET","url":"/docs/json","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64973},"msg":"incoming request"}
+{"level":30,"time":1780912607489,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-7","res":{"statusCode":200},"responseTime":33.67650008201599,"msg":"request completed"}
+{"level":30,"time":1780912607489,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-8","req":{"method":"GET","url":"/docs/static/favicon-32x32.png","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":63337},"msg":"incoming request"}
+{"level":30,"time":1780912607493,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-8","res":{"statusCode":200},"responseTime":4.288599967956543,"msg":"request completed"}
+{"level":30,"time":1780912715353,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-9","req":{"method":"POST","url":"/auth/login","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":65344},"msg":"incoming request"}
+{"level":30,"time":1780912715976,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-9","res":{"statusCode":200},"responseTime":623.0553998947144,"msg":"request completed"}
+{"level":30,"time":1780912780264,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-a","req":{"method":"POST","url":"/auth/login","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":65344},"msg":"incoming request"}
+{"level":30,"time":1780912780701,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-a","res":{"statusCode":200},"responseTime":436.32360005378723,"msg":"request completed"}
+{"level":30,"time":1780912932693,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-b","req":{"method":"POST","url":"/recipes","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":55660},"msg":"incoming request"}
+{"level":30,"time":1780912932712,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-b","res":{"statusCode":400},"err":{"type":"FastifyError","message":"Body is not valid JSON but content-type is set to 'application/json'","stack":"FastifyError: Body is not valid JSON but content-type is set to 'application/json'\n    at Parser.defaultJsonParser [as fn] (C:\\Users\\sahar\\Desktop\\3rdyear\\Mixer-main\\Mixer-main\\node_modules\\fastify\\lib\\content-type-parser.js:319:12)\n    at IncomingMessage.onEnd (C:\\Users\\sahar\\Desktop\\3rdyear\\Mixer-main\\Mixer-main\\node_modules\\fastify\\lib\\content-type-parser.js:299:27)\n    at IncomingMessage.emit (node:events:508:28)\n    at endReadableNT (node:internal/streams/readable:1701:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","code":"FST_ERR_CTP_INVALID_JSON_BODY","name":"FastifyError","statusCode":400},"msg":"Body is not valid JSON but content-type is set to 'application/json'"}
+{"level":30,"time":1780912932720,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-b","res":{"statusCode":400},"responseTime":27.050400018692017,"msg":"request completed"}
+{"level":30,"time":1780912959014,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-c","req":{"method":"POST","url":"/recipes","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":49720},"msg":"incoming request"}
+{"level":30,"time":1780912959015,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-c","res":{"statusCode":400},"err":{"type":"FastifyError","message":"Body is not valid JSON but content-type is set to 'application/json'","stack":"FastifyError: Body is not valid JSON but content-type is set to 'application/json'\n    at Parser.defaultJsonParser [as fn] (C:\\Users\\sahar\\Desktop\\3rdyear\\Mixer-main\\Mixer-main\\node_modules\\fastify\\lib\\content-type-parser.js:319:12)\n    at IncomingMessage.onEnd (C:\\Users\\sahar\\Desktop\\3rdyear\\Mixer-main\\Mixer-main\\node_modules\\fastify\\lib\\content-type-parser.js:299:27)\n    at IncomingMessage.emit (node:events:508:28)\n    at endReadableNT (node:internal/streams/readable:1701:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","code":"FST_ERR_CTP_INVALID_JSON_BODY","name":"FastifyError","statusCode":400},"msg":"Body is not valid JSON but content-type is set to 'application/json'"}
+{"level":30,"time":1780912959015,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-c","res":{"statusCode":400},"responseTime":1.3875000476837158,"msg":"request completed"}
+{"level":30,"time":1780913517225,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-d","req":{"method":"POST","url":"/recipes","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":54863},"msg":"incoming request"}
+{"level":30,"time":1780913517291,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-d","res":{"statusCode":201},"responseTime":66.00879979133606,"msg":"request completed"}
+{"level":30,"time":1780914168218,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-e","req":{"method":"OPTIONS","url":"/recipe-books","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64352},"msg":"incoming request"}
+{"level":30,"time":1780914168219,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-e","res":{"statusCode":204},"responseTime":0.8861000537872314,"msg":"request completed"}
+{"level":30,"time":1780914168220,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-f","req":{"method":"OPTIONS","url":"/favorites?kind=recipe","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":50611},"msg":"incoming request"}
+{"level":30,"time":1780914168220,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-f","res":{"statusCode":204},"responseTime":0.37089991569519043,"msg":"request completed"}
+{"level":30,"time":1780914168230,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-g","req":{"method":"GET","url":"/favorites?kind=recipe","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64352},"msg":"incoming request"}
+{"level":30,"time":1780914168231,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-g","res":{"statusCode":401},"responseTime":0.8058998584747314,"msg":"request completed"}
+{"level":30,"time":1780914168231,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-h","req":{"method":"GET","url":"/recipe-books","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":50611},"msg":"incoming request"}
+{"level":30,"time":1780914168231,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-h","res":{"statusCode":401},"responseTime":0.45109987258911133,"msg":"request completed"}
+{"level":30,"time":1780914168634,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-i","req":{"method":"OPTIONS","url":"/auth/refresh","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":50611},"msg":"incoming request"}
+{"level":30,"time":1780914168635,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-i","res":{"statusCode":204},"responseTime":0.6935999393463135,"msg":"request completed"}
+{"level":30,"time":1780914168643,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-j","req":{"method":"POST","url":"/auth/refresh","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":50611},"msg":"incoming request"}
+{"level":30,"time":1780914168651,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-j","res":{"statusCode":200},"responseTime":8.36299991607666,"msg":"request completed"}
+{"level":30,"time":1780914168671,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-k","req":{"method":"OPTIONS","url":"/recipe-books","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64352},"msg":"incoming request"}
+{"level":30,"time":1780914168672,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-k","res":{"statusCode":204},"responseTime":0.37380003929138184,"msg":"request completed"}
+{"level":30,"time":1780914168672,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-l","req":{"method":"OPTIONS","url":"/favorites?kind=recipe","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":50611},"msg":"incoming request"}
+{"level":30,"time":1780914168672,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-l","res":{"statusCode":204},"responseTime":0.2630000114440918,"msg":"request completed"}
+{"level":30,"time":1780914168681,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-m","req":{"method":"GET","url":"/recipe-books","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":50611},"msg":"incoming request"}
+{"level":30,"time":1780914168685,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-n","req":{"method":"GET","url":"/favorites?kind=recipe","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64352},"msg":"incoming request"}
+{"level":30,"time":1780914168690,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-m","res":{"statusCode":200},"responseTime":8.638499975204468,"msg":"request completed"}
+{"level":30,"time":1780914168698,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-n","res":{"statusCode":200},"responseTime":12.69599986076355,"msg":"request completed"}
+{"level":30,"time":1780914320073,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-o","req":{"method":"OPTIONS","url":"/recipes?owner=me&limit=100","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64995},"msg":"incoming request"}
+{"level":30,"time":1780914320074,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-o","res":{"statusCode":204},"responseTime":0.6459000110626221,"msg":"request completed"}
+{"level":30,"time":1780914320074,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-p","req":{"method":"OPTIONS","url":"/recipe-books","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":65047},"msg":"incoming request"}
+{"level":30,"time":1780914320075,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-p","res":{"statusCode":204},"responseTime":0.5357999801635742,"msg":"request completed"}
+{"level":30,"time":1780914320075,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-q","req":{"method":"OPTIONS","url":"/favorites?kind=recipe","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":52074},"msg":"incoming request"}
+{"level":30,"time":1780914320076,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-q","res":{"statusCode":204},"responseTime":0.44009995460510254,"msg":"request completed"}
+{"level":30,"time":1780914320076,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-r","req":{"method":"OPTIONS","url":"/favorites?kind=book","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":59885},"msg":"incoming request"}
+{"level":30,"time":1780914320077,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-r","res":{"statusCode":204},"responseTime":0.4786999225616455,"msg":"request completed"}
+{"level":30,"time":1780914320078,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-s","req":{"method":"GET","url":"/recipes?owner=me&limit=100","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":65047},"msg":"incoming request"}
+{"level":30,"time":1780914320083,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-t","req":{"method":"GET","url":"/recipe-books","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":59885},"msg":"incoming request"}
+{"level":30,"time":1780914320085,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-u","req":{"method":"GET","url":"/favorites?kind=recipe","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":52074},"msg":"incoming request"}
+{"level":30,"time":1780914320086,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-v","req":{"method":"GET","url":"/favorites?kind=book","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":64995},"msg":"incoming request"}
+{"level":30,"time":1780914320092,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-s","res":{"statusCode":200},"responseTime":13.974299907684326,"msg":"request completed"}
+{"level":30,"time":1780914320094,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-v","res":{"statusCode":200},"responseTime":8.627399921417236,"msg":"request completed"}
+{"level":30,"time":1780914320100,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-t","res":{"statusCode":200},"responseTime":16.423799991607666,"msg":"request completed"}
+{"level":30,"time":1780914320101,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-u","res":{"statusCode":200},"responseTime":16.04330015182495,"msg":"request completed"}
+{"level":30,"time":1780914340463,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-w","req":{"method":"OPTIONS","url":"/recipes?owner=me&status=draft&limit=6","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":52074},"msg":"incoming request"}
+{"level":30,"time":1780914340464,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-w","res":{"statusCode":204},"responseTime":0.8903999328613281,"msg":"request completed"}
+{"level":30,"time":1780914340505,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-x","req":{"method":"GET","url":"/recipes?owner=me&status=draft&limit=6","host":"localhost:3000","remoteAddress":"127.0.0.1","remotePort":52074},"msg":"incoming request"}
+{"level":30,"time":1780914340535,"pid":19248,"hostname":"DESKTOP-TS6A61E","reqId":"req-x","res":{"statusCode":200},"responseTime":29.933300018310547,"msg":"request completed"}
+13:37:44 [tsx] change in ./src\plugins\auth.ts Restarting...
+c13:37:46 [tsx] change in ./..\..\packages\contracts\dist\index.js Restarting...
+c[api] failed to start Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at node:net:2206:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 3000
+}

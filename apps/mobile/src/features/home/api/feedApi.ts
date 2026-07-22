@@ -38,6 +38,15 @@ export const feedApi = {
 
   recipeById: (id: string) => http<Recipe>(`/recipes/${id}`),
 
+  recipesByCategory: (categoryId: string, limit = 100) =>
+    http<ListResponse<Recipe>>(`/recipes?categoryId=${categoryId}&limit=${limit}`),
+
+  searchRecipes: (q: string, limit = 20) =>
+    http<ListResponse<Recipe>>(`/recipes?q=${encodeURIComponent(q)}&limit=${limit}`),
+
+  searchBooks: (q: string) =>
+    http<ListResponse<RecipeBook>>(`/recipe-books?q=${encodeURIComponent(q)}`),
+
   usersByIds: (ids: string[]) =>
     http<ListResponse<PublicUser>>('/users/by-ids', {
       method: 'POST',
@@ -74,4 +83,10 @@ export const feedApi = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }),
+
+  deleteRecipe: (id: string) =>
+    http<void>(`/recipes/${id}`, { method: 'DELETE' }),
+
+  addRecipeToBook: (bookId: string, recipeId: string) =>
+    http<RecipeBook>(`/recipe-books/${bookId}/recipes/${recipeId}`, { method: 'POST' }),
 };

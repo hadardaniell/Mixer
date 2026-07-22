@@ -40,6 +40,59 @@
     "seeMore": "הצג  הכל",
     "emptySection": "אין מה להציג עדיין"
   },
+  "notifications": {
+    "title": "התראות",
+    "markAllRead": "סמן הכל כנקרא",
+    "empty": "אין התראות עדיין",
+    "error": "לא הצלחנו לטעון התראות. נסו שוב.",
+    "accept": "אישור",
+    "decline": "דחייה",
+    "time": {
+      "now": "עכשיו",
+      "minutes": "לפני {{count}} דק׳",
+      "hours": "לפני {{count}} שע׳",
+      "days": "לפני {{count}} ימים",
+      "weeks": "לפני {{count}} שבועות"
+    },
+    "items": {
+      "shareRequest": {
+        "title": "בקשת שיתוף",
+        "body": "{{name}} רוצה לשתף איתך את {{resource}}"
+      },
+      "shareAccepted": {
+        "title": "השיתוף אושר",
+        "body": "{{name}} אישר/ה את השיתוף של {{resource}}"
+      },
+      "shareRejected": {
+        "title": "השיתוף נדחה",
+        "body": "{{name}} דחה/תה את השיתוף של {{resource}}"
+      },
+      "ownerDeleted": {
+        "title": "פריט משותף הוסר",
+        "body": "{{name}} מחק/ה את {{resource}}, שמרנו לך עותק"
+      },
+      "friendRequest": {
+        "title": "בקשת חברות",
+        "body": "{{name}} שלח/ה לך בקשת חברות"
+      },
+      "friendAccepted": {
+        "title": "בקשת החברות אושרה",
+        "body": "{{name}} אישר/ה את בקשת החברות שלך"
+      },
+      "friendUnfriended": {
+        "title": "הוסרת מרשימת החברים",
+        "body": "{{name}} הסיר/ה אותך מרשימת החברים"
+      }
+    }
+  },
+  "categories": {
+    "sheetTitle": "עיון לפי קטגוריה"
+  },
+  "search": {
+    "recipes": "מתכונים",
+    "books": "ספרים",
+    "noResults": "אין תוצאות עבור \"{{query}}\""
+  },
   "newRecipe": {
     "title": "יצירת מתכון",
     "subtitle": "איך תרצי להתחיל?",
@@ -56,7 +109,9 @@
     "drafts": {
       "title": "טיוטות אחרונות",
       "seeAll": "הצג הכל",
-      "updatedDaysAgo": "עודכן לפני {{count}} ימים"
+      "updatedDaysAgo": "עודכן לפני {{count}} ימים",
+      "delete": "מחיקת מתכון",
+      "empty": "אין טיוטות עדיין"
     },
     "creating": "יוצר מתכון...",
     "errors": {
@@ -99,6 +154,7 @@
     },
     "manual": {
       "title": "יצירת מתכון ידני",
+      "editTitle": "עריכת מתכון ידני",
       "stepOf": "שלב {{current}} מתוך {{total}}",
       "saving": "שומר...",
       "buttons": {
@@ -241,6 +297,10 @@
       "share": "שיתוף",
       "saveToBook": "שמירה לספר",
       "shoppingList": "רשימת קניות"
+    },
+    "saveToBookSheet": {
+      "title": "שמירה לספר",
+      "empty": "אין לך ספרים עדיין"
     }
   },
   "add": {

@@ -4,8 +4,10 @@ import { refreshTokensValidator } from './refresh-tokens.js';
 import { recipesValidator } from './recipes.js';
 import { recipeBooksValidator } from './recipe-books.js';
 import { favoritesValidator } from './favorites.js';
+import { categoriesValidator } from './categories.js';
 import { sharedItemsValidator } from './shared-items.js';
 import { notificationsValidator } from './notifications.js';
+import { urlExtractionCacheValidator } from './url-extraction-cache.js';
 
 /**
  * Source of truth for the MongoDB collection `$jsonSchema` validators.
@@ -30,8 +32,10 @@ export const collectionValidators: Record<string, CollectionValidator> = {
   recipes: recipesValidator,
   recipe_books: recipeBooksValidator,
   favorites: favoritesValidator,
+  categories: categoriesValidator,
   shared_items: sharedItemsValidator,
   notifications: notificationsValidator,
+  url_extraction_cache: urlExtractionCacheValidator,
 };
 
 export type { CollectionValidator } from './types.js';

@@ -4,6 +4,7 @@ import type { Collections } from '../plugins/mongo.js';
 export type NotificationPayloadMap = {
   SHARE_REQUEST: {
     fromUserId: string;
+    fromUserName: string;
     resourceType: 'recipe' | 'book';
     resourceId: string;
     resourceName: string;
@@ -11,18 +12,21 @@ export type NotificationPayloadMap = {
   };
   SHARE_ACCEPTED: {
     fromUserId: string;
+    fromUserName: string;
     resourceType: 'recipe' | 'book';
     resourceId: string;
     resourceName: string;
   };
   SHARE_REJECTED: {
     fromUserId: string;
+    fromUserName: string;
     resourceType: 'recipe' | 'book';
     resourceId: string;
     resourceName: string;
   };
   OWNER_DELETED_RESOURCE: {
     fromUserId: string;
+    fromUserName: string;
     resourceType: 'recipe' | 'book';
     resourceName: string;
     savedCopyId: string;
@@ -30,15 +34,18 @@ export type NotificationPayloadMap = {
   FRIEND_REQUEST: {
     fromUserId: string;
     fromUserName: string;
+    fromUserAvatar: string | null;
     friendshipId: string;
   };
   FRIEND_ACCEPTED: {
     fromUserId: string;
     fromUserName: string;
+    fromUserAvatar: string | null;
   };
   FRIEND_UNFRIENDED: {
     fromUserId: string;
     fromUserName: string;
+    fromUserAvatar: string | null;
   };
 };
 

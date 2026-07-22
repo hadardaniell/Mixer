@@ -4,9 +4,11 @@ import { z } from 'zod';
 import {
   AddBookMemberInputSchema,
   CreateRecipeBookInputSchema,
+  RecipeBookListQuerySchema,
   UpdateBookMemberInputSchema,
   UpdateRecipeBookInputSchema,
 } from '@mixer/contracts';
+import type { Filter } from 'mongodb';
 import type { RecipeBookDoc } from '../../db/types.js';
 import { toRecipeBook } from './recipe-books.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
@@ -58,11 +60,20 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.get(
     '/recipe-books',
-    { onRequest: [app.authenticate], schema: { tags: ['recipe-books'] } },
+    {
+      onRequest: [app.authenticate],
+      schema: { querystring: RecipeBookListQuerySchema, tags: ['recipe-books'] },
+    },
     async (req) => {
       const userId = new ObjectId(req.user.id);
+      const { q } = req.query;
+      const filter: Filter<RecipeBookDoc> = {
+        $or: [{ ownerId: userId }, { 'members.userId': userId }],
+      };
+      // Escape regex metacharacters so a user's query is matched literally.
+      if (q) filter.name = { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
       const items = await app.collections.recipeBooks
-        .find({ $or: [{ ownerId: userId }, { 'members.userId': userId }] })
+        .find(filter)
         .sort({ createdAt: -1 })
         .toArray();
       const favSet = await favoritedIds(app.collections, req.user.id, 'book', items.map((b) => b._id));

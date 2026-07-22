@@ -138,6 +138,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         difficulty: body.difficulty,
         cuisine: body.cuisine,
         tags: body.tags,
+        categoryIds: body.categoryIds.map((id) => new ObjectId(id)),
         language: body.language,
         source: {
           type: body.source.type,
@@ -241,7 +242,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: { querystring: RecipeListQuerySchema, tags: ['recipes'] },
     },
     async (req) => {
-      const { owner, tag, q, visibility, status, limit, skip } = req.query;
+      const { owner, tag, categoryId, q, visibility, status, limit, skip } = req.query;
       const filter: Filter<RecipeDoc> = {};
 
       const isOwnerSelf = owner === 'me' && !!req.user?.id;
@@ -271,6 +272,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       if (visibility) filter.visibility = visibility;
       if (tag) filter.tags = tag;
+      if (categoryId && ObjectId.isValid(categoryId)) {
+        filter.categoryIds = new ObjectId(categoryId);
+      }
       if (q) filter.$text = { $search: q };
 
       const cursor = app.collections.recipes.find(filter, {
@@ -323,8 +327,11 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (existing.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'not the owner' });
       }
-      const { source, ...rest } = req.body;
+      const { source, categoryIds, ...rest } = req.body;
       const $set: Partial<RecipeDoc> & { updatedAt: Date } = { ...rest, updatedAt: new Date() };
+      if (categoryIds) {
+        $set.categoryIds = categoryIds.map((id) => new ObjectId(id));
+      }
       if (source) {
         $set.source = {
           type: source.type,
@@ -358,9 +365,15 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       }
 
       // Auto-fork for friends who have a live link (accepted share, not yet saved)
-      const liveShares = await app.collections.sharedItems
-        .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
-        .toArray();
+      const [liveShares, owner] = await Promise.all([
+        app.collections.sharedItems
+          .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
+          .toArray(),
+        app.collections.users.findOne(
+          { _id: new ObjectId(req.user.id) },
+          { projection: { displayName: 1 } },
+        ),
+      ]);
 
       await Promise.all(
         liveShares.map(async (share) => {
@@ -382,6 +395,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
           );
           await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
             fromUserId: req.user.id,
+            fromUserName: owner?.displayName ?? '',
             resourceType: 'recipe',
             resourceName: existing.title,
             savedCopyId: fork._id.toString(),
@@ -420,6 +434,56 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       };
       await app.collections.recipes.insertOne(fork);
       return reply.code(201).send(toRecipe(fork));
+    },
+  );
+
+  app.post(
+    '/recipes/import/url',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: z.object({ url: z.string().url() }),
+        response: {
+          200: ExtractFromTextResultSchema,
+          422: z.object({ error: z.string() }),
+          500: z.object({ error: z.string() }),
+        },
+        tags: ['recipes'],
+      },
+    },
+    async (req, reply) => {
+      const { url } = req.body;
+
+      // Check global cache first — if any user already extracted this URL, reuse it
+      const cached = await app.collections.urlExtractionCache.findOne({ url });
+      if (cached) {
+        app.log.info(`[import/url] Cache hit for ${url}`);
+        return ExtractFromTextResultSchema.parse(cached.extraction);
+      }
+
+      // Cache miss — call the AI service
+      app.log.info(`[import/url] Cache miss — calling AI for ${url}`);
+      const response = await fetch(`${config.aiBaseUrl}/extract/video`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json() as { error?: string };
+        return reply.code(response.status === 422 ? 422 : 500).send({
+          error: data?.error ?? 'AI service failed to extract recipe from URL',
+        });
+      }
+
+      const extraction = await response.json() as Record<string, unknown>;
+
+      // Save to cache so future requests skip the AI call
+      await app.collections.urlExtractionCache
+        .insertOne({ _id: new ObjectId(), url, extraction, extractedAt: new Date() })
+        .catch(() => {}); // ignore duplicate-key race (two simultaneous requests for same URL)
+
+      return ExtractFromTextResultSchema.parse(extraction);
     },
   );
 

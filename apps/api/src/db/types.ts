@@ -57,6 +57,8 @@ export type RecipeDoc = {
   difficulty?: 'easy' | 'medium' | 'hard';
   cuisine?: string;
   tags: string[];
+  /** References into the `categories` collection. Optional: legacy docs predate it. */
+  categoryIds?: ObjectId[];
   language: 'he' | 'en';
   source: {
     type: 'manual' | 'url' | 'image' | 'video-upload' | 'text';
@@ -72,6 +74,17 @@ export type RecipeDoc = {
   embeddingIndexedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+};
+
+// Keep in sync with categoriesValidator in db/validators/categories.ts.
+export type CategoryDoc = {
+  _id: ObjectId;
+  slug: string;
+  label: { he: string; en: string };
+  /** Design-system color token name, e.g. "accentPeach". */
+  accent: string;
+  order: number;
+  isActive: boolean;
 };
 
 export type RecipeBookMember = {
@@ -123,6 +136,13 @@ export type FriendshipDoc = {
   status: 'pending' | 'accepted';
   createdAt: Date;
   acceptedAt?: Date;
+};
+
+export type UrlExtractionCacheDoc = {
+  _id: ObjectId;
+  url: string;
+  extraction: Record<string, unknown>;
+  extractedAt: Date;
 };
 
 export type NotificationDoc = {

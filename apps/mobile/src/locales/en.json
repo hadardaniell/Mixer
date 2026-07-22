@@ -40,6 +40,59 @@
     "seeMore": "See more",
     "emptySection": "Nothing here yet"
   },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet",
+    "error": "Couldn't load notifications. Please try again.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "time": {
+      "now": "now",
+      "minutes": "{{count}}m ago",
+      "hours": "{{count}}h ago",
+      "days": "{{count}}d ago",
+      "weeks": "{{count}}w ago"
+    },
+    "items": {
+      "shareRequest": {
+        "title": "Share request",
+        "body": "{{name}} wants to share {{resource}} with you"
+      },
+      "shareAccepted": {
+        "title": "Share accepted",
+        "body": "{{name}} accepted your share of {{resource}}"
+      },
+      "shareRejected": {
+        "title": "Share declined",
+        "body": "{{name}} declined your share of {{resource}}"
+      },
+      "ownerDeleted": {
+        "title": "Shared item removed",
+        "body": "{{name}} deleted {{resource}} — we saved you a copy"
+      },
+      "friendRequest": {
+        "title": "Friend request",
+        "body": "{{name}} sent you a friend request"
+      },
+      "friendAccepted": {
+        "title": "Friend request accepted",
+        "body": "{{name}} accepted your friend request"
+      },
+      "friendUnfriended": {
+        "title": "Removed from friends",
+        "body": "{{name}} removed you from their friends"
+      }
+    }
+  },
+  "categories": {
+    "sheetTitle": "Browse by category"
+  },
+  "search": {
+    "recipes": "Recipes",
+    "books": "Books",
+    "noResults": "No results for \"{{query}}\""
+  },
   "newRecipe": {
     "title": "Create recipe",
     "subtitle": "How would you like to start?",
@@ -56,7 +109,9 @@
     "drafts": {
       "title": "Recent drafts",
       "seeAll": "See all",
-      "updatedDaysAgo": "Updated {{count}} days ago"
+      "updatedDaysAgo": "Updated {{count}} days ago",
+      "delete": "Delete recipe",
+      "empty": "No drafts yet"
     },
     "creating": "Creating recipe...",
     "errors": {
@@ -99,6 +154,7 @@
     },
     "manual": {
       "title": "Manual recipe",
+      "editTitle": "Edit recipe",
       "stepOf": "Step {{current}} of {{total}}",
       "saving": "Saving...",
       "buttons": {
@@ -244,6 +300,10 @@
       "share": "Share",
       "saveToBook": "Save to book",
       "shoppingList": "Shopping list"
+    },
+    "saveToBookSheet": {
+      "title": "Save to a book",
+      "empty": "You don't have any books yet"
     }
   },
   "add": {

@@ -82,7 +82,7 @@ export function CreateBookScreen() {
       <YStack
         flex={1}
         width="100%"
-        paddingTop={insets.top + 16}
+        paddingTop={insets.top + 36}
         style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
       >
         {/* Stepper — pinned at the top */}

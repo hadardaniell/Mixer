@@ -151,6 +151,8 @@ export const RecipeSchema = z.object({
   difficulty: DifficultySchema.optional(),
   cuisine: z.string().optional(),
   tags: z.array(z.string()),
+  /** References into the `categories` collection. Free-text `tags` stays for AI/search. */
+  categoryIds: z.array(ObjectIdString).default([]),
   language: LocaleSchema,
   source: RecipeSourceSchema,
   visibility: VisibilitySchema,
@@ -175,6 +177,7 @@ export const CreateRecipeInputSchema = z.object({
   difficulty: DifficultySchema.optional(),
   cuisine: z.string().optional(),
   tags: z.array(z.string()).default([]),
+  categoryIds: z.array(ObjectIdString).default([]),
   language: LocaleSchema.default('en'),
   source: RecipeSourceSchema.default({ type: 'manual' }),
   visibility: VisibilitySchema.default('private'),
@@ -188,6 +191,7 @@ export type UpdateRecipeInput = z.infer<typeof UpdateRecipeInputSchema>;
 export const RecipeListQuerySchema = z.object({
   owner: z.string().optional(), // 'me' or an ObjectId hex
   tag: z.string().optional(),
+  categoryId: z.string().optional(), // ObjectId hex of a category
   q: z.string().optional(),
   visibility: VisibilitySchema.optional(),
   status: RecipeStatusSchema.optional(),
@@ -195,6 +199,20 @@ export const RecipeListQuerySchema = z.object({
   skip: z.coerce.number().int().nonnegative().default(0),
 });
 export type RecipeListQuery = z.infer<typeof RecipeListQuerySchema>;
+
+// --- categories ---
+// A food-type "chip" (e.g. pasta, soups, desserts). Labels are stored per
+// language in the DB so categories can be added/edited without an app release.
+// `accent` is a design-system color token name (e.g. "accentPeach").
+export const CategorySchema = z.object({
+  id: ObjectIdString,
+  slug: z.string(),
+  label: z.object({ he: z.string(), en: z.string() }),
+  accent: z.string(),
+  order: z.number().int(),
+  isActive: z.boolean(),
+});
+export type Category = z.infer<typeof CategorySchema>;
 
 // --- recipe books ---
 export const RecipeBookTypeSchema = z.enum(['personal', 'shared', 'meal']);
@@ -224,6 +242,11 @@ export const RecipeBookSchema = z.object({
   isFavorite: z.boolean().optional(),
 });
 export type RecipeBook = z.infer<typeof RecipeBookSchema>;
+
+export const RecipeBookListQuerySchema = z.object({
+  q: z.string().optional(), // free-text match on the book name
+});
+export type RecipeBookListQuery = z.infer<typeof RecipeBookListQuerySchema>;
 
 export const FavoriteKindSchema = z.enum(['recipe', 'book']);
 export type FavoriteKind = z.infer<typeof FavoriteKindSchema>;
@@ -391,15 +414,67 @@ export const NotificationTypeSchema = z.enum([
 ]);
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 
-export const NotificationSchema = z.object({
+// Per-type payloads. Keep in sync with NotificationPayloadMap in
+// apps/api/src/services/notification.service.ts.
+export const ShareRequestPayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  resourceType: ShareResourceTypeSchema,
+  resourceId: ObjectIdString,
+  resourceName: z.string(),
+  shareId: ObjectIdString,
+});
+export const ShareAcceptedPayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  resourceType: ShareResourceTypeSchema,
+  resourceId: ObjectIdString,
+  resourceName: z.string(),
+});
+export const ShareRejectedPayloadSchema = ShareAcceptedPayloadSchema;
+export const OwnerDeletedResourcePayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  resourceType: ShareResourceTypeSchema,
+  resourceName: z.string(),
+  savedCopyId: ObjectIdString,
+});
+export const FriendRequestPayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  fromUserAvatar: z.string().nullable(),
+  friendshipId: ObjectIdString,
+});
+export const FriendActivityPayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  fromUserAvatar: z.string().nullable(),
+});
+
+const notificationBase = {
   id: ObjectIdString,
-  type: NotificationTypeSchema,
-  payload: z.record(z.unknown()),
   read: z.boolean(),
   createdAt: IsoDate,
   expiresAt: IsoDate.nullable(),
-});
+};
+
+export const NotificationSchema = z.discriminatedUnion('type', [
+  z.object({ ...notificationBase, type: z.literal('SHARE_REQUEST'), payload: ShareRequestPayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('SHARE_ACCEPTED'), payload: ShareAcceptedPayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('SHARE_REJECTED'), payload: ShareRejectedPayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('OWNER_DELETED_RESOURCE'), payload: OwnerDeletedResourcePayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('FRIEND_REQUEST'), payload: FriendRequestPayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('FRIEND_ACCEPTED'), payload: FriendActivityPayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('FRIEND_UNFRIENDED'), payload: FriendActivityPayloadSchema }),
+]);
 export type Notification = z.infer<typeof NotificationSchema>;
+
+export const NotificationListResponseSchema = z.object({
+  items: z.array(NotificationSchema),
+  total: z.number(),
+  unreadCount: z.number(),
+});
+export type NotificationListResponse = z.infer<typeof NotificationListResponseSchema>;
 
 export const NotificationListQuerySchema = z.object({
   read: z.coerce.boolean().optional(),
