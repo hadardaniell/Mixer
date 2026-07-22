@@ -7,6 +7,7 @@ import {
   ExtractFromTextInputSchema,
   ExtractFromImageInputSchema,
   ExtractFromTextResultSchema,
+  ExtractFromUrlInputSchema,
   RecipeListQuerySchema,
   UpdateRecipeInputSchema,
 } from '@mixer/contracts';
@@ -536,6 +537,33 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
           throw new Error('images_not_same_recipe');
         }
         throw new Error('AI service failed to extract recipe from image');
+      }
+
+      const data = await response.json();
+      const result = ExtractFromTextResultSchema.parse(data);
+      return result;
+    },
+  );
+
+  app.post(
+    '/recipes/import/url',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: ExtractFromUrlInputSchema,
+        response: { 200: ExtractFromTextResultSchema },
+        tags: ['recipes'],
+      },
+    },
+    async (req) => {
+      const response = await fetch(`${config.aiBaseUrl}/extract/url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: req.body.url }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI service failed to extract recipe from URL');
       }
 
       const data = await response.json();
