@@ -261,11 +261,13 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       // Drafts are private work-in-progress. They surface only when explicitly
       // requested (e.g. the drafts screen: owner=me&status=draft); every other
-      // listing hides them. `$ne: 'draft'` also covers legacy docs with no
-      // status field, so nothing disappears before the backfill runs.
+      // listing hides them — including the owner's own recipes (my-recipes,
+      // profile, feed), which is why we must exclude drafts even when
+      // isOwnerSelf. `$ne: 'draft'` also covers legacy docs with no status
+      // field, so nothing disappears before the backfill runs.
       if (status === 'draft') {
         filter.status = 'draft';
-      } else if (status === 'published' || !isOwnerSelf) {
+      } else {
         filter.status = { $ne: 'draft' };
       }
 
