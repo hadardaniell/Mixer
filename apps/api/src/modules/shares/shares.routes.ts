@@ -98,11 +98,15 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (resourceType === 'recipe') {
         const recipe = await app.collections.recipes.findOne(
           { _id: resourceId },
-          { projection: { ownerId: 1 } },
+          { projection: { ownerId: 1, status: 1 } },
         );
         if (!recipe) return reply.code(404).send({ error: 'recipe not found' });
         if (recipe.ownerId.toString() !== req.user.id) {
           return reply.code(403).send({ error: 'not the owner' });
+        }
+        // Drafts are unfinished work-in-progress — they can't be shared until published.
+        if (recipe.status === 'draft') {
+          return reply.code(400).send({ error: 'cannot share a draft recipe' });
         }
       } else {
         const book = await app.collections.recipeBooks.findOne(

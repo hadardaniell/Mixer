@@ -43,7 +43,9 @@ export function useRecentlyViewed(limit = MAX_HOME_PREVIEW): {
     const byId = new Map(fetched.map((r) => [r.id, r]));
     return ids
       .map((id) => byId.get(id))
-      .filter((r): r is NonNullable<typeof r> => !!r)
+      // Drafts are work-in-progress — never surface them in the feed, even if
+      // the user just viewed one right after importing it.
+      .filter((r): r is NonNullable<typeof r> => !!r && r.status !== 'draft')
       .map((r) => ({
         id: r.id,
         name: r.title,
