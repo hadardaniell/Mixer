@@ -133,7 +133,8 @@
     "creating": "Creating recipe...",
     "errors": {
       "extractFailed": "We couldn't extract the recipe. Please try again.",
-      "notSameRecipe": "These photos don't look like the same recipe. Try photos of one recipe."
+      "notSameRecipe": "These photos don't look like the same recipe. Try photos of one recipe.",
+      "uploadFailed": "We couldn't upload the photo. Please try again."
     },
     "link": {
       "title": "Recipe from a link",
@@ -187,7 +188,9 @@
         "descLabel": "Short description",
         "descPlaceholder": "A few words about the recipe...",
         "photoLabel": "Add a photo (optional)",
-        "photoHint": "Tap to add a photo"
+        "photoHint": "Tap to add a photo",
+        "photoUploading": "Uploading…",
+        "photoChange": "Tap to change photo"
       },
       "step2": {
         "subtitle": "A few small details and we move on",

@@ -123,25 +123,50 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
     {
       schema: {
         body: ExtractFromUrlInputSchema,
-        response: { 200: ExtractFromTextResultSchema },
+        response: {
+          200: ExtractFromTextResultSchema,
+          422: z.object({ error: z.string() }),
+        },
         tags: ['extract'],
       },
     },
-    async (req) => {
+    async (req, reply) => {
       const { url } = req.body as ExtractFromUrlInput;
       const isVideo = isVideoUrl(url);
 
       if (isVideo) {
+        const isYouTube = /youtube\.com|youtu\.be/.test(url);
         let tempDirectory: string | undefined;
         try {
+          if (isYouTube) {
+            // YouTube: check duration first (no download), then send the URL
+            // straight to Gemini — cheaper and faster than downloading frames.
+            app.log.info(`[extract/url] YouTube URL detected — checking duration for: ${url}`);
+            try {
+              const { duration } = await downloadService.getVideoInfo(url);
+              if (duration > MAX_VIDEO_DURATION_SECONDS) {
+                return reply.code(422).send({
+                  error: `Video is too long (${Math.round(duration / 60)} min). Only short videos up to ${MAX_VIDEO_DURATION_SECONDS / 60} minutes are supported (Shorts, Reels, TikToks).`,
+                });
+              }
+            } catch {
+              app.log.warn(`[extract/url] Could not fetch YouTube metadata for ${url} — proceeding anyway`);
+            }
+
+            app.log.info(`[extract/url] Sending YouTube URL directly to Gemini`);
+            return await videoLlamaService.extractRecipeFromYouTube(url);
+          }
+
           app.log.info(`[extract/url] Starting download and frame extraction for video URL: ${url}`);
           const { tempDir, audioPath, framePaths } = await downloadService.downloadAndExtractFrames(url);
           tempDirectory = tempDir;
 
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
-          const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths);
-          return recipe;
+          return await videoLlamaService.extractRecipe(audioPath, framePaths);
         } catch (error) {
+          if (error instanceof Error && error.message === 'not_a_recipe') {
+            return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
+          }
           app.log.error(error);
           throw new Error('Failed to process video URL');
         } finally {
@@ -157,9 +182,11 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           const text = await fetchWebpageText(url);
 
           app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
-          const recipe = await extractRecipeFromText(text);
-          return recipe;
+          return await extractRecipeFromText(text);
         } catch (error) {
+          if (error instanceof Error && error.message === 'not_a_recipe') {
+            return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });
+          }
           app.log.error(error);
           throw new Error('Failed to extract recipe from webpage URL');
         }

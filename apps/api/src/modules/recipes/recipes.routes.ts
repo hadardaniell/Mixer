@@ -7,7 +7,6 @@ import {
   ExtractFromTextInputSchema,
   ExtractFromImageInputSchema,
   ExtractFromTextResultSchema,
-  ExtractFromUrlInputSchema,
   RecipeListQuerySchema,
   UpdateRecipeInputSchema,
 } from '@mixer/contracts';
@@ -461,9 +460,12 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         return ExtractFromTextResultSchema.parse(cached.extraction);
       }
 
-      // Cache miss — call the AI service
+      // Cache miss — call the AI service. `/extract/url` branches internally:
+      // web pages are scraped (Jina) and video links (YouTube/TikTok/Instagram/…)
+      // are transcribed, so this single endpoint covers every source the mobile
+      // "create from link" screen advertises (web + video + social).
       app.log.info(`[import/url] Cache miss — calling AI for ${url}`);
-      const response = await fetch(`${config.aiBaseUrl}/extract/video`, {
+      const response = await fetch(`${config.aiBaseUrl}/extract/url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
@@ -545,36 +547,10 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     },
   );
 
-  app.post(
-    '/recipes/import/url',
-    {
-      onRequest: [app.authenticate],
-      schema: {
-        body: ExtractFromUrlInputSchema,
-        response: { 200: ExtractFromTextResultSchema },
-        tags: ['recipes'],
-      },
-    },
-    async (req) => {
-      const response = await fetch(`${config.aiBaseUrl}/extract/url`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: req.body.url }),
-      });
-
-      if (!response.ok) {
-        throw new Error('AI service failed to extract recipe from URL');
-      }
-
-      const data = await response.json();
-      const result = ExtractFromTextResultSchema.parse(data);
-      return result;
-    },
-  );
-
   app.get(
     '/recipes/semantic-search',
     {
+      onRequest: [app.optionalAuthenticate],
       schema: {
         querystring: z.object({ q: z.string().min(1) }),
         tags: ['recipes'],
@@ -600,7 +576,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         : { visibility: { $in: ['public', 'unlisted'] } };
 
       const recipes = await app.collections.recipes
-        .find({ ...visibilityFilter, embedding: { $exists: true } })
+        // Exclude drafts — search should only surface published recipes, even
+        // the caller's own (which the visibility filter would otherwise include).
+        .find({ ...visibilityFilter, status: { $ne: 'draft' }, embedding: { $exists: true } })
         .toArray();
 
       const scored = recipes

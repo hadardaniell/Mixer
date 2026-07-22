@@ -48,7 +48,15 @@ export function HomeSearchView({ query }: HomeSearchViewProps) {
 
   const recipesQ = useQuery({
     queryKey: ['search', 'recipes', debounced],
-    queryFn: () => feedApi.searchRecipes(debounced),
+    // Semantic (embedding) search for recipes, with a keyword-search fallback so
+    // results still appear if the embedding service is unavailable.
+    queryFn: async () => {
+      try {
+        return await feedApi.semanticSearchRecipes(debounced);
+      } catch {
+        return feedApi.searchRecipes(debounced);
+      }
+    },
     enabled,
   });
   const booksQ = useQuery({

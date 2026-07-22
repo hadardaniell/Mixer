@@ -71,11 +71,14 @@ export async function http<T>(path: string, opts: HttpOptions = {}): Promise<T> 
     // Only advertise a JSON body when we actually send one. Fastify rejects an
     // empty body when Content-Type is application/json (FST_ERR_CTP_EMPTY_JSON_BODY),
     // which would break bodyless mutations like PUT /notifications/:id/read.
-    const hasBody = init.body != null;
+    // FormData (multipart file uploads) must NOT get a JSON content-type — let
+    // fetch set `multipart/form-data` with the correct boundary itself.
+    const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;
+    const hasJsonBody = init.body != null && !isFormData;
     return fetch(`${baseUrl}${path}`, {
       ...init,
       headers: {
-        ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
+        ...(hasJsonBody ? { 'Content-Type': 'application/json' } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...headers,
       },

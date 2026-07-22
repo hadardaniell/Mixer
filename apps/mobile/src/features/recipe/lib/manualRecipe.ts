@@ -21,6 +21,8 @@ export interface ManualStep {
 export interface ManualForm {
   title: string;
   description: string;
+  /** Public URL of the uploaded cover image, once the upload completes. */
+  coverImageUrl?: string;
   prepTimeMinutes?: number;
   difficulty?: Difficulty;
   servings?: number;
@@ -85,6 +87,7 @@ export function stepPatch(step: number, form: ManualForm): Partial<CreateRecipeI
       return {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
+        coverImageUrl: form.coverImageUrl,
       };
     case 2:
       return {
@@ -125,6 +128,7 @@ export function recipeToManualForm(r: Recipe): ManualForm {
   return {
     title: r.title,
     description: r.description ?? '',
+    coverImageUrl: r.coverImageUrl,
     prepTimeMinutes: r.prepTimeMinutes,
     difficulty: r.difficulty,
     servings: r.servings,
