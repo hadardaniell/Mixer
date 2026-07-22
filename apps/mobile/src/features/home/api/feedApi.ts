@@ -44,6 +44,11 @@ export const feedApi = {
   searchRecipes: (q: string, limit = 20) =>
     http<ListResponse<Recipe>>(`/recipes?q=${encodeURIComponent(q)}&limit=${limit}`),
 
+  // Embedding-based recipe search: ranks recipes by semantic similarity to the
+  // query rather than exact keyword match. Returns the top matches (no `total`).
+  semanticSearchRecipes: (q: string) =>
+    http<ListResponse<Recipe>>(`/recipes/semantic-search?q=${encodeURIComponent(q)}`),
+
   searchBooks: (q: string) =>
     http<ListResponse<RecipeBook>>(`/recipe-books?q=${encodeURIComponent(q)}`),
 
@@ -71,6 +76,18 @@ export const feedApi = {
       method: 'POST',
       body: JSON.stringify({ url }),
     }),
+
+  // Uploads a cover image to Firebase Storage and returns its public URL.
+  // Sent as multipart/form-data; the server reads the first file part.
+  uploadRecipeImage: (file: { uri: string; name: string; type: string }) => {
+    const form = new FormData();
+    // React Native's FormData accepts a { uri, name, type } file descriptor.
+    form.append('file', file as unknown as Blob);
+    return http<{ imageUrl: string }>('/recipes/upload-image', {
+      method: 'POST',
+      body: form,
+    });
+  },
 
   createRecipe: (input: CreateRecipeInput) =>
     http<Recipe>('/recipes', {

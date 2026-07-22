@@ -1,5 +1,6 @@
 import { ChefHat, Clock, Utensils } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { Image } from 'react-native';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { useIsRtl } from '@/shared/lib/useIsRtl';
@@ -49,6 +50,14 @@ export function Step5Review({ form }: Props) {
   return (
     <StepShell step={5} title={t('newRecipe.manual.step5.title')}>
       <YStack gap="$4" style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}>
+        {form.coverImageUrl ? (
+          <Image
+            source={{ uri: form.coverImageUrl }}
+            style={{ width: '100%', height: 200, borderRadius: 18 }}
+            resizeMode="cover"
+          />
+        ) : null}
+
         <YStack gap="$2" alignItems="center">
           <Text color="$text" fontSize={20} fontWeight="700" textAlign="center">
             {form.title.trim()}
