@@ -407,3 +407,6 @@ export const NotificationListQuerySchema = z.object({
   skip: z.coerce.number().int().nonnegative().default(0),
 });
 export type NotificationListQuery = z.infer<typeof NotificationListQuerySchema>;
+
+// --- friends ---
+export * from './friends.js';

@@ -35,8 +35,17 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       const phone = phoneNumber.trim();
 
       // Pre-check both unique fields so we can return a specific code per cause.
-      const existingEmail = await app.collections.users.findOne({ email });
-      if (existingEmail) return reply.code(409).send({ error: 'email_already_registered' });
+      const existingEmail = await app.collections.users.findOne(
+        { email },
+        { collation: { locale: 'en', strength: 2 } }
+      );
+      if (existingEmail) {
+        console.log('\n--- FOUND CONFLICTING USER ---');
+        console.log(JSON.stringify(existingEmail, null, 2));
+        console.log('------------------------------\n');
+        req.log.warn({ existingEmail }, 'Registration blocked: Email exists in pre-check');
+        return reply.code(409).send({ error: 'email_already_registered' });
+      }
       const existingPhone = await app.collections.users.findOne({ phoneNumber: phone });
       if (existingPhone) return reply.code(409).send({ error: 'phone_already_registered' });
 
@@ -75,6 +84,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
         // Race condition fallback: the unique index caught what the pre-check
         // missed (two concurrent registrations with the same email/phone).
         if (isDuplicateKeyError(e, 'email')) {
+          req.log.warn(e, 'Registration blocked: Unique index collision on email');
           return reply.code(409).send({ error: 'email_already_registered' });
         }
         if (isDuplicateKeyError(e, 'phoneNumber')) {
