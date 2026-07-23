@@ -1,3 +1,4 @@
+import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,6 @@ import { Text, useTheme, YStack } from 'tamagui';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useToggleRecipeFavorite } from '@/features/home/hooks/useFavoriteMutations';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
-import { addToShoppingList } from '@/features/shopping-list/storage/shoppingList';
 import { ShareSheet } from '@/features/shares/components/ShareSheet';
 import { isRTL } from '@/shared/lib/i18n';
 
@@ -20,6 +20,7 @@ import { RecipeHeader } from '../components/RecipeHeader';
 import { RecipeSourceNote } from '../components/RecipeSourceNote';
 import { RecipeTip } from '../components/RecipeTip';
 import { StartCookingButton } from '../components/StartCookingButton';
+import { recipeToText } from '../lib/recipeToText';
 import { useRecipe } from '../hooks/useRecipe';
 
 interface RecipeScreenProps {
@@ -40,11 +41,11 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
   // Quantity multiplier — the recipe's authored amounts are "כמות 1" (×1).
   const [multiplier, setMultiplier] = useState(1);
   const [checked, setChecked] = useState<Set<number>>(() => new Set());
-  const [addedNotice, setAddedNotice] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [bookSheetOpen, setBookSheetOpen] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareNotice, setShareNotice] = useState<'draft' | 'notOwner' | null>(null);
-  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shareNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tipNotes = useMemo(
@@ -94,19 +95,13 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
     shareNoticeTimer.current = setTimeout(() => setShareNotice(null), 3000);
   };
 
-  const handleAddToShoppingList = () => {
-    addToShoppingList(
-      recipe.ingredients.map((ing) => ({
-        name: ing.name,
-        amount: ing.amount != null ? ing.amount * multiplier : undefined,
-        unit: ing.unit,
-        recipeId: recipe.id,
-        recipeName: recipe.title,
-      })),
-    );
-    setAddedNotice(true);
-    if (noticeTimer.current) clearTimeout(noticeTimer.current);
-    noticeTimer.current = setTimeout(() => setAddedNotice(false), 2500);
+  // Copies the recipe as plain text so it can be pasted straight into WhatsApp.
+  // Scaled by the current multiplier — you copy what you see.
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(recipeToText(recipe, t, multiplier));
+    setCopied(true);
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopied(false), 2500);
   };
 
   return (
@@ -129,7 +124,6 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
           recipe={recipe}
           isFavorited={isFavorited}
           onToggleFavorite={() => toggleFavorite.mutate({ id: recipe.id, next: !isFavorited })}
-          onShare={handleShare}
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
         />
 
@@ -139,13 +133,9 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
           <RecipeActionBar
             onShare={handleShare}
             onSaveToBook={() => setBookSheetOpen(true)}
-            onShoppingList={handleAddToShoppingList}
+            onCopy={handleCopy}
+            copied={copied}
           />
-          {addedNotice ? (
-            <Text fontSize={13} fontWeight="600" color="$success" textAlign="center">
-              {t('recipe.addedToShoppingList')}
-            </Text>
-          ) : null}
           {shareNotice ? (
             <Text fontSize={13} fontWeight="600" color="$danger" textAlign="center">
               {t(`share.blocked.${shareNotice}`)}

@@ -19,6 +19,7 @@
     "@tamagui/config": "^1.114.0",
     "@tanstack/react-query": "^5.59.0",
     "expo": "~52.0.0",
+    "expo-clipboard": "~7.0.1",
     "expo-constants": "~17.0.3",
     "expo-dev-client": "~5.0.0",
     "expo-font": "~13.0.4",

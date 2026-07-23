@@ -1,5 +1,5 @@
 import type { Recipe } from '@mixer/contracts';
-import { ArrowRight, Share2 } from 'lucide-react-native';
+import { ArrowRight } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { Image, Pressable } from 'react-native';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
@@ -13,24 +13,17 @@ interface RecipeHeaderProps {
   recipe: Recipe;
   isFavorited: boolean;
   onToggleFavorite: () => void;
-  onShare: () => void;
   onBack: () => void;
 }
 
 const COVER_HEIGHT = 240;
 
 /**
- * Cover image with an overlaid action row (back on the start side, share +
- * favorite on the end side — flips with language), followed by the centered
- * title, description and meta chips.
+ * Cover image with an overlaid action row (back on the start side, favorite on
+ * the end side — flips with language), followed by the centered title,
+ * description and meta chips.
  */
-export function RecipeHeader({
-  recipe,
-  isFavorited,
-  onToggleFavorite,
-  onShare,
-  onBack,
-}: RecipeHeaderProps) {
+export function RecipeHeader({ recipe, isFavorited, onToggleFavorite, onBack }: RecipeHeaderProps) {
   const theme = useTheme();
   const isRtl = useIsRtl();
   const ink = theme.text?.val as string;
@@ -55,12 +48,8 @@ export function RecipeHeader({
             <ArrowRight size={24} color={ink} />
           </CircleIconButton>
 
-          <XStack alignItems="center" gap="$2">
-            <CircleIconButton onPress={onShare}>
-              <Share2 size={20} color={ink} />
-            </CircleIconButton>
-            <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} />
-          </XStack>
+          {/* Sharing lives only in the action bar below — one entry point. */}
+          <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} />
         </XStack>
       </View>
 

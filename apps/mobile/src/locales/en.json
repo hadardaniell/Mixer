@@ -377,7 +377,7 @@
     "actions": {
       "share": "Share",
       "saveToBook": "Save to book",
-      "shoppingList": "Shopping list"
+      "copy": "Copy recipe"
     },
     "saveToBookSheet": {
       "title": "Save to a book",
