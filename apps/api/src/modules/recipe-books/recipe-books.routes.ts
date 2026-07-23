@@ -258,8 +258,17 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       const userOid = new ObjectId(req.params.userId);
       const book = await app.collections.recipeBooks.findOne({ _id });
       if (!book) return reply.code(404).send({ error: 'book not found' });
-      if (book.ownerId.toString() !== req.user.id) {
+      // The owner removes anyone; everyone else may only remove themselves
+      // ("leave book"). Without the self case a member would be stuck in a book
+      // they no longer want.
+      const isSelf = req.params.userId === req.user.id;
+      if (!isSelf && book.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'owner only' });
+      }
+      // The owner can't leave — an ownerless book would be unreachable. They
+      // delete the book instead.
+      if (book.ownerId.toString() === req.params.userId) {
+        return reply.code(400).send({ error: 'owner cannot leave their own book' });
       }
       const updated = await app.collections.recipeBooks.findOneAndUpdate(
         { _id },

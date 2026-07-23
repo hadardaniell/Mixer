@@ -41,6 +41,8 @@ interface RecipeCardProps {
   isFavorited: boolean;
   onToggleFavorite: () => void;
   onPress: () => void;
+  /** Optional long-press action (e.g. "remove from book" on the book screen). */
+  onLongPress?: () => void;
   /** When present, shows an attribution row at the top of the card. */
   attribution?: RecipeAttribution;
   /** Override the default fixed feed width — e.g. "100%" to fill a grid cell. */
@@ -64,6 +66,7 @@ export function RecipeCard({
   isFavorited,
   onToggleFavorite,
   onPress,
+  onLongPress,
   attribution,
   width = FEED_CARD_WIDTH,
   selectable = false,
@@ -74,6 +77,7 @@ export function RecipeCard({
   return (
     <YStack
       onPress={onPress}
+      onLongPress={onLongPress}
       width={width}
       height={RECIPE_CARD_HEIGHT}
       borderRadius={RADIUS}

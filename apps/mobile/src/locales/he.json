@@ -285,6 +285,64 @@
       "subtitle": "אפשר לשנות אותה גם אחר כך"
     }
   },
+  "book": {
+    "loading": "טוען...",
+    "loadError": "לא הצלחנו לפתוח את הספר הזה.",
+    "counts": "{{recipes}} מתכונים · {{members}} חברים",
+    "addMembers": "הוספת חברים",
+    "searchPlaceholder": "חיפוש בספר...",
+    "empty": "אין עדיין מתכונים בספר הזה",
+    "noSearchResults": "אין תוצאות עבור \"{{query}}\"",
+    "removeRecipeTitle": "הסרה מהספר",
+    "removeRecipeMessage": "להסיר את \"{{name}}\" מהספר? המתכון עצמו יישאר באוסף שלך.",
+    "removeRecipeConfirm": "הסירי",
+    "leave": "יציאה מהספר",
+    "leaveTitle": "יציאה מהספר",
+    "leaveMessage": "לא תהיה לך יותר גישה לספר ולמתכונים שבו.",
+    "leaveConfirm": "צאי",
+    "deleteTitle": "מחיקת הספר",
+    "deleteMessage": "למחוק את \"{{name}}\"? המתכונים שבתוכו לא יימחקו.",
+    "deleteConfirm": "מחקי",
+    "roles": {
+      "owner": "בעלים",
+      "editor": "עורכת",
+      "viewer": "צופה"
+    },
+    "members": {
+      "title": "חברים בספר",
+      "you": "{{name}} (את)",
+      "removeTitle": "הסרת חברה",
+      "removeMessage": "להסיר את {{name}} מהספר?",
+      "removeConfirm": "הסירי"
+    },
+    "addMembersSheet": {
+      "title": "הוספת חברים",
+      "searchPlaceholder": "חיפוש בחברים...",
+      "roleLabel": "הרשאה:",
+      "noFriends": "אין לך עדיין חברים",
+      "allAdded": "כל החברים שלך כבר בספר הזה",
+      "confirm": "הוספת {{count}}",
+      "adding": "מוסיף..."
+    },
+    "addRecipesSheet": {
+      "title": "הוספת מתכונים",
+      "searchPlaceholder": "חיפוש מתכון...",
+      "noRecipes": "אין לך עדיין מתכונים",
+      "allAdded": "כל המתכונים שלך כבר בספר הזה",
+      "confirm": "הוספת {{count}}",
+      "adding": "מוסיף..."
+    },
+    "edit": {
+      "title": "עריכת הספר",
+      "save": "שמירת שינויים",
+      "saving": "שומר..."
+    },
+    "overflow": {
+      "edit": "עריכת הספר",
+      "members": "ניהול חברים",
+      "delete": "מחיקת הספר"
+    }
+  },
   "time": {
     "min": "{{count}} דק'",
     "hour": "שעה",

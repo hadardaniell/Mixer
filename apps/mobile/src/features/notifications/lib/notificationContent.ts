@@ -32,10 +32,8 @@ export interface NotificationContent {
   avatar?: { url: string | null; name: string };
 }
 
-// Only the recipe detail route exists today; the book detail screen isn't built
-// yet, so book resources fall through to "no navigation" (tap just marks read).
 function resourceRoute(resourceType: 'recipe' | 'book', id: string): string | undefined {
-  return resourceType === 'recipe' ? `/recipes/${id}` : undefined;
+  return resourceType === 'recipe' ? `/recipes/${id}` : `/books/${id}`;
 }
 
 /**
