@@ -384,6 +384,24 @@
       "empty": "You don't have any books yet"
     }
   },
+  "share": {
+    "sheet": {
+      "title": "Share with friends",
+      "subtitle": "They'll get a request and can accept or decline",
+      "searchPlaceholder": "Search friends",
+      "noFriends": "You don't have any friends yet",
+      "noMatches": "No friends match that search",
+      "alreadyShared": "Shared",
+      "confirm": "Send ({{count}})",
+      "sending": "Sending…",
+      "error": "Couldn't send the share. Please try again.",
+      "partialError": "{{count}} couldn't be sent — they may already have it"
+    },
+    "blocked": {
+      "draft": "Publish this recipe before sharing it",
+      "notOwner": "Only the recipe's owner can share it"
+    }
+  },
   "add": {
     "title": "What would you like to add?",
     "newRecipe": "New recipe",

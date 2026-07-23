@@ -5,9 +5,11 @@ import { ActivityIndicator, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, YStack } from 'tamagui';
 
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useToggleRecipeFavorite } from '@/features/home/hooks/useFavoriteMutations';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { addToShoppingList } from '@/features/shopping-list/storage/shoppingList';
+import { ShareSheet } from '@/features/shares/components/ShareSheet';
 import { isRTL } from '@/shared/lib/i18n';
 
 import { IngredientsList } from '../components/IngredientsList';
@@ -31,6 +33,7 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
   const { language } = useLanguage();
   const isRtl = isRTL(language);
 
+  const { user } = useAuth();
   const { data: recipe, isLoading, isError } = useRecipe(recipeId);
   const toggleFavorite = useToggleRecipeFavorite();
 
@@ -39,7 +42,10 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
   const [checked, setChecked] = useState<Set<number>>(() => new Set());
   const [addedNotice, setAddedNotice] = useState(false);
   const [bookSheetOpen, setBookSheetOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [shareNotice, setShareNotice] = useState<'draft' | 'notOwner' | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shareNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tipNotes = useMemo(
     () => (recipe?.ingredients ?? []).map((i) => i.note).filter((n): n is string => !!n),
@@ -73,6 +79,20 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
       else next.add(index);
       return next;
     });
+
+  // The server only lets the owner share, and refuses drafts. Rather than let
+  // the user pick friends and then fail, we surface the reason up front.
+  const canShare = recipe.ownerId === user?.id && recipe.status !== 'draft';
+
+  const handleShare = () => {
+    if (canShare) {
+      setShareSheetOpen(true);
+      return;
+    }
+    setShareNotice(recipe.status === 'draft' ? 'draft' : 'notOwner');
+    if (shareNoticeTimer.current) clearTimeout(shareNoticeTimer.current);
+    shareNoticeTimer.current = setTimeout(() => setShareNotice(null), 3000);
+  };
 
   const handleAddToShoppingList = () => {
     addToShoppingList(
@@ -109,21 +129,26 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
           recipe={recipe}
           isFavorited={isFavorited}
           onToggleFavorite={() => toggleFavorite.mutate({ id: recipe.id, next: !isFavorited })}
-          onShare={() => {}}
+          onShare={handleShare}
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
         />
 
-        <StartCookingButton label={t('recipe.startCooking')} onPress={() => {}} />
+        {/* <StartCookingButton label={t('recipe.startCooking')} onPress={() => {}} /> */}
 
         <YStack gap="$1">
           <RecipeActionBar
-            onShare={() => {}}
+            onShare={handleShare}
             onSaveToBook={() => setBookSheetOpen(true)}
             onShoppingList={handleAddToShoppingList}
           />
           {addedNotice ? (
             <Text fontSize={13} fontWeight="600" color="$success" textAlign="center">
               {t('recipe.addedToShoppingList')}
+            </Text>
+          ) : null}
+          {shareNotice ? (
+            <Text fontSize={13} fontWeight="600" color="$danger" textAlign="center">
+              {t(`share.blocked.${shareNotice}`)}
             </Text>
           ) : null}
         </YStack>
@@ -150,6 +175,13 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
         open={bookSheetOpen}
         onOpenChange={setBookSheetOpen}
         recipeId={recipe.id}
+      />
+
+      <ShareSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        resourceType="recipe"
+        resourceId={recipe.id}
       />
     </>
   );
