@@ -288,6 +288,64 @@
       "subtitle": "You can change it later too"
     }
   },
+  "book": {
+    "loading": "Loading...",
+    "loadError": "We couldn't open this book.",
+    "counts": "{{recipes}} recipes · {{members}} members",
+    "addMembers": "Add friends",
+    "searchPlaceholder": "Search in this book...",
+    "empty": "No recipes in this book yet",
+    "noSearchResults": "No results for \"{{query}}\"",
+    "removeRecipeTitle": "Remove from book",
+    "removeRecipeMessage": "Remove \"{{name}}\" from this book? The recipe itself stays in your collection.",
+    "removeRecipeConfirm": "Remove",
+    "leave": "Leave book",
+    "leaveTitle": "Leave book",
+    "leaveMessage": "You'll lose access to this book and its recipes.",
+    "leaveConfirm": "Leave",
+    "deleteTitle": "Delete book",
+    "deleteMessage": "Delete \"{{name}}\"? The recipes inside it are not deleted.",
+    "deleteConfirm": "Delete",
+    "roles": {
+      "owner": "Owner",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "members": {
+      "title": "Members",
+      "you": "{{name}} (you)",
+      "removeTitle": "Remove member",
+      "removeMessage": "Remove {{name}} from this book?",
+      "removeConfirm": "Remove"
+    },
+    "addMembersSheet": {
+      "title": "Add friends",
+      "searchPlaceholder": "Search friends...",
+      "roleLabel": "They can:",
+      "noFriends": "You don't have any friends yet",
+      "allAdded": "All your friends are already in this book",
+      "confirm": "Add {{count}}",
+      "adding": "Adding..."
+    },
+    "addRecipesSheet": {
+      "title": "Add recipes",
+      "searchPlaceholder": "Search a recipe...",
+      "noRecipes": "You don't have any recipes yet",
+      "allAdded": "All your recipes are already in this book",
+      "confirm": "Add {{count}}",
+      "adding": "Adding..."
+    },
+    "edit": {
+      "title": "Edit book",
+      "save": "Save changes",
+      "saving": "Saving..."
+    },
+    "overflow": {
+      "edit": "Edit book",
+      "members": "Manage members",
+      "delete": "Delete book"
+    }
+  },
   "time": {
     "min": "{{count}} min",
     "hour": "1 hr",
