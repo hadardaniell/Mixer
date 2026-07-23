@@ -1,3 +1,4 @@
+//apps/ai/src/app.ts
 import Fastify, { type FastifyInstance } from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
@@ -11,6 +12,7 @@ import { healthRoute } from './routes/health.js';
 import { extractTextRoutes } from './modules/extract-text/extract-text.routes.js';
 import { extractImageRoutes } from './modules/extract-image/extract-image.routes.js';
 import { embedRoutes } from './modules/embed/embed.routes.js';
+import { translateRoutes } from './modules/translate/translate.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   // `warn`: silence Fastify's startup ("Server listening at…") and per-request
@@ -44,6 +46,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(extractTextRoutes);
   await app.register(extractImageRoutes);
   await app.register(embedRoutes);
+  await app.register(translateRoutes);
 
   return app;
 }

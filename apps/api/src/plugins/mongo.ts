@@ -1,3 +1,4 @@
+//apps/api/src/plugins/mongo.ts
 import type { FastifyInstance } from 'fastify';
 import { MongoClient, type Db, type Collection } from 'mongodb';
 import { config } from '../config.js';
@@ -13,6 +14,7 @@ import type {
   FriendshipDoc,
   NotificationDoc,
   UrlExtractionCacheDoc,
+  RecipeTranslationDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -26,6 +28,7 @@ export type Collections = {
   friendships: Collection<FriendshipDoc>;
   notifications: Collection<NotificationDoc>;
   urlExtractionCache: Collection<UrlExtractionCacheDoc>;
+  recipeTranslations: Collection<RecipeTranslationDoc>;
 };
 
 declare module 'fastify' {
@@ -58,6 +61,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     friendships: db.collection<FriendshipDoc>('friendships'),
     notifications: db.collection<NotificationDoc>('notifications'),
     urlExtractionCache: db.collection<UrlExtractionCacheDoc>('url_extraction_cache'),
+    recipeTranslations: db.collection<RecipeTranslationDoc>('recipe_translations'),
   };
 
   await ensureValidators(app, db);
@@ -156,4 +160,5 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     { expiresAt: 1 },
     { expireAfterSeconds: 0, sparse: true },
   );
+  await collections.recipeTranslations.createIndex({ recipeId: 1, language: 1 }, { unique: true });
 }
