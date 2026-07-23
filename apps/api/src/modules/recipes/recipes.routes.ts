@@ -300,20 +300,98 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   app.get(
-    '/recipes/:id',
-    {
-      onRequest: [app.optionalAuthenticate],
-      schema: { params: IdParam, tags: ['recipes'] },
-    },
-    async (req, reply) => {
-      const doc = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
-      if (!doc) return reply.code(404).send({ error: 'recipe not found' });
-      if (!canRead(req, doc)) return reply.code(403).send({ error: 'forbidden' });
-      if (!req.user) return toRecipe(doc);
-      const favSet = await favoritedIds(app.collections, req.user.id, 'recipe', [doc._id]);
-      return toRecipe(doc, { isFavorite: favSet.has(doc._id.toString()) });
-    },
-  );
+  '/recipes/:id',
+  {
+    onRequest: [app.optionalAuthenticate],
+    schema: { params: IdParam, tags: ['recipes'] },
+  },
+  async (req, reply) => {
+    const doc = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
+    if (!doc) return reply.code(404).send({ error: 'recipe not found' });
+    if (!canRead(req, doc)) return reply.code(403).send({ error: 'forbidden' });
+
+    let targetLang: 'he' | 'en' = 'he';
+    if (req.user) {
+      const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
+      if (userDoc?.locale) {
+        targetLang = userDoc.locale;
+      }
+    }
+
+    let finalDoc = doc;
+
+    if (doc.language && doc.language !== targetLang) {
+      try {
+        const cachedTranslation = await app.collections.recipeTranslations?.findOne({
+          recipeId: doc._id,
+          language: targetLang,
+        });
+
+        if (cachedTranslation) {
+          app.log.info(`[recipes/:id] Translation cache hit for recipe ${doc._id}`);
+          finalDoc = {
+            ...doc,
+            title: cachedTranslation.title,
+            description: cachedTranslation.description,
+            ingredients: cachedTranslation.ingredients,
+            steps: cachedTranslation.steps,
+            language: targetLang,
+          };
+        } else {
+          app.log.info(`[recipes/:id] Translation cache miss - calling AI for recipe ${doc._id}`);
+          const response = await fetch(`${config.aiBaseUrl}/translate/recipe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipe: {
+                title: doc.title,
+                description: doc.description,
+                ingredients: doc.ingredients,
+                steps: doc.steps,
+              },
+              targetLanguage: targetLang,
+            }),
+          });
+
+          if (response.ok) {
+            const translatedData = (await response.json()) as {
+              title: string;
+              description?: string;
+              ingredients: RecipeDoc['ingredients'];
+              steps: RecipeDoc['steps'];
+            };
+
+            await app.collections.recipeTranslations
+              ?.insertOne({
+                _id: new ObjectId(),
+                recipeId: doc._id,
+                language: targetLang,
+                title: translatedData.title,
+                description: translatedData.description,
+                ingredients: translatedData.ingredients,
+                steps: translatedData.steps,
+                createdAt: new Date(),
+              })
+              .catch(() => {}); 
+
+            finalDoc = {
+              ...doc,
+              ...translatedData,
+              language: targetLang,
+            };
+          }
+        }
+      } catch (error) {
+        app.log.error(error, '[recipes/:id] AI translation failed, falling back to original doc');
+      }
+    }
+
+    if (!req.user) return toRecipe(finalDoc);
+
+    const favSet = await favoritedIds(app.collections, req.user.id, 'recipe', [doc._id]);
+    return toRecipe(finalDoc, { isFavorite: favSet.has(doc._id.toString()) });
+  },
+);
 
   app.patch(
     '/recipes/:id',
@@ -346,6 +424,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         { $set },
         { returnDocument: 'after' },
       );
+      await app.collections.recipeTranslations
+        .deleteMany({ recipeId: _id })
+        .catch((err) => app.log.error(err, 'Failed to clear translation cache on recipe update'));
       generateAndStoreEmbedding(app.collections, _id, updated!);
       return toRecipe(updated!);
     },
@@ -406,6 +487,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       await app.collections.sharedItems.deleteMany({ resourceId: _id, resourceType: 'recipe' });
       await app.collections.recipes.deleteOne({ _id });
+      await app.collections.recipeTranslations
+        .deleteMany({ recipeId: _id })
+        .catch((err) => app.log.error(err, 'Failed to clear translation cache on recipe delete'));
       return reply.code(204).send();
     },
   );
