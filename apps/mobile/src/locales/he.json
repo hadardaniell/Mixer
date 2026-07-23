@@ -403,7 +403,6 @@
   },
   "profile": {
     "bioDefault": "אוספת, יוצרת ומשתפת מתכונים",
-    "editProfile": "עריכת פרופיל",
     "stats": {
       "books": "ספרים",
       "recipes": "מתכונים",
@@ -427,17 +426,29 @@
       "books": "אין ספרים עדיין",
       "recipes": "אין מתכונים עדיין"
     },
-    "edit": {
-      "title": "עריכת פרופיל",
-      "comingSoon": "עריכת פרופיל תהיה זמינה בקרוב."
-    }
+    "changePhoto": "שינוי תמונת פרופיל"
   },
   "settings": {
     "title": "הגדרות",
     "language": "שפה",
     "languageHe": "עברית",
     "languageEn": "English",
-    "restartRequired": "השפה השתנתה. האפליקציה תופעל מחדש."
+    "restartRequired": "השפה השתנתה. האפליקציה תופעל מחדש.",
+    "sections": {
+      "account": "החשבון שלך"
+    },
+    "logOut": "התנתקות",
+    "logOutMessage": "תצטרכו להתחבר מחדש כדי להגיע למתכונים שלכם.",
+    "version": "גרסה {{version}}",
+    "profile": {
+      "title": "פרטים אישיים",
+      "displayName": "שם",
+      "displayNamePlaceholder": "השם שלך",
+      "contact": "פרטי קשר",
+      "contactHint": "אימייל וטלפון לא ניתנים לשינוי כאן — הטלפון הוא הדרך שחברים מוצאים אותך.",
+      "saving": "שומר…",
+      "saveFailed": "לא הצלחנו לשמור את הפרטים. נסו שוב."
+    }
   },
   "auth": {
     "login": "התחבר",

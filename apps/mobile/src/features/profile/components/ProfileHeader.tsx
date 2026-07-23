@@ -1,37 +1,39 @@
 import type { PublicUser } from '@mixer/contracts';
-import { Pencil, Settings, UserPlus, type LucideIcon } from 'lucide-react-native';
-import { Image } from 'react-native';
+import { Camera, Settings, UserPlus, type LucideIcon } from 'lucide-react-native';
+import { ActivityIndicator, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
+
+import { initials } from '@/features/profile/lib/initials';
 
 interface ProfileHeaderProps {
   user: PublicUser | null;
   isSelf: boolean;
   stats: { recipes: number; books: number; friends: number };
+  /** Local uri of a just-picked avatar, shown before the upload resolves. */
+  avatarPreview?: string | null;
+  isUploadingAvatar?: boolean;
   onSettings: () => void;
-  onEditProfile: () => void;
+  onChangeAvatar: () => void;
   onAddFriends: () => void;
   onFriends: () => void;
-}
-
-function initials(name?: string): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  return parts.slice(0, 2).map((p) => p.charAt(0)).join('').toUpperCase() || '?';
 }
 
 export function ProfileHeader({
   user,
   isSelf,
   stats,
+  avatarPreview,
+  isUploadingAvatar,
   onSettings,
-  onEditProfile,
+  onChangeAvatar,
   onAddFriends,
   onFriends,
 }: ProfileHeaderProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const ink = theme.text?.val as string;
+  const avatarSrc = avatarPreview ?? user?.avatarUrl;
 
   return (
     <YStack gap="$4" alignItems="center">
@@ -48,17 +50,19 @@ export function ProfileHeader({
         ) : null}
       </XStack>
 
-      {/* Avatar with soft accent blob */}
+      {/* Avatar. On your own profile the camera badge takes the accent blob's spot. */}
       <View width={112} height={112} alignItems="center" justifyContent="center">
-        <View
-          position="absolute"
-          width={44}
-          height={44}
-          borderRadius={22}
-          backgroundColor="$accentLavender"
-          bottom={4}
-          left={0}
-        />
+        {isSelf ? null : (
+          <View
+            position="absolute"
+            width={44}
+            height={44}
+            borderRadius={22}
+            backgroundColor="$accentLavender"
+            bottom={4}
+            left={0}
+          />
+        )}
         <View
           width={104}
           height={104}
@@ -68,14 +72,56 @@ export function ProfileHeader({
           alignItems="center"
           justifyContent="center"
         >
-          {user?.avatarUrl ? (
-            <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} />
+          {avatarSrc ? (
+            <Image source={{ uri: avatarSrc }} style={{ width: '100%', height: '100%' }} />
           ) : (
             <Text color="$primary" fontSize={36} fontWeight="700">
               {initials(user?.displayName)}
             </Text>
           )}
+          {isUploadingAvatar ? (
+            <View
+              position="absolute"
+              width="100%"
+              height="100%"
+              alignItems="center"
+              justifyContent="center"
+              backgroundColor="$accentLavender"
+              opacity={0.7}
+            >
+              <ActivityIndicator color={theme.primary?.val as string} />
+            </View>
+          ) : null}
         </View>
+
+        {/* Camera badge — the only entry point for changing the photo. */}
+        {isSelf ? (
+          <YStack
+            onPress={onChangeAvatar}
+            position="absolute"
+            bottom={4}
+            // Physical left in both directions — it replaces the accent blob.
+            left={0}
+            width={34}
+            height={34}
+            borderRadius={999}
+            backgroundColor="$surface"
+            borderWidth={2}
+            borderColor="$bg"
+            alignItems="center"
+            justifyContent="center"
+            shadowColor="black"
+            shadowOpacity={0.06}
+            shadowRadius={12}
+            shadowOffset={{ width: 0, height: 4 }}
+            elevation={2}
+            pressStyle={{ opacity: 0.85 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.changePhoto')}
+          >
+            <Camera size={17} color={theme.primary?.val as string} />
+          </YStack>
+        ) : null}
       </View>
 
       <YStack gap="$1" alignItems="center">
@@ -93,31 +139,6 @@ export function ProfileHeader({
         <Divider />
         <Stat value={stats.friends} label={t('profile.stats.friends')} onPress={onFriends} />
       </XStack>
-
-      {isSelf ? (
-        <XStack
-          onPress={onEditProfile}
-          alignItems="center"
-          gap="$2"
-          paddingHorizontal="$4"
-          paddingVertical="$2"
-          borderRadius={999}
-          backgroundColor="$surface"
-          borderWidth={1}
-          borderColor="$border"
-          shadowColor="black"
-          shadowOpacity={0.06}
-          shadowRadius={12}
-          shadowOffset={{ width: 0, height: 4 }}
-          elevation={1}
-          pressStyle={{ backgroundColor: '$bgSubtle' }}
-        >
-          <Pencil size={16} color={theme.primary?.val as string} />
-          <Text fontSize={15} fontWeight="600" color="$text">
-            {t('profile.editProfile')}
-          </Text>
-        </XStack>
-      ) : null}
     </YStack>
   );
 }

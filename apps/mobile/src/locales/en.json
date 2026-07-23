@@ -406,7 +406,6 @@
   },
   "profile": {
     "bioDefault": "Collects, creates and shares recipes",
-    "editProfile": "Edit profile",
     "stats": {
       "books": "books",
       "recipes": "recipes",
@@ -430,17 +429,29 @@
       "books": "No books yet",
       "recipes": "No recipes yet"
     },
-    "edit": {
-      "title": "Edit profile",
-      "comingSoon": "Profile editing is coming soon."
-    }
+    "changePhoto": "Change profile photo"
   },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "languageHe": "עברית",
     "languageEn": "English",
-    "restartRequired": "Language changed. The app will reload."
+    "restartRequired": "Language changed. The app will reload.",
+    "sections": {
+      "account": "Your account"
+    },
+    "logOut": "Log out",
+    "logOutMessage": "You'll need to sign in again to reach your recipes.",
+    "version": "Version {{version}}",
+    "profile": {
+      "title": "Personal details",
+      "displayName": "Name",
+      "displayNamePlaceholder": "Your name",
+      "contact": "Contact",
+      "contactHint": "Email and phone can't be changed here — your phone is how friends find you.",
+      "saving": "Saving…",
+      "saveFailed": "Couldn't save your details. Please try again."
+    }
   },
   "auth": {
     "login": "Sign in",

@@ -14,6 +14,7 @@ import { ProfileFilterChips, type FavoritesFilter } from '@/features/profile/com
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
 import { useProfile } from '@/features/profile/hooks/useProfile';
+import { usePickAvatar } from '@/features/settings/hooks/usePickAvatar';
 import { isRTL } from '@/shared/lib/i18n';
 import { BookCard } from '@/shared/ui/BookCard';
 import { FeedSection } from '@/shared/ui/FeedSection';
@@ -35,6 +36,7 @@ export function ProfileScreen({ userId }: ProfileScreenProps) {
   const profile = useProfile(userId);
   const toggleRecipe = useToggleRecipeFavorite();
   const toggleBook = useToggleBookFavorite();
+  const avatar = usePickAvatar();
 
   const [tab, setTab] = useState<ProfileTab>('favorites');
   const [filter, setFilter] = useState<FavoritesFilter>('all');
@@ -54,8 +56,10 @@ export function ProfileScreen({ userId }: ProfileScreenProps) {
             user={profile.user}
             isSelf={profile.isSelf}
             stats={profile.stats}
+            avatarPreview={avatar.preview}
+            isUploadingAvatar={avatar.isUploading}
             onSettings={() => router.push('/settings')}
-            onEditProfile={() => router.push('/profile/edit' as never)}
+            onChangeAvatar={() => void avatar.pick()}
             onAddFriends={() => router.push('/friends/add' as never)}
             onFriends={() => router.push('/friends' as never)}
           />
