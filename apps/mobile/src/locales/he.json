@@ -374,7 +374,7 @@
     "actions": {
       "share": "שיתוף",
       "saveToBook": "שמירה לספר",
-      "shoppingList": "רשימת קניות"
+      "copy": "העתקת מתכון"
     },
     "saveToBookSheet": {
       "title": "שמירה לספר",
