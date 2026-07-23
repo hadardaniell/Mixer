@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { Camera } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'react-native';
@@ -13,8 +14,7 @@ import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromEx
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
-
-const IMAGE_BLOB = require('../../../assets/images/create-recipe/by photo.png');
+import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
 
 type PickedImage = { uri: string; base64: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp' };
 
@@ -93,9 +93,9 @@ export function CreateFromImageScreen() {
           onPress={pick}
           flex={1}
           minHeight={160}
-          borderRadius={24}
+          borderRadius={20}
           borderWidth={2}
-          borderColor="$primary"
+          borderColor="$border"
           backgroundColor="$surface"
           alignItems="center"
           justifyContent="center"
@@ -113,13 +113,13 @@ export function CreateFromImageScreen() {
                 style={{ width: '100%', flex: 1, borderRadius: 16 }}
                 resizeMode="contain"
               />
-              <Text color="$primary" fontSize={14} fontWeight="600">
+              <Text color="$linkText" fontSize={14} fontWeight="700">
                 {t('newRecipe.image.replace')}
               </Text>
             </YStack>
           ) : (
             <>
-              <Image source={IMAGE_BLOB} style={{ width: 150, height: 150 }} resizeMode="contain" />
+              <ConceptualIcon Icon={Camera} blobColor="$accentPink" variant={1} size={84} />
               <Text color="$text" fontSize={16} fontWeight="700">
                 {t('newRecipe.image.dropzone')}
               </Text>

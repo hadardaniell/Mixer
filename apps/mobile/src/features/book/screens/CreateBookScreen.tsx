@@ -114,7 +114,6 @@ export function CreateBookScreen() {
             onNext={goNext}
             backDisabled={step === 1 || create.isPending}
             nextDisabled={create.isPending || !canAdvance(step, form)}
-            nextColor="$accentTeal"
           />
         </YStack>
       </YStack>

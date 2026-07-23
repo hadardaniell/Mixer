@@ -76,7 +76,9 @@ export function NotificationsScreen() {
         >
           <ArrowRight size={26} color={ink} />
         </Pressable>
-        <Text flex={1} color="$text" fontSize={20} fontWeight="700">
+        {/* Light and lette-spaced — this screen is a list of other people's
+            actions, so the page title stays quiet and the rows carry the ink. */}
+        <Text flex={1} color="$textMuted" fontSize={13} fontWeight="700" letterSpacing={1.4}>
           {t('notifications.title')}
         </Text>
         {notifications.length > 0 ? (

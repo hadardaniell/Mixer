@@ -179,13 +179,13 @@ export function ShareSheet({ open, onOpenChange, resourceType, resourceId }: Pro
         disabled={disabled}
         height={54}
         borderRadius={20}
-        backgroundColor="$primary"
+        backgroundColor="$buttonPrimaryBg"
         alignItems="center"
         justifyContent="center"
         opacity={disabled ? 0.55 : 1}
         pressStyle={{ backgroundColor: '$buttonPrimaryBgHover' }}
       >
-        <Text color="$textOnPrimary" fontSize={16} fontWeight="700">
+        <Text color="$buttonPrimaryText" fontSize={16} fontWeight="700">
           {send.isPending
             ? t('share.sheet.sending')
             : t('share.sheet.confirm', { count: selected.size })}

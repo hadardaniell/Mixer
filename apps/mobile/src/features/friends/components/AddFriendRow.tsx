@@ -35,14 +35,14 @@ export function AddFriendRow({ user, busy = false, onSend, onCancel, onAccept }:
         height={48}
         borderRadius={999}
         overflow="hidden"
-        backgroundColor="$accentLavender"
+        backgroundColor="$bgSubtle"
         alignItems="center"
         justifyContent="center"
       >
         {user.avatarUrl ? (
           <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} />
         ) : (
-          <Text color="$primary" fontSize={17} fontWeight="700">
+          <Text color="$textMuted" fontSize={17} fontWeight="700">
             {initials(user.displayName)}
           </Text>
         )}

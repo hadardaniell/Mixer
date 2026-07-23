@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spinner, Text, useTheme, View, XStack, YStack } from 'tamagui';
 
 import { AddFriendRow } from '@/features/friends/components/AddFriendRow';
+import { ContactsEmptyState } from '@/features/friends/components/ContactsEmptyState';
 import { useFriendActions } from '@/features/friends/hooks/useFriendActions';
 import { useUserSearch } from '@/features/friends/hooks/useUserSearch';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
@@ -60,11 +61,6 @@ export function AddFriendsScreen() {
           height={48}
           borderRadius={28}
           backgroundColor="$searchBarBg"
-          shadowColor="black"
-          shadowOpacity={0.1}
-          shadowRadius={24}
-          shadowOffset={{ width: 0, height: 8 }}
-          elevation={6}
         >
           <Search size={20} color={muted} />
           <TextInput
@@ -101,7 +97,12 @@ export function AddFriendsScreen() {
       ) : isError ? (
         <Centered text={t('friends.error')} />
       ) : !hasQuery ? (
-        <Centered text={tooShort ? t('friends.keepTyping') : t('friends.searchHint')} />
+        // One char typed → nudge to keep going; otherwise the contacts flow.
+        tooShort ? (
+          <Centered text={t('friends.keepTyping')} />
+        ) : (
+          <ContactsEmptyState />
+        )
       ) : users.length === 0 ? (
         <Centered text={t('friends.noResults', { query })} />
       ) : (

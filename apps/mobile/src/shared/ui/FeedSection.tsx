@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+// (StaggerIn below reuses the RN Animated import already present in this file.)
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
@@ -44,7 +45,10 @@ export function FeedSection<T>({
   const theme = useTheme();
   const { language } = useLanguage();
   const isRtl = isRTL(language);
-  const primary = theme.primary?.val as string;
+  // "See all" stays neutral ink. The brand rose is reserved for the primary
+  // button, the active chip and the favorite star — four tinted links on one
+  // screen would dilute it until it stops meaning "this is the action".
+  const affordance = theme.textMuted?.val as string;
   const Chevron = isRtl ? ChevronLeft : ChevronRight;
 
   const items = data.slice(0, MAX_ITEMS);
@@ -84,16 +88,16 @@ export function FeedSection<T>({
   return (
     <YStack gap="$2">
       <XStack alignItems="center" justifyContent="space-between" paddingHorizontal="$4">
-        <Text fontSize={17} fontWeight="700" color="$text">
+        <Text fontSize={20} fontWeight="700" color="$text" letterSpacing={-0.6}>
           {title}
         </Text>
         {onSeeMore ? (
           <Pressable onPress={onSeeMore} accessibilityRole="button" hitSlop={8}>
             <XStack alignItems="center" gap={2}>
-              <Text fontSize={13} color="$primary" fontWeight="600">
+              <Text fontSize={12.5} color="$textMuted" fontWeight="600">
                 {t('home.seeMore')}
               </Text>
-              <Chevron size={16} color={primary} />
+              <Chevron size={15} color={affordance} />
             </XStack>
           </Pressable>
         ) : null}
@@ -111,7 +115,7 @@ export function FeedSection<T>({
           showsHorizontalScrollIndicator={false}
           data={items}
           keyExtractor={keyExtractor}
-          renderItem={renderItem}
+          renderItem={(info) => <StaggerIn index={info.index}>{renderItem(info)}</StaggerIn>}
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 18, gap: 12 }}
           scrollEventThrottle={16}
           onScroll={onSeeMore ? handleScroll : undefined}
@@ -133,8 +137,37 @@ export function FeedSection<T>({
 }
 
 /**
+ * Cards rise into place one after another, ~55ms apart. Only the first handful
+ * are staggered — past that the delay would be longer than the user's patience,
+ * and offscreen cards should simply be there when scrolled to.
+ */
+function StaggerIn({ index, children }: { index: number; children: ReactNode }) {
+  const p = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(p, {
+      toValue: 1,
+      duration: 320,
+      delay: Math.min(index, 4) * 55,
+      useNativeDriver: true,
+    }).start();
+  }, [index, p]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: p,
+        transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
+      }}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+/**
  * Trailing affordance at the end of a section row: a chevron (matching the back
- * control) in a translucent violet circle, vertically centered to the row. It
+ * control) in a soft neutral circle, vertically centered to the row. It
  * fades in only once the row is scrolled near its end, with a gentle looping
  * nudge toward the see-all direction. Tap — or overscroll past it — opens the
  * full list.
@@ -149,7 +182,7 @@ function SeeAllArrow({
   onPress: () => void;
 }) {
   const theme = useTheme();
-  const primary = theme.primary?.val as string;
+  const ink = theme.text?.val as string;
   const Chevron = isRtl ? ChevronLeft : ChevronRight;
   const tx = useRef(new Animated.Value(0)).current;
   const appear = useRef(new Animated.Value(0)).current;
@@ -186,7 +219,7 @@ function SeeAllArrow({
         style={{ alignItems: 'center', opacity: appear, transform: [{ scale }, { translateX: tx }] }}
       >
         <YStack width={48} height={48} borderRadius={999} alignItems="center" justifyContent="center">
-          {/* Translucent violet background; the chevron stays fully opaque. */}
+          {/* Soft neutral background; the chevron stays fully opaque. */}
           <YStack
             position="absolute"
             top={0}
@@ -194,10 +227,9 @@ function SeeAllArrow({
             right={0}
             bottom={0}
             borderRadius={999}
-            backgroundColor="$accentLavender"
-            opacity={0.7}
+            backgroundColor="$bgSubtle"
           />
-          <Chevron size={26} color={primary} />
+          <Chevron size={26} color={ink} />
         </YStack>
       </Animated.View>
     </Pressable>

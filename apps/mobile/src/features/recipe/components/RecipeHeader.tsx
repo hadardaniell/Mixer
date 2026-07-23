@@ -30,7 +30,7 @@ export function RecipeHeader({ recipe, isFavorited, onToggleFavorite, onBack }: 
 
   return (
     <YStack gap="$3">
-      <View height={COVER_HEIGHT} borderRadius={24} overflow="hidden" backgroundColor="$bgSubtle">
+      <View height={COVER_HEIGHT} borderRadius={20} overflow="hidden" backgroundColor="$bgSubtle">
         {recipe.coverImageUrl ? (
           <Image source={{ uri: recipe.coverImageUrl }} style={{ width: '100%', height: '100%' }} />
         ) : null}
@@ -44,8 +44,8 @@ export function RecipeHeader({ recipe, isFavorited, onToggleFavorite, onBack }: 
           justifyContent="space-between"
           style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
         >
-          <CircleIconButton onPress={onBack} opacity={0.8}>
-            <ArrowRight size={24} color={ink} />
+          <CircleIconButton onPress={onBack}>
+            <ArrowRight size={22} color="#FFFFFF" strokeWidth={2} />
           </CircleIconButton>
 
           {/* Sharing lives only in the action bar below — one entry point. */}
@@ -69,31 +69,29 @@ export function RecipeHeader({ recipe, isFavorited, onToggleFavorite, onBack }: 
   );
 }
 
-function CircleIconButton({
-  onPress,
-  children,
-  opacity,
-}: {
-  onPress: () => void;
-  children: ReactNode;
-  opacity?: number;
-}) {
+/**
+ * Translucent ink disc over the cover photo — you can still read the image
+ * through it.
+ *
+ * The tint is `$overlay` (ink at 50%), not a translucent *white* circle: over an
+ * unpredictable photograph a dark scrim with a white glyph stays legible on both
+ * a dark sauce and a pale meringue, while white-on-white disappears entirely.
+ *
+ * The alpha lives in the background color rather than on an `opacity` prop —
+ * `opacity` would fade the arrow along with the disc and cost the contrast the
+ * scrim is there to buy.
+ */
+function CircleIconButton({ onPress, children }: { onPress: () => void; children: ReactNode }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" hitSlop={8}>
       <YStack
         width={40}
         height={40}
-        borderRadius={20}
-        backgroundColor="$surface"
-        opacity={opacity}
+        borderRadius={999}
+        backgroundColor="$overlay"
         alignItems="center"
         justifyContent="center"
-        shadowColor="black"
-        shadowOpacity={0.08}
-        shadowRadius={8}
-        shadowOffset={{ width: 0, height: 2 }}
-        elevation={3}
-        pressStyle={{ opacity: 0.85 }}
+        pressStyle={{ opacity: 0.75, scale: 0.94 }}
       >
         {children}
       </YStack>

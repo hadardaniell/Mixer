@@ -2,10 +2,29 @@
  * Raw color palette — single source of truth.
  *
  * Encodes the product design language:
- *   • Brand primary  → violet  (lavender tint #ECE8FF, solid #7C5CFC)
- *   • Brand secondary→ lime    (tint #D9F99D, vivid action/FAB #A3D40C)
+ *   • Brand primary  → periwinkle (tint #E8EDFF, vivid #6C8EFF, text #33409E)
+ *   • Brand secondary→ ink        (neutral dark solids)
  *   • Neutral gray   → cool slate (#F6F7F9 bg … #6B7280 muted … #111827 ink)
- *   • Accents        → the named swatches used as soft icon "blobs" / chips
+ *   • Accents        → the named swatches used as soft tints
+ *
+ * The brand uses THREE steps with distinct jobs, and mixing them up breaks
+ * legibility:
+ *   • step 3  #E8EDFF — fills (primary button, active chip, sticker backing)
+ *   • step 9  #6C8EFF — vivid marks only (icons, unread dot). 3.0:1 on white,
+ *                       which is fine for graphics and NOT enough for text.
+ *   • step 11 #33409E — every piece of brand-colored *text*. 7.6:1 on the tint,
+ *                       8.9:1 on white.
+ * So `$buttonPrimaryBg` maps to step 3 and `$textOnPrimary` to step 11 — the
+ * light-fill / dark-label inversion, not the usual solid-fill / white-label.
+ *
+ * Dosage is deliberately minimal: the brand appears on the primary button, the
+ * active chip, links and the unread dot. Nothing else. Two colors sit outside
+ * the brand on purpose — the coral notification badge (`$danger`) and the
+ * yellow favorite star (`$accentYellow`) — because each says exactly one thing
+ * and shouldn't shift when the brand does.
+ *
+ * The color in this app comes from the recipe photography and from motion, not
+ * from the surfaces.
  *
  * Each brand/neutral family is a 12-step scale following the Radix convention:
  *   1–2   app backgrounds
@@ -30,36 +49,38 @@ export type Scale12 = readonly [
 
 // ─── Light mode scales ──────────────────────────────────────────────────────
 
-// Primary — violet
+// Primary — periwinkle
 const primaryLight: Scale12 = [
-  '#F6F4FF', // 1  app bg tint
-  '#ECE8FF', // 2  lavender (design swatch)
-  '#DED7FF', // 3  component bg
-  '#CDC0FF', // 4
-  '#B9A6FB', // 5
-  '#A48CF4', // 6  subtle border
-  '#8E72EC', // 7  border
-  '#7E5EE4', // 8  strong border
-  '#7C5CFC', // 9  solid (violet anchor)
-  '#6A49E0', // 10 solid hover
-  '#5536C0', // 11 low-contrast text
-  '#2E1C6B', // 12 high-contrast text
+  '#F7F9FF', // 1  app bg tint
+  '#EEF2FF', // 2
+  '#E8EDFF', // 3  tint — primary BUTTON FILL, active chip, sticker backing
+  '#CFD9FC', // 4  the hairline that gives the pale button a readable edge
+  '#B3C3F9', // 5
+  '#93A9F5', // 6  subtle border
+  '#7C95F2', // 7  border
+  '#5F7CE8', // 8  strong border
+  '#6C8EFF', // 9  vivid anchor — MARKS ONLY (icons, unread dot). 3.0:1 on white
+  '#4A5ED0', // 10 the solid fill that carries WHITE text — 5.5:1. Step 9 is
+             //    only 3.0:1 and fails as a button background.
+  '#33409E', // 11 every brand-colored TEXT. 7.6:1 on tint, 8.9:1 on white
+  '#1B2360', // 12 high-contrast text
 ];
 
-// Secondary — lime / action green
+// Secondary — ink. Neutral dark solids; deliberately not a second brand hue,
+// so nothing competes with the rose pair.
 const secondaryLight: Scale12 = [
-  '#F8FCEB', // 1
-  '#F0FAD6', // 2
-  '#E4F6B3', // 3  component bg
-  '#D9F99D', // 4  lime (design swatch)
-  '#CBEE85', // 5
-  '#BBE266', // 6  subtle border
-  '#A9D447', // 7  border
-  '#98C32E', // 8  strong border
-  '#A3D40C', // 9  vivid lime (FAB / action anchor)
-  '#8FB80A', // 10 solid hover
-  '#5E7A0A', // 11 low-contrast text
-  '#2F3D0A', // 12 high-contrast text
+  '#F7F7F8', // 1
+  '#EFEFF1', // 2
+  '#E2E2E6', // 3  component bg
+  '#D0D0D6', // 4
+  '#B5B5BE', // 5
+  '#94949F', // 6  subtle border
+  '#71717C', // 7  border
+  '#4E4E58', // 8  strong border
+  '#1C1C24', // 9  solid ink
+  '#2E2E38', // 10 solid hover
+  '#43434D', // 11 low-contrast text
+  '#0C0C11', // 12 high-contrast text
 ];
 
 // Neutral — cool slate
@@ -80,34 +101,36 @@ const grayLight: Scale12 = [
 
 // ─── Dark mode scales ───────────────────────────────────────────────────────
 
+// Dark mode keeps the same three jobs: step 3 is the fill (now a deep navy),
+// step 9 stays the vivid anchor, step 11 becomes the light text on the fill.
 const primaryDark: Scale12 = [
-  '#120F22',
-  '#1A152E',
-  '#241D40',
-  '#2E2552',
-  '#3A2F66',
-  '#473A7C',
-  '#574894',
-  '#6A58B8',
-  '#7C5CFC', // 9 — keep brand anchor stable across modes
-  '#9176FF',
-  '#BCA9FF',
-  '#E7E0FF',
+  '#0F1220',
+  '#141829',
+  '#1E2440', // 3  button fill on dark
+  '#2A3358',
+  '#37426F',
+  '#455288',
+  '#5566A6',
+  '#6379C6',
+  '#6C8EFF', // 9  vivid anchor — stable across modes
+  '#87A3FF',
+  '#C3D0FF', // 11 text on the dark fill
+  '#EEF2FF',
 ];
 
 const secondaryDark: Scale12 = [
-  '#121707',
-  '#19200B',
-  '#222C10',
-  '#2C3915',
-  '#37471A',
-  '#445721',
-  '#536A28',
-  '#688A2F',
-  '#A3D40C', // 9
-  '#B6E62A',
-  '#CEF06B',
-  '#E9FAC0',
+  '#0F0F13',
+  '#16161B',
+  '#1F1F26',
+  '#282830',
+  '#33333C',
+  '#41414B',
+  '#53535E',
+  '#6C6C78',
+  '#F2F2F6', // 9 — inverted: the ink solid becomes bone on dark
+  '#E2E2E8',
+  '#CACAD3',
+  '#FFFFFF',
 ];
 
 const grayDark: Scale12 = [
@@ -143,10 +166,12 @@ const statusLight = {
   warningSolid: '#FFB74D',
   warningText: '#8A5A10',
 
-  infoBg: '#E8EEFE',
-  infoBorder: '#A9C2F8',
-  infoSolid: '#2563EB',
-  infoText: '#1A3F94',
+  infoBg: '#EEF2FF',
+  infoBorder: '#C3CFFA',
+  // Sits in the brand's blue family on purpose — "share" is a brand action, and
+  // the harsher #2563EB fought the periwinkle beside it.
+  infoSolid: '#5B7BF0',
+  infoText: '#33409E',
 } as const;
 
 const statusDark = {
@@ -174,20 +199,56 @@ const statusDark = {
 // ─── Accents (named design swatches — soft icon blobs / chips) ───────────────
 
 const accentsLight = {
-  lavender: '#ECE8FF',
+  // The universal "soft tint" slot. Deliberately no longer purple — it is the
+  // brand's periwinkle tint, kept under the old name so every legacy
+  // `$accentLavender` call-site retints without a code change.
+  lavender: '#E8EDFF',
+
+  // ── The cool tint ramp ────────────────────────────────────────────────────
+  // Four steps spanning teal (172°) to periwinkle (228°).
+  //
+  // These sit around 85% lightness, not 93%. The first attempt kept all four at
+  // a constant 93% and the hues became indistinguishable — four near-whites that
+  // read as a rendering fault rather than a decision. A ramp nobody can perceive
+  // is worse than a single color, because it looks accidental. Chroma and
+  // lightness both have to move for a hue step to register.
+  //
+  // Used for step-number badges and quick-action blobs. Named for what they are:
+  // recycling `peach`/`pink` for blue tints would have been a lie.
+  tintTeal: '#C6E7DF',
+  tintAqua: '#C8DEF1',
+  tintSky: '#CDD7F6',
+  tintPeriwinkle: '#D6DCFF',
+  /** Cool pink — the ramp's warm-leaning end, still firmly on the cool side.
+   *  Distinct from `accentPink` #FFECEF, which is a genuinely warm blush. */
+  tintPink: '#FBDFEC',
+
+  // Inks for text and icons sitting on the ramp. Each clears 4.6:1 on its own
+  // tint, so a label never has to fall back to near-black and go muddy.
+  tintTealInk: '#0B6B5F',
+  tintPinkInk: '#9B2C60',
+
   peach: '#FFF2E6',
   pink: '#FFECEF',
   mint: '#E6F7F1',
-  lime: '#D9F99D',
-  limeBright: '#BFED39',
-  limeVivid: '#B2E330',
+  lime: '#EEF2FF',
+  // Still named "lime" for the steppers and RecipeTip that consume them; both
+  // are periwinkle now so those call-sites retint without a code change.
+  // `limeBright` is a soft fill; `limeVivid` is a mid-tone that carries the
+  // deep brand label at 4.5:1 and reads as a 2px connector line on white.
+  limeBright: '#E8EDFF',
+  limeVivid: '#CFD9FC',
   teal: '#14B8A6',
   blue: '#2563EB',
   coral: '#FF4D6D',
-  yellow: '#FFD54F',
+  // The favorite star. Deliberately outside the brand family — yellow reads as
+  // "favorite" with no learning, and staying off-brand means it never has to
+  // move when the brand does.
+  yellow: '#F8C80E',
   orange: '#FFB74D',
   seafoam: '#4DB6AC',
-  green: '#81C784',
+  // Vivid on purpose — this one is confetti, not a surface tint.
+  green: '#34C759',
   indigo: '#7986CB',
   purple: '#BA68C8',
   brown: '#A1887F',
@@ -198,17 +259,26 @@ const accentsLight = {
 
 // Slightly deepened so the same hues read on dark surfaces.
 const accentsDark = {
-  lavender: '#3A2F66',
+  lavender: '#1E2440',
+
+  tintTeal: '#1B3A34',
+  tintAqua: '#1C2F3E',
+  tintSky: '#232C4A',
+  tintPeriwinkle: '#2A3159',
+  tintPink: '#3A1E2C',
+  tintTealInk: '#8FDCCD',
+  tintPinkInk: '#F0A8C7',
+
   peach: '#3D3322',
   pink: '#3A222A',
   mint: '#143029',
-  lime: '#2C3915',
-  limeBright: '#BFED39',
-  limeVivid: '#B2E330',
+  lime: '#141829',
+  limeBright: '#1E2440',
+  limeVivid: '#2A3358',
   teal: '#0F8C7F',
   blue: '#3B74E8',
   coral: '#E84566',
-  yellow: '#E6BE47',
+  yellow: '#F8C80E',
   orange: '#E6A645',
   seafoam: '#3F9E95',
   green: '#6FB073',
@@ -223,7 +293,7 @@ const accentsDark = {
 // ─── Surfaces ───────────────────────────────────────────────────────────────
 
 const surfacesLight = {
-  background: '#FCFCFC', // app canvas — rgb(252, 252, 252)
+  background: '#FFFFFF', // app canvas — pure white; #FCFCFC read as faintly grey
   surface: '#FFFFFF', // cards, inputs, sheets, nav bar
   searchBar: '#F5F7F8', // search field fill (feed + search page)
   surfaceElevated: '#FFFFFF', // modals, menus

@@ -1,13 +1,11 @@
 import { useRouter } from 'expo-router';
+import { BookPlus, CookingPot, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, type ImageSourcePropType } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
 import { useIsRtl } from '@/shared/lib/useIsRtl';
+import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
 import { Sheet } from '@/shared/ui/Sheet';
-
-const RECIPE_ICON = require('../../assets/images/conceptual-icons/recipe icon.png');
-const BOOK_ICON = require('../../assets/images/conceptual-icons/recipe book icon.png');
 
 interface AddSheetProps {
   open: boolean;
@@ -16,8 +14,8 @@ interface AddSheetProps {
 
 /**
  * Bottom sheet opened by the navbar "+": two choices — create a recipe or a
- * recipe book. Each row is an icon + title that hugs the start edge (right in
- * RTL, left in LTR).
+ * recipe book. Each row leads with a conceptual icon (line glyph + colored blob,
+ * the mood-board style), not a bitmap and not an ink disc.
  */
 export function AddSheet({ open, onOpenChange }: AddSheetProps) {
   const { t } = useTranslation();
@@ -35,13 +33,17 @@ export function AddSheet({ open, onOpenChange }: AddSheetProps) {
       </Text>
       <YStack gap="$3">
         <AddOption
-          image={RECIPE_ICON}
+          Icon={CookingPot}
+          blobColor="$accentMint"
+          variant={0}
           title={t('add.newRecipe')}
           desc={t('add.newRecipeDesc')}
           onPress={() => go('/new-recipe')}
         />
         <AddOption
-          image={BOOK_ICON}
+          Icon={BookPlus}
+          blobColor="$accentLavender"
+          variant={2}
           title={t('add.newBook')}
           desc={t('add.newBookDesc')}
           onPress={() => go('/books/new')}
@@ -52,12 +54,16 @@ export function AddSheet({ open, onOpenChange }: AddSheetProps) {
 }
 
 function AddOption({
-  image,
+  Icon,
+  blobColor,
+  variant,
   title,
   desc,
   onPress,
 }: {
-  image: ImageSourcePropType;
+  Icon: LucideIcon;
+  blobColor: string;
+  variant: number;
   title: string;
   desc: string;
   onPress: () => void;
@@ -76,7 +82,7 @@ function AddOption({
       pressStyle={{ backgroundColor: '$bgSubtle' }}
       style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
     >
-      <Image source={image} style={{ width: 52, height: 52 }} resizeMode="contain" />
+      <ConceptualIcon Icon={Icon} blobColor={blobColor} variant={variant} size={52} />
       <YStack flex={1} gap={2}>
         <Text color="$text" fontSize={16} fontWeight="700" textAlign={isRtl ? 'right' : 'left'}>
           {title}

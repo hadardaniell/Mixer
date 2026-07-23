@@ -47,6 +47,13 @@ const config: ExpoConfig = {
         photosPermission: 'Mixer needs access to your photos to import a recipe from an image.',
       },
     ],
+    [
+      'expo-contacts',
+      {
+        contactsPermission:
+          'Mixer uses your contacts to find friends who already use the app. Numbers are matched, not stored.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: false,

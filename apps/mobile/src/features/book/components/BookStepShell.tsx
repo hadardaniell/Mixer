@@ -1,50 +1,51 @@
 import type { LucideIcon } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { Text, useTheme, YStack } from 'tamagui';
+import { Text, YStack } from 'tamagui';
+
+import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
 
 interface BookStepShellProps {
-  Icon?: LucideIcon;
+  Icon: LucideIcon;
+  /** Theme alias for the blob tint, e.g. `$accentPeach`. */
   iconBg?: string;
   title: string;
   subtitle?: string;
   children: ReactNode;
 }
 
-/** White card each create-book step lives in: centered icon blob, title,
- *  subtitle, then the step body. */
+// Each accent maps to a fixed blob silhouette so the four steps never look
+// stamped, without every step having to pass a variant.
+const VARIANT: Record<string, number> = {
+  '$accentPeach': 0,
+  '$accentMint': 1,
+  '$accentPink': 2,
+  '$accentLavender': 3,
+};
+
+/**
+ * The card each create-book step lives in — hairline border (a faint shadow
+ * vanishes on the white canvas) with the step's conceptual icon over its title,
+ * matching the recipe manual wizard.
+ */
 export function BookStepShell({
-  // Icon,
+  Icon,
   iconBg = '$accentPeach',
   title,
   subtitle,
   children,
 }: BookStepShellProps) {
-  const theme = useTheme();
-  const ink = theme.text?.val as string;
   return (
     <YStack
       backgroundColor="$surface"
-      borderRadius={24}
+      borderRadius={20}
+      borderWidth={1}
+      borderColor="$border"
       padding="$4"
       gap="$4"
-      shadowColor="black"
-      shadowOpacity={0.06}
-      shadowRadius={14}
-      shadowOffset={{ width: 0, height: 6 }}
-      elevation={2}
     >
       <YStack alignItems="center" gap="$2">
-        {/* <YStack
-          width={72}
-          height={72}
-          borderRadius={22}
-          backgroundColor={iconBg}
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Icon size={34} color={ink} strokeWidth={1.6} />
-        </YStack> */}
-        <Text color="$text" fontSize={22} fontWeight="700" textAlign="center">
+        <ConceptualIcon Icon={Icon} blobColor={iconBg} variant={VARIANT[iconBg] ?? 0} size={72} />
+        <Text color="$text" fontSize={22} fontWeight="700" letterSpacing={-0.4} textAlign="center">
           {title}
         </Text>
         {subtitle ? (

@@ -9,12 +9,18 @@ import { formatDuration } from '@/shared/lib/formatDuration';
 export const FEED_CARD_WIDTH = 180;
 export const FEED_CARD_HEIGHT = 230;
 export const FEED_CARD_RADIUS = 8;
+/**
+ * Feed card lift. Tighter and darker than a typical soft shadow on purpose: the
+ * canvas is pure white and the cards are white too, so a wide, faint blur just
+ * hazes out and the card loses its edge. A short radius close to the element
+ * reads as a defined boundary instead.
+ */
 export const FEED_CARD_SHADOW = {
   shadowColor: 'black' as const,
-  shadowOpacity: 0.18,
-  shadowRadius: 14,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 8,
+  shadowOpacity: 0.24,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 9,
 };
 const IMAGE_HEIGHT = 110;
 const RECIPE_CARD_HEIGHT = 170;

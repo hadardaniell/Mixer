@@ -76,21 +76,16 @@ export function TabBar({ state }: CustomTabBarProps) {
             </TabItem>
           </XStack>
 
-          {/* Center FAB — white circle with the same ink icon as the other tabs.
-              Opens the "add" sheet (new recipe / new recipe book). */}
+          {/* Center action — the bare plus icon, no disc behind it. A white
+              circle on a white bar only ever showed up as its own shadow, which
+              read as a smudge rather than a button. Opens the "add" sheet. */}
           <Pressable onPress={() => setAddOpen(true)} accessibilityRole="button">
             <YStack
               width={48}
               height={48}
               borderRadius={24}
-              backgroundColor="$surface"
               alignItems="center"
               justifyContent="center"
-              shadowColor="black"
-              shadowOpacity={0.18}
-              shadowOffset={{ width: 0, height: 6 }}
-              shadowRadius={12}
-              elevation={6}
             >
               <CirclePlus
                 size={28}

@@ -12,8 +12,12 @@ export function useCreateBook() {
   return useMutation<RecipeBook, Error, CreateRecipeBookInput>({
     mutationFn: (input) => feedApi.createBook(input),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['myBooks'] });
-      qc.invalidateQueries({ queryKey: ['homeFeed'] });
+      // The book lists (home feed + profile) both read from `['feed', 'my-books']`,
+      // and a book can land in favorites too. The previous keys (`myBooks`,
+      // `homeFeed`) matched nothing, so a new book only showed after a manual
+      // refresh. Invalidating the `['feed', …]` prefix refetches every list.
+      qc.invalidateQueries({ queryKey: ['feed', 'my-books'] });
+      qc.invalidateQueries({ queryKey: ['feed', 'favorite-books'] });
     },
   });
 }

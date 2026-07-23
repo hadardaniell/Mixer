@@ -27,8 +27,9 @@ export function HomeFeedSections() {
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-      <YStack gap="$3">
-        <YStack paddingHorizontal="$4">
+      {/* Generous air BETWEEN sections; the rows themselves stay dense. */}
+      <YStack gap={26}>
+        <YStack paddingHorizontal="$4" paddingTop="$2">
           <ImportRecipeCard onCreatePress={openNewRecipe} />
         </YStack>
 

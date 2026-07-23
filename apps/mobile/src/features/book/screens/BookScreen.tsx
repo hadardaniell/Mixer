@@ -16,6 +16,7 @@ import { BookHero } from '../components/BookHero';
 import { BookMembersSheet } from '../components/BookMembersSheet';
 import { BookOverflowSheet } from '../components/BookOverflowSheet';
 import { BookRecipeGrid } from '../components/BookRecipeGrid';
+import { BookSkeleton } from '../components/BookSkeleton';
 import { EditBookSheet } from '../components/EditBookSheet';
 import { useBook } from '../hooks/useBook';
 import { useBookMembers, type BookMember } from '../hooks/useBookMembers';
@@ -61,9 +62,9 @@ export function BookScreen({ bookId }: BookScreenProps) {
 
   if (isLoading) {
     return (
-      <Centered>
-        <ActivityIndicator color={theme.primary?.val as string} />
-      </Centered>
+      <YStack flex={1} backgroundColor="$bg" style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}>
+        <BookSkeleton />
+      </YStack>
     );
   }
 

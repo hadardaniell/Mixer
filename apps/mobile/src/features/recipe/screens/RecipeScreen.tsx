@@ -2,7 +2,7 @@ import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, YStack } from 'tamagui';
 
@@ -17,6 +17,7 @@ import { PreparationSteps } from '../components/PreparationSteps';
 import { RecipeActionBar } from '../components/RecipeActionBar';
 import { SaveToBookSheet } from '../components/SaveToBookSheet';
 import { RecipeHeader } from '../components/RecipeHeader';
+import { RecipeSkeleton } from '../components/RecipeSkeleton';
 import { RecipeSourceNote } from '../components/RecipeSourceNote';
 import { RecipeTip } from '../components/RecipeTip';
 import { StartCookingButton } from '../components/StartCookingButton';
@@ -55,9 +56,14 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
 
   if (isLoading) {
     return (
-      <Centered>
-        <ActivityIndicator color={theme.primary?.val as string} />
-      </Centered>
+      <YStack
+        flex={1}
+        backgroundColor="$bg"
+        paddingTop={insets.top + 8}
+        style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
+      >
+        <RecipeSkeleton />
+      </YStack>
     );
   }
 

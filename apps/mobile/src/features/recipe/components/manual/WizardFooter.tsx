@@ -10,7 +10,7 @@ interface WizardFooterProps {
   onNext: () => void;
   backDisabled?: boolean;
   nextDisabled?: boolean;
-  /** Fill + shadow color of the primary (next) button. Defaults to orange. */
+  /** Fill of the primary (next) button. Defaults to the app's ink primary. */
   nextColor?: string;
 }
 
@@ -25,7 +25,7 @@ export function WizardFooter({
   onNext,
   backDisabled,
   nextDisabled,
-  nextColor = '$accentOrange',
+  nextColor = '$buttonPrimaryBg',
 }: WizardFooterProps) {
   const isRtl = useIsRtl();
   return (
@@ -59,15 +59,15 @@ export function WizardFooter({
             alignItems="center"
             justifyContent="center"
             backgroundColor={nextColor}
-            opacity={nextDisabled ? 0.55 : 1}
-            shadowColor={nextColor}
-            shadowOpacity={0.35}
-            shadowOffset={{ width: 0, height: 8 }}
-            shadowRadius={16}
-            elevation={6}
+            opacity={nextDisabled ? 0.5 : 1}
+            shadowColor="black"
+            shadowOpacity={0.28}
+            shadowOffset={{ width: 0, height: 6 }}
+            shadowRadius={14}
+            elevation={10}
             pressStyle={{ opacity: 0.9 }}
           >
-            <Text color="$textOnPrimary" fontSize={18} fontWeight="700">
+            <Text color="$buttonPrimaryText" fontSize={18} fontWeight="700">
               {nextLabel}
             </Text>
           </YStack>
