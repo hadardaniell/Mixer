@@ -7,6 +7,8 @@ const TranslateRecipeSchema = z.object({
   recipe: z.object({
     title: z.string(),
     description: z.string().optional(),
+    tags: z.array(z.string()).optional(), 
+    cuisine: z.string().optional(),
     ingredients: z.array(
       z.object({
         name: z.string(),

@@ -1,3 +1,4 @@
+//apps/api/src/db/validators/users.ts
 import type { CollectionValidator } from './types.js';
 
 // Keep in sync with UserDoc in db/types.ts.

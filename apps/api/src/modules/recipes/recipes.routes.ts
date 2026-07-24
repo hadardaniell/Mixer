@@ -333,6 +333,8 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
             ...doc,
             title: cachedTranslation.title,
             description: cachedTranslation.description,
+            tags: cachedTranslation.tags ?? doc.tags, 
+            cuisine: cachedTranslation.cuisine ?? doc.cuisine,
             ingredients: cachedTranslation.ingredients,
             steps: cachedTranslation.steps,
             language: targetLang,
@@ -346,6 +348,8 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
               recipe: {
                 title: doc.title,
                 description: doc.description,
+                tags: doc.tags, 
+                cuisine: doc.cuisine,
                 ingredients: doc.ingredients,
                 steps: doc.steps,
               },
@@ -357,6 +361,8 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
             const translatedData = (await response.json()) as {
               title: string;
               description?: string;
+              tags?: string[];
+              cuisine?: string;
               ingredients: RecipeDoc['ingredients'];
               steps: RecipeDoc['steps'];
             };
@@ -368,6 +374,8 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
                 language: targetLang,
                 title: translatedData.title,
                 description: translatedData.description,
+                tags: translatedData.tags ?? doc.tags, 
+                cuisine: translatedData.cuisine ?? doc.cuisine,
                 ingredients: translatedData.ingredients,
                 steps: translatedData.steps,
                 createdAt: new Date(),
