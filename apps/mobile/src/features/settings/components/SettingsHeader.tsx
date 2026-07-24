@@ -22,7 +22,8 @@ export function SettingsHeader({ title, action }: SettingsHeaderProps) {
       <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8}>
         <Back size={26} color={theme.text?.val as string} />
       </Pressable>
-      <Text fontSize={20} fontWeight="700" color="$text" flex={1}>
+      {/* Quiet list-screen title, matching notifications / friends / see-all. */}
+      <Text fontSize={13} fontWeight="700" letterSpacing={1.4} color="$textMuted" flex={1}>
         {title}
       </Text>
       {action ? <View>{action}</View> : null}

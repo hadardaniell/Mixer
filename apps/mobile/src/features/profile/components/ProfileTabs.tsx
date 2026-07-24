@@ -1,28 +1,26 @@
-import { Book, BookOpen, Star, type LucideIcon } from 'lucide-react-native';
-import { useTheme, View, XStack, YStack } from 'tamagui';
+import { useTranslation } from 'react-i18next';
+import { Text, View, XStack, YStack } from 'tamagui';
 
-export type ProfileTab = 'favorites' | 'books' | 'recipes';
+export type ProfileTab = 'recipes' | 'books' | 'favorites';
 
-const TABS: { key: ProfileTab; icon: LucideIcon }[] = [
-  { key: 'favorites', icon: Star },
-  { key: 'books', icon: BookOpen },
-  { key: 'recipes', icon: Book },
-];
+const TABS: ProfileTab[] = ['recipes', 'books', 'favorites'];
 
 interface ProfileTabsProps {
   value: ProfileTab;
   onChange: (tab: ProfileTab) => void;
 }
 
-/** Icon-only 3-way control: Favorites / Books / Recipes. Active = primary + underline. */
+/**
+ * Labeled 3-way tab bar: Recipes / Books / Favorites. Active tab is ink with a
+ * periwinkle underline. Replaces the old icon-only control + the redundant
+ * filter chips that used to sit inside the favorites tab.
+ */
 export function ProfileTabs({ value, onChange }: ProfileTabsProps) {
-  const theme = useTheme();
-  const primary = theme.primary?.val as string;
-  const muted = theme.textMuted?.val as string;
+  const { t } = useTranslation();
 
   return (
-    <XStack>
-      {TABS.map(({ key, icon: Icon }) => {
+    <XStack borderBottomWidth={1.5} borderColor="$bgSubtle">
+      {TABS.map((key) => {
         const selected = key === value;
         return (
           <YStack
@@ -30,14 +28,21 @@ export function ProfileTabs({ value, onChange }: ProfileTabsProps) {
             flex={1}
             onPress={() => onChange(key)}
             alignItems="center"
-            gap="$2"
-            paddingVertical="$2"
-            pressStyle={{ opacity: 0.85 }}
+            paddingVertical="$3"
+            pressStyle={{ opacity: 0.7 }}
           >
-            <Icon size={24} color={selected ? primary : muted} />
+            <Text
+              fontSize={14}
+              fontWeight="700"
+              color={selected ? '$text' : '$textMuted'}
+            >
+              {t(`profile.tabs.${key}`)}
+            </Text>
             <View
-              height={2}
-              width={24}
+              position="absolute"
+              bottom={-1.5}
+              height={2.5}
+              width={40}
               borderRadius={999}
               backgroundColor={selected ? '$primary' : 'transparent'}
             />

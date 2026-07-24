@@ -74,6 +74,8 @@ type ThemeShape = {
   accentPeach: string;
   accentPink: string;
   accentMint: string;
+  /** Rose end of the mixer bowl rim gradient (start = `$primary`). */
+  accentBowlRim: string;
   accentLime: string;
   accentLimeBright: string;
   accentLimeVivid: string;
@@ -203,6 +205,7 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     accentPeach: c[k('peach')],
     accentPink: c[k('pink')],
     accentMint: c[k('mint')],
+    accentBowlRim: c[k('bowlRim')],
     accentLime: c[k('lime')],
     accentLimeBright: c[k('limeBright')],
     accentLimeVivid: c[k('limeVivid')],

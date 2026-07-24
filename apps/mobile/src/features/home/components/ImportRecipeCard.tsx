@@ -4,8 +4,8 @@ import { Pressable } from 'react-native';
 import { Text, View, XStack, YStack } from 'tamagui';
 
 import { ConfettiBurst } from '@/features/home/components/ConfettiBurst';
-import { StirringBowl } from '@/features/home/components/StirringBowl';
 import { BlobShape } from '@/shared/ui/BlobShape';
+import { MixerBowl } from '@/shared/ui/MixerBowl';
 
 export type ImportRecipeSource = 'ai' | 'image' | 'video' | 'link';
 
@@ -48,9 +48,9 @@ export function ImportRecipeCard({ onCreatePress }: ImportRecipeCardProps) {
         <View position="absolute">
           <BlobShape size={STAGE} color="$accentLavender" variant={0} />
         </View>
-        {/* The bowl sits well inside the blob, otherwise its steam and rim
-            spill past the silhouette and the two shapes stop reading as one. */}
-        <StirringBowl size={STAGE - 24} />
+        {/* The bowl sits well inside the blob, otherwise its rim spills past the
+            silhouette and the two shapes stop reading as one. */}
+        <MixerBowl size={STAGE - 16} animated />
         <ConfettiBurst size={STAGE} />
       </View>
 

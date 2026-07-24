@@ -231,6 +231,10 @@ const accentsLight = {
   peach: '#FFF2E6',
   pink: '#FFECEF',
   mint: '#E6F7F1',
+  // The rose end of the mixer bowl's rim gradient (start = brand periwinkle
+  // `$primary`). A brand-mark detail, kept off the accent grid so it never gets
+  // picked as a surface tint.
+  bowlRim: '#E06C9A',
   lime: '#EEF2FF',
   // Still named "lime" for the steppers and RecipeTip that consume them; both
   // are periwinkle now so those call-sites retint without a code change.
@@ -272,6 +276,7 @@ const accentsDark = {
   peach: '#3D3322',
   pink: '#3A222A',
   mint: '#143029',
+  bowlRim: '#C25A82',
   lime: '#141829',
   limeBright: '#1E2440',
   limeVivid: '#2A3358',

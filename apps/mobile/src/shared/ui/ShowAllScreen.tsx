@@ -57,7 +57,7 @@ export function ShowAllScreen<T>({
         <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={8}>
           <ArrowRight size={26} color={ink} />
         </Pressable>
-        <Text flex={1} color="$text" fontSize={20} fontWeight="700">
+        <Text flex={1} color="$textMuted" fontSize={13} fontWeight="700" letterSpacing={1.4}>
           {title}
         </Text>
       </XStack>

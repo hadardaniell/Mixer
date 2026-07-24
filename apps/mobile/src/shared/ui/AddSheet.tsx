@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookPlus, CookingPot, type LucideIcon } from 'lucide-react-native';
+import { BookOpenIcon, CookingPotIcon, type Icon } from 'phosphor-react-native';
 import { useTranslation } from 'react-i18next';
 import { Text, XStack, YStack } from 'tamagui';
 
@@ -33,7 +33,7 @@ export function AddSheet({ open, onOpenChange }: AddSheetProps) {
       </Text>
       <YStack gap="$3">
         <AddOption
-          Icon={CookingPot}
+          Icon={CookingPotIcon}
           blobColor="$accentMint"
           variant={0}
           title={t('add.newRecipe')}
@@ -41,7 +41,7 @@ export function AddSheet({ open, onOpenChange }: AddSheetProps) {
           onPress={() => go('/new-recipe')}
         />
         <AddOption
-          Icon={BookPlus}
+          Icon={BookOpenIcon}
           blobColor="$accentLavender"
           variant={2}
           title={t('add.newBook')}
@@ -61,7 +61,7 @@ function AddOption({
   desc,
   onPress,
 }: {
-  Icon: LucideIcon;
+  Icon: Icon;
   blobColor: string;
   variant: number;
   title: string;
