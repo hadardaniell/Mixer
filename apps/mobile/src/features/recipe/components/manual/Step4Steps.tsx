@@ -6,7 +6,7 @@ import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 import type { ManualForm, ManualFormAction, ManualStep } from '@/features/recipe/lib/manualRecipe';
-import { STEP_ACCENTS } from '@/features/recipe/components/PreparationSteps';
+import { STEP_BADGE_BG } from '@/features/recipe/components/PreparationSteps';
 
 import { ManualTextInput } from './ManualTextInput';
 import { StepShell } from './StepShell';
@@ -116,11 +116,11 @@ export function Step4Steps({ form, dispatch }: Props) {
                   width={26}
                   height={26}
                   borderRadius={999}
-                  backgroundColor={STEP_ACCENTS[index % STEP_ACCENTS.length]}
+                  backgroundColor={STEP_BADGE_BG}
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <Text fontSize={13} fontWeight="700" color="$text">
+                  <Text fontSize={13} fontWeight="700" color="$textOnPrimary">
                     {index + 1}
                   </Text>
                 </YStack>

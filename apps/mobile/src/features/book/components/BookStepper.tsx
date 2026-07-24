@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Text, useTheme, XStack, YStack } from 'tamagui';
+import { Text, XStack, YStack } from 'tamagui';
 
 interface BookStepperProps {
   current: number;
@@ -14,8 +14,6 @@ interface BookStepperProps {
  */
 export function BookStepper({ current, total }: BookStepperProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const onAccent = theme.textOnPrimary?.val as string;
 
   const steps = Array.from({ length: total }, (_, i) => i + 1);
 
@@ -29,7 +27,10 @@ export function BookStepper({ current, total }: BookStepperProps) {
         {steps.map((n) => {
           const isDone = n < current;
           const isCurrent = n === current;
-          const active = isDone || isCurrent;
+          // Same three-state periwinkle system as the recipe wizard's stepper:
+          // current = bright `$primary` + white numeral; done = soft fill + a
+          // brand-blue check; upcoming = white with a hairline.
+          const bg = isCurrent ? '$primary' : isDone ? '$primarySubtle' : '$surface';
           return (
             <XStack key={n} alignItems="center" flex={n === total ? 0 : 1}>
               <YStack
@@ -38,14 +39,14 @@ export function BookStepper({ current, total }: BookStepperProps) {
                 borderRadius={999}
                 alignItems="center"
                 justifyContent="center"
-                backgroundColor={active ? '$accentLimeVivid' : '$surface'}
-                borderWidth={active ? 0 : 1}
+                backgroundColor={bg}
+                borderWidth={isCurrent || isDone ? 0 : 1}
                 borderColor="$border"
               >
                 {isDone ? (
-                  <Check size={18} color={onAccent} strokeWidth={3} />
+                  <Check size={18} color="#33409E" strokeWidth={3} />
                 ) : (
-                  <Text fontSize={14} fontWeight="600" color={isCurrent ? onAccent : '$textMuted'}>
+                  <Text fontSize={14} fontWeight="700" color={isCurrent ? '#FFFFFF' : '$textMuted'}>
                     {n}
                   </Text>
                 )}
@@ -54,7 +55,7 @@ export function BookStepper({ current, total }: BookStepperProps) {
                 <YStack
                   flex={1}
                   height={2}
-                  backgroundColor={n < current ? '$accentLimeVivid' : '$border'}
+                  backgroundColor={n < current ? '$primary' : '$border'}
                 />
               ) : null}
             </XStack>

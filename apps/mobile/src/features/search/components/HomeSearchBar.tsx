@@ -52,11 +52,6 @@ export function HomeSearchBar({
         height={48}
         borderRadius={28}
         backgroundColor="$searchBarBg"
-        shadowColor="black"
-        shadowOpacity={0.1}
-        shadowRadius={24}
-        shadowOffset={{ width: 0, height: 8 }}
-        elevation={6}
       >
         <Search size={20} color={muted} />
         <TextInput
@@ -86,7 +81,7 @@ export function HomeSearchBar({
 
       {active ? (
         <Pressable onPress={cancel} hitSlop={8} accessibilityRole="button">
-          <Text color="$primary" fontSize={15} fontWeight="600">
+          <Text color="$linkText" fontSize={15} fontWeight="700">
             {t('common.cancel')}
           </Text>
         </Pressable>

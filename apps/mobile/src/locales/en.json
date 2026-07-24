@@ -100,7 +100,20 @@
     "friends": "Friends",
     "remove": "Remove",
     "removeTitle": "Remove friend",
-    "removeMessage": "Remove {{name}} from your friends?"
+    "removeMessage": "Remove {{name}} from your friends?",
+    "contacts": {
+      "sectionTitle": "Contacts on Mixer",
+      "loading": "Finding your contacts…",
+      "promptTitle": "Find friends from your contacts",
+      "promptSubtitle": "We'll check which of your contacts are already on Mixer. Numbers aren't stored.",
+      "connect": "Connect contacts",
+      "deniedTitle": "No access to contacts",
+      "deniedSubtitle": "You can allow access in your device settings, or just search by name above.",
+      "noMatchesTitle": "Nobody here yet",
+      "noMatchesSubtitle": "None of your contacts are on Mixer yet. Search by name above.",
+      "errorTitle": "Something went wrong",
+      "errorSubtitle": "We couldn't load your contacts. Please try again."
+    }
   },
   "categories": {
     "sheetTitle": "Browse by category"
@@ -285,7 +298,9 @@
     },
     "step4": {
       "title": "Pick a cover",
-      "subtitle": "You can change it later too"
+      "subtitle": "You can change it later too",
+      "colorLabel": "Color",
+      "iconLabel": "Icon"
     }
   },
   "book": {

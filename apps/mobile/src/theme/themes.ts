@@ -38,6 +38,15 @@ type ThemeShape = {
   buttonPrimaryBg: string;
   buttonPrimaryBgHover: string;
   buttonPrimaryBgPress: string;
+  /** Label/icon on the ink primary button — white in light, dark in dark. */
+  buttonPrimaryText: string;
+  /** Hairline on the primary button. The tint fill is barely 1.2:1 against a
+   *  white canvas, so without this border the button has no readable edge. */
+  buttonPrimaryBorder: string;
+  /** Solid brand fill for buttons that carry WHITE text (e.g. the notification
+   *  accept action). Deliberately deeper than `$primary`: step 9 is 3.0:1
+   *  against white and fails, this is 5.5:1. */
+  buttonPrimarySolid: string;
 
   // Brand — secondary (lime / action)
   secondary: string;
@@ -51,11 +60,22 @@ type ThemeShape = {
   fabHover: string;
   fabText: string;
 
+  // The cool tint ramp — teal → periwinkle, for step badges and action blobs.
+  tintTeal: string;
+  tintAqua: string;
+  tintSky: string;
+  tintPeriwinkle: string;
+  tintPink: string;
+  tintTealInk: string;
+  tintPinkInk: string;
+
   // Accents — soft named swatches (icon blobs, chips). Direct hues.
   accentLavender: string;
   accentPeach: string;
   accentPink: string;
   accentMint: string;
+  /** Rose end of the mixer bowl rim gradient (start = `$primary`). */
+  accentBowlRim: string;
   accentLime: string;
   accentLimeBright: string;
   accentLimeVivid: string;
@@ -120,8 +140,8 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     bgSubtle: c[k('gray2')],
     surface: c[k('surface')],
     searchBarBg: c[k('searchBar')],
-    // Category chip (search page): fixed lavender fill + slate ink, both modes.
-    categoryChipBg: c.primary12Dark,
+    // Category chip (search page): fixed rose tint + slate ink, both modes.
+    categoryChipBg: c.lavenderLight,
     categoryChipText: c.gray12Light,
     surfaceElevated: c[k('surfaceElevated')],
     overlay: c[k('overlay')],
@@ -131,8 +151,10 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     text: c[k('onBackground')],
     textMuted: c[k('onBackgroundMuted')],
     textSubtle: c[k('onBackgroundSubtle')],
-    textOnPrimary: '#FFFFFF',
-    textOnSecondary: c[k('gray12')], // dark ink on lime
+    // The brand fill is the LIGHT periwinkle tint, so its label is the DARK
+    // step 11 — not step 9. Step 9 is 3.0:1 on the tint and would be unreadable.
+    textOnPrimary: c[k('primary11')],
+    textOnSecondary: mode === 'Light' ? '#FFFFFF' : c.gray1Dark,
 
     // Borders
     border: c[k('gray6')],
@@ -143,9 +165,19 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     primary: c[k('primary9')],
     primaryHover: c[k('primary10')],
     primarySubtle: c[k('primary3')],
-    buttonPrimaryBg: c[k('primary9')],
-    buttonPrimaryBgHover: c[k('primary10')],
-    buttonPrimaryBgPress: c[k('primary11')],
+    // The primary button is INK, not periwinkle — "black = action" across the
+    // whole app, matching the ink discs (FAB, quick actions, back). Periwinkle
+    // stays the brand accent for chips / active states / links, but is no longer
+    // a button fill. Uses the secondary (ink) scale so it's theme-aware: ink in
+    // light, bone in dark, with `buttonPrimaryText` flipping to match.
+    buttonPrimaryBg: c[k('secondary9')],
+    buttonPrimaryBgHover: c[k('secondary10')],
+    buttonPrimaryBgPress: c[k('secondary11')],
+    buttonPrimaryText: mode === 'Light' ? '#FFFFFF' : c.gray1Dark,
+    // Kept for `EditProfile` etc. that still draw a tinted-outline button; not
+    // the primary button anymore.
+    buttonPrimaryBorder: c[k('primary4')],
+    buttonPrimarySolid: c[k('primary10')],
 
     // Secondary
     secondary: c[k('secondary9')],
@@ -159,11 +191,21 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     fabHover: c[k('secondary10')],
     fabText: c[k('gray12')],
 
+    // Cool tint ramp
+    tintTeal: c[k('tintTeal')],
+    tintAqua: c[k('tintAqua')],
+    tintSky: c[k('tintSky')],
+    tintPeriwinkle: c[k('tintPeriwinkle')],
+    tintPink: c[k('tintPink')],
+    tintTealInk: c[k('tintTealInk')],
+    tintPinkInk: c[k('tintPinkInk')],
+
     // Accents
     accentLavender: c[k('lavender')],
     accentPeach: c[k('peach')],
     accentPink: c[k('pink')],
     accentMint: c[k('mint')],
+    accentBowlRim: c[k('bowlRim')],
     accentLime: c[k('lime')],
     accentLimeBright: c[k('limeBright')],
     accentLimeVivid: c[k('limeVivid')],

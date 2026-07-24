@@ -1,26 +1,16 @@
-import { Asset } from 'expo-asset';
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Platform, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, YStack } from 'tamagui';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
+import { Text, useTheme, View, YStack } from 'tamagui';
 
-// Resolved once: a bundler URL for the hero clip (works on web via <video>).
-const HERO_VIDEO_URI = Asset.fromModule(
-  require('../src/assets/videos/mix soicials create recipe.mp4'),
-).uri;
+import { StartMixerScene } from '@/features/auth/components/StartMixerScene';
+import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 
 export default function StartScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  // Ensure the clip plays on mount even if the browser ignores the autoPlay
-  // attribute (it's muted, so this is allowed without a user gesture).
-  useEffect(() => {
-    videoRef.current?.play?.().catch(() => {});
-  }, []);
 
   return (
     <YStack
@@ -29,102 +19,80 @@ export default function StartScreen() {
       paddingHorizontal="$5"
       paddingTop={insets.top + 24}
       paddingBottom={insets.bottom + 24}
-      justifyContent="space-between"
-      alignItems="center"
     >
-      {/* Hero clip — autoplays muted on loop, GIF-style. */}
-      <YStack flex={1} width="100%" alignItems="center" justifyContent="center" gap="$4">
-        <YStack
-          width="100%"
-          aspectRatio={1}
-          maxWidth={340}
-          borderRadius={28}
-          overflow="hidden"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Image
-            source={require('../src/assets/images/recpie flow 4.jpeg')}
-            resizeMode="contain"
-            style={{ width: '100%', height: '100%' }}
-          />
-          {/* {Platform.OS === 'web' ? (
-            <video
-              ref={videoRef}
-              src={HERO_VIDEO_URI}
-              autoPlay
-              loop
-              muted
-              playsInline
-              style={{
-                width: '113%',
-                height: '100%',
-                objectFit: 'contain',
-                display: 'block',
-                pointerEvents: 'none',
-              }}
-            />
-          ) : (
-            // Native needs a real player (expo-video); placeholder until wired.
-            <Text fontSize="$6" fontWeight="700" color="$primary">
-              GIF
-            </Text>
-          )} */}
+      {/* Two small periwinkle glows in opposite corners — the only color on the
+          canvas, kept faint so the motion carries the screen, not the surface. */}
+      <AmbientGlow />
+
+      <YStack flex={1} justifyContent="space-between">
+        {/* Hero: the mixer animation, tagline beneath it */}
+        <YStack flex={1} alignItems="center" justifyContent="center" gap="$5">
+          <StartMixerScene />
+          <Text
+            fontSize={22}
+            fontWeight="700"
+            color="$text"
+            textAlign="center"
+            letterSpacing={-0.4}
+          >
+            {t('start.tagline')}
+          </Text>
         </YStack>
 
-        <Text fontSize="$6" fontWeight="700" color="$text" textAlign="center">
-          {t('start.tagline')}
-        </Text>
-      </YStack>
-
-      {/* Login (secondary) on top, Register (primary) below — full-width column */}
-      <YStack width="100%" gap="$3">
-        <ActionButton variant="secondary" onPress={() => router.push('/login')}>
-          {t('start.login')}
-        </ActionButton>
-        <ActionButton variant="primary" onPress={() => router.push('/register')}>
-          {t('start.register')}
-        </ActionButton>
+        {/* Login (secondary) on top, Register (primary ink) below */}
+        <YStack width="100%" gap="$3">
+          <SecondaryButton onPress={() => router.push('/login')}>
+            {t('start.login')}
+          </SecondaryButton>
+          <PrimaryButton label={t('start.register')} onPress={() => router.push('/register')} />
+        </YStack>
       </YStack>
     </YStack>
   );
 }
 
-function ActionButton({
-  variant,
-  onPress,
-  children,
-}: {
-  variant: 'primary' | 'secondary';
-  onPress: () => void;
-  children: string;
-}) {
-  const isPrimary = variant === 'primary';
+/** Full-bleed periwinkle radial glows, faded to transparent. `react-native-svg`
+ *  can't read Tamagui tokens, so the brand hex is resolved from the theme. */
+function AmbientGlow() {
+  const theme = useTheme();
+  const periwinkle = theme.primary?.val as string;
+
+  return (
+    <View position="absolute" top={0} left={0} right={0} bottom={0} pointerEvents="none">
+      <Svg width="100%" height="100%">
+        <Defs>
+          <RadialGradient id="glowTop" cx="12%" cy="10%" r="42%">
+            <Stop offset="0" stopColor={periwinkle} stopOpacity={0.15} />
+            <Stop offset="1" stopColor={periwinkle} stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id="glowBottom" cx="90%" cy="94%" r="40%">
+            <Stop offset="0" stopColor={periwinkle} stopOpacity={0.12} />
+            <Stop offset="1" stopColor={periwinkle} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#glowTop)" />
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#glowBottom)" />
+      </Svg>
+    </View>
+  );
+}
+
+/** The one secondary look: white surface, hairline border, ink label. */
+function SecondaryButton({ onPress, children }: { onPress: () => void; children: string }) {
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={{ width: '100%' }}>
       <YStack
         width="100%"
-        height={52}
+        height={54}
         borderRadius={20}
         alignItems="center"
         justifyContent="center"
-        backgroundColor={isPrimary ? '$buttonPrimaryBg' : '$surface'}
-        borderWidth={isPrimary ? 0 : 1}
+        backgroundColor="$surface"
+        borderWidth={1}
         borderColor="$border"
-        shadowColor={isPrimary ? '$primary' : 'black'}
-        shadowOpacity={isPrimary ? 0.35 : 0.05}
-        shadowOffset={{ width: 0, height: isPrimary ? 8 : 4 }}
-        shadowRadius={isPrimary ? 16 : 8}
-        elevation={isPrimary ? 6 : 1}
-        pressStyle={{
-          backgroundColor: isPrimary ? '$buttonPrimaryBgHover' : '$bgSubtle',
-        }}
+        pressStyle={{ backgroundColor: '$bgSubtle' }}
       >
-        <Text
-          fontSize="$5"
-          fontWeight="700"
-          color={isPrimary ? '$textOnPrimary' : '$text'}
-        >
+        <Text fontSize={18} fontWeight="700" color="$text">
           {children}
         </Text>
       </YStack>

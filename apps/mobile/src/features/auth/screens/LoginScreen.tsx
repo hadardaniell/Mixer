@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Platform, Pressable } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
@@ -15,11 +15,10 @@ import { authApi } from '@/features/auth/services/authApi';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
+import { MixerBowl } from '@/shared/ui/MixerBowl';
 import { OutlinedInput } from '@/shared/ui/OutlinedInput';
 
 const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
-
-const HERO = require('../../../assets/images/login.png');
 
 export function LoginScreen() {
   const { t } = useTranslation();
@@ -79,12 +78,10 @@ export function LoginScreen() {
           {/* Back-only header (no language controls on login). */}
           <AuthHeader onBack={() => router.back()} showLanguageControls={false} />
 
-          {/* 1em gap from header; full hero image, no cropping. */}
-          <Image
-            source={HERO}
-            resizeMode="contain"
-            style={{ width: '100%', height: 190, marginTop: 16 }}
-          />
+          {/* The Mixer mark — the same bowl as Start, as a still logo. */}
+          <YStack alignItems="center" marginTop={24}>
+            <MixerBowl size={92} />
+          </YStack>
 
           {/* Form area: flex column with space-between (top = title/fields/google,
               bottom = login button + "don't have account" link). */}

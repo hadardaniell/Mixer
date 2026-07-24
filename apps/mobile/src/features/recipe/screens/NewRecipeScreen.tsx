@@ -1,22 +1,16 @@
 import { useRouter } from 'expo-router';
+import { Camera, ChevronLeft, ChevronRight, Link as LinkIcon, PencilLine, Type } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, type ImageSourcePropType, Pressable, ScrollView } from 'react-native';
+import { Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, XStack, YStack } from 'tamagui';
+import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { DraftCard } from '@/features/recipe/components/DraftCard';
+import { DraftsSkeleton } from '@/features/recipe/components/DraftsSkeleton';
 import { useDrafts } from '@/features/recipe/hooks/useDrafts';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { isRTL } from '@/shared/lib/i18n';
-
-const CTA_ILLUSTRATION = require('../../../assets/images/CTA.png');
-
-const OPTION_IMAGES = {
-  link: require('../../../assets/images/create-recipe/by link.png'),
-  image: require('../../../assets/images/create-recipe/by photo.png'),
-  text: require('../../../assets/images/create-recipe/by text.png'),
-  manual: require('../../../assets/images/create-recipe/by hands.png'),
-} satisfies Record<string, ImageSourcePropType>;
+import { BlobActionCard } from '@/shared/ui/BlobActionCard';
 
 export function NewRecipeScreen() {
   const { t } = useTranslation();
@@ -24,7 +18,13 @@ export function NewRecipeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isRtl = isRTL(language);
-  const { data: drafts } = useDrafts(6);
+  const { data: drafts, isLoading: draftsLoading } = useDrafts(6);
+  const theme = useTheme();
+
+  const SeeAllChevron = () => {
+    const Chevron = isRtl ? ChevronLeft : ChevronRight;
+    return <Chevron size={15} color={theme.textMuted?.val as string} />;
+  };
 
   return (
     <ScrollView
@@ -60,90 +60,98 @@ export function NewRecipeScreen() {
           </YStack>
         </YStack> */}
 
-        {/* Hero card */}
-        <XStack
-          backgroundColor="$surface"
-          borderRadius={24}
-          paddingVertical="$5"
-          paddingHorizontal="$5"
-          gap="$3"
-          alignItems="center"
-          shadowColor="black"
-          shadowOpacity={0.08}
-          shadowRadius={28}
-          shadowOffset={{ width: 0, height: 14 }}
-          elevation={5}
-        >
-          <YStack flex={1} gap="$2">
-            <Text color="$text" fontSize={20} fontWeight="700" lineHeight={26}>
-              {t('newRecipe.hero.title')}
-            </Text>
-            <Text color="$textMuted" fontSize={14} lineHeight={20}>
-              {t('newRecipe.hero.subtitle')}
-            </Text>
-          </YStack>
-          <Image
-            source={CTA_ILLUSTRATION}
-            style={{ width: 150, height: 140 }}
-            resizeMode="contain"
-          />
-        </XStack>
+        {/* Plain title block, no card. Once the mark came out, a shadowed panel
+            holding nothing but two lines of text was drawing attention to
+            itself for no reason — the four action tiles below are the content
+            of this screen. */}
+        <YStack gap="$2" paddingTop="$2">
+          <Text color="$text" fontSize={24} fontWeight="700" letterSpacing={-0.6} lineHeight={30}>
+            {t('newRecipe.hero.title')}
+          </Text>
+          <Text color="$textMuted" fontSize={14} lineHeight={20}>
+            {t('newRecipe.hero.subtitle')}
+          </Text>
+        </YStack>
 
-        {/* Options grid 2×2 */}
+        {/* Options grid 2×2.
+            The blob tints are deliberately **varied hues**, not the cool ramp
+            used for step badges. Here the color is doing real work — telling
+            four different actions apart at a glance — and a cropped blob is a
+            big enough shape to carry a distinct hue. The ramp was tried and
+            reverted: four near-identical blues made the tiles look stamped. */}
         <YStack gap="$3">
           <XStack gap="$3">
-            <OptionCard
-              image={OPTION_IMAGES.link}
+            <BlobActionCard
+              Icon={LinkIcon}
               label={t('newRecipe.options.link')}
+              blobColor="$accentLavender"
+              variant={0}
               onPress={() => router.push('/new-recipe/link')}
             />
-            <OptionCard
-              image={OPTION_IMAGES.image}
+            <BlobActionCard
+              Icon={Camera}
               label={t('newRecipe.options.image')}
+              blobColor="$accentPink"
+              variant={1}
               onPress={() => router.push('/new-recipe/image')}
             />
           </XStack>
           <XStack gap="$3">
-            <OptionCard
-              image={OPTION_IMAGES.text}
+            <BlobActionCard
+              Icon={Type}
               label={t('newRecipe.options.text')}
+              blobColor="$accentPeach"
+              variant={2}
               onPress={() => router.push('/new-recipe/text')}
             />
-            <OptionCard
-              image={OPTION_IMAGES.manual}
+            <BlobActionCard
+              Icon={PencilLine}
               label={t('newRecipe.options.manual')}
+              blobColor="$accentMint"
+              variant={3}
               onPress={() => router.push('/new-recipe/manual')}
             />
           </XStack>
         </YStack>
 
-        {/* Drafts — only shown when the user actually has some */}
-        {drafts && drafts.length > 0 ? (
+        {/* Drafts — a shimmer while loading, then the list (hidden if empty). */}
+        {draftsLoading ? (
+          <YStack gap="$3">
+            <Text color="$text" fontSize={20} fontWeight="700" letterSpacing={-0.6}>
+              {t('newRecipe.drafts.title')}
+            </Text>
+            <DraftsSkeleton rows={2} />
+          </YStack>
+        ) : drafts && drafts.length > 0 ? (
           <YStack gap="$3">
             <XStack alignItems="center" justifyContent="space-between">
-              <Text color="$text" fontSize={17} fontWeight="700">
+              <Text color="$text" fontSize={20} fontWeight="700" letterSpacing={-0.6}>
                 {t('newRecipe.drafts.title')}
               </Text>
-              {drafts.length > 2 ? (
+              {drafts.length > 3 ? (
                 <Pressable
                   accessibilityRole="button"
                   hitSlop={6}
                   onPress={() => router.push('/new-recipe/drafts' as never)}
                 >
-                  <Text color="$primary" fontSize={14} fontWeight="600">
-                    {t('newRecipe.drafts.seeAll')}
-                  </Text>
+                  {/* Muted grey + chevron — the exact "see all" from the feed. */}
+                  <XStack alignItems="center" gap={2}>
+                    <Text color="$textMuted" fontSize={12.5} fontWeight="600">
+                      {t('newRecipe.drafts.seeAll')}
+                    </Text>
+                    <SeeAllChevron />
+                  </XStack>
                 </Pressable>
               ) : null}
             </XStack>
 
-            <XStack flexWrap="wrap" gap="$3">
-              {drafts.slice(0, 2).map((d) => (
-                <YStack key={d.id} width="48%">
-                  <DraftCard draft={d} />
-                </YStack>
+            {/* One draft per row, full width — the card is a horizontal row and
+                needs the space; two-up left it cramped. */}
+            <YStack gap="$2">
+              {drafts.slice(0, 3).map((d) => (
+                <DraftCard key={d.id} draft={d} />
               ))}
-            </XStack>
+            </YStack>
           </YStack>
         ) : null}
       </YStack>
@@ -151,36 +159,4 @@ export function NewRecipeScreen() {
   );
 }
 
-function OptionCard({
-  image,
-  label,
-  onPress,
-}: {
-  image: ImageSourcePropType;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <YStack
-      flex={1}
-      backgroundColor="$surface"
-      borderRadius={24}
-      paddingVertical="$4"
-      gap="$2"
-      alignItems="center"
-      shadowColor="black"
-      shadowOpacity={0.06}
-      shadowRadius={14}
-      shadowOffset={{ width: 0, height: 6 }}
-      elevation={2}
-      pressStyle={{ opacity: 0.92, scale: 0.98 }}
-      onPress={onPress}
-    >
-      <Image source={image} style={{ width: 104, height: 104 }} resizeMode="contain" />
-      <Text color="$text" fontSize={15} fontWeight="700">
-        {label}
-      </Text>
-    </YStack>
-  );
-}
 

@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
-import { Text, useTheme, XStack, YStack } from 'tamagui';
+import { Text, XStack, YStack } from 'tamagui';
 
 import { ManualTextInput } from '@/features/recipe/components/manual/ManualTextInput';
 import { RecipeCard, type RecipeCardData } from '@/shared/ui/RecipeCard';
@@ -40,7 +40,6 @@ export function BookRecipeGrid({
   onRemoveRecipe,
 }: Props) {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   const confirmRemove = (card: Card) => {
     if (!canEdit) return;
@@ -70,12 +69,14 @@ export function BookRecipeGrid({
             width={50}
             height={50}
             borderRadius={999}
-            backgroundColor="$buttonSecondaryBg"
+            backgroundColor="$text"
             alignItems="center"
             justifyContent="center"
             pressStyle={{ opacity: 0.85 }}
           >
-            <Plus size={24} color={theme.text?.val as string} strokeWidth={2.5} />
+            {/* White plus on the ink disc — it was `$text` on `$buttonSecondaryBg`,
+                i.e. ink on ink, so the plus was invisible. */}
+            <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
           </YStack>
         ) : null}
       </XStack>

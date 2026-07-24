@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, KeyboardAvoidingView, Platform, Pressable, TextInput } from 'react-native';
+import { AlignLeft } from 'lucide-react-native';
+import { KeyboardAvoidingView, Platform, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
@@ -10,9 +11,9 @@ import { CreateFlowHeader } from '@/features/recipe/components/CreateFlowHeader'
 import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromExtraction';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { isRTL } from '@/shared/lib/i18n';
+import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
 
 const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
-const TEXT_BLOB = require('../../../assets/images/create-recipe/by text.png');
 
 export function CreateFromTextScreen() {
   const { t } = useTranslation();
@@ -63,23 +64,18 @@ export function CreateFromTextScreen() {
           subtitle={t('newRecipe.text.subtitle')}
         />
 
-        <YStack alignItems="center">
-          <Image source={TEXT_BLOB} style={{ width: 88, height: 82 }} resizeMode="contain" />
+        <YStack alignItems="center" paddingVertical="$1">
+          <ConceptualIcon Icon={AlignLeft} blobColor="$accentPeach" variant={2} size={84} />
         </YStack>
 
         <YStack
           flex={1}
           backgroundColor="$surface"
-          borderRadius={18}
-          borderWidth={1.5}
-          borderColor={focused ? '$accentLavender' : 'transparent'}
+          borderRadius={14}
+          borderWidth={focused ? 2 : 1}
+          borderColor={focused ? '$borderStrong' : '$border'}
           padding="$3"
           minHeight={120}
-          shadowColor="black"
-          shadowOpacity={0.06}
-          shadowRadius={14}
-          shadowOffset={{ width: 0, height: 6 }}
-          elevation={2}
         >
           <TextInput
             value={text}
@@ -119,16 +115,16 @@ export function CreateFromTextScreen() {
             borderRadius={20}
             alignItems="center"
             justifyContent="center"
-            backgroundColor="$accentTeal"
-            opacity={!text.trim() || busy ? 0.55 : 1}
-            shadowColor="$accentTeal"
-            shadowOpacity={0.35}
-            shadowOffset={{ width: 0, height: 8 }}
-            shadowRadius={16}
-            elevation={6}
-            pressStyle={{ opacity: 0.9 }}
+            backgroundColor="$buttonPrimaryBg"
+            opacity={!text.trim() || busy ? 0.5 : 1}
+            shadowColor="black"
+            shadowOpacity={0.28}
+            shadowOffset={{ width: 0, height: 6 }}
+            shadowRadius={14}
+            elevation={10}
+            pressStyle={{ backgroundColor: '$buttonPrimaryBgHover' }}
           >
-            <Text color="$textOnPrimary" fontSize={18} fontWeight="700">
+            <Text color="$buttonPrimaryText" fontSize={18} fontWeight="700">
               {busy ? t('newRecipe.creating') : t('newRecipe.text.cta')}
             </Text>
           </YStack>

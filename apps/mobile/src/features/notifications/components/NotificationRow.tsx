@@ -113,13 +113,16 @@ export function NotificationRow({
                 onPress={() => onAccept(notification)}
                 style={({ pressed }) => ({ opacity: actionBusy ? 0.55 : pressed ? 0.85 : 1 })}
               >
+                {/* The app-wide primary: ink fill, white label. Same as every
+                    other primary button. Against the white "decline" beside it,
+                    ink vs white-with-border keeps them clearly distinct. */}
                 <View
-                  backgroundColor="$primary"
+                  backgroundColor="$buttonPrimaryBg"
                   borderRadius={999}
                   paddingHorizontal={16}
                   paddingVertical={8}
                 >
-                  <Text color="white" fontSize={14} fontWeight="600">
+                  <Text color="$buttonPrimaryText" fontSize={14} fontWeight="700">
                     {t('notifications.accept')}
                   </Text>
                 </View>

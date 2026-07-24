@@ -136,8 +136,8 @@ export function Step1Basics({ form, dispatch }: Props) {
                     gap="$2"
                     backgroundColor="$overlay"
                   >
-                    <ActivityIndicator color={theme.textOnPrimary?.val as string} />
-                    <Text color="$textOnPrimary" fontSize={13}>
+                    <ActivityIndicator color="#FFFFFF" />
+                    <Text color="#FFFFFF" fontSize={13}>
                       {t('newRecipe.manual.step1.photoUploading')}
                     </Text>
                   </YStack>

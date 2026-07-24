@@ -29,9 +29,9 @@ export function MemberAvatar({ displayName, avatarUrl, size = 44, ringed = false
       height={size}
       borderRadius={999}
       overflow="hidden"
-      // Same grey + white ink as the avatars on BookCard, so a member looks
-      // identical on the card and inside the book.
-      backgroundColor="$accentBlueGray"
+      // Light grey + muted ink, matching the avatars on BookCard and the
+      // notification rows, so a member looks identical everywhere.
+      backgroundColor="$bgSubtle"
       alignItems="center"
       justifyContent="center"
       {...(ringed ? { borderWidth: 2, borderColor: '$surface' as const } : {})}
@@ -39,7 +39,7 @@ export function MemberAvatar({ displayName, avatarUrl, size = 44, ringed = false
       {avatarUrl ? (
         <Image source={{ uri: avatarUrl }} style={{ width: '100%', height: '100%' }} />
       ) : (
-        <Text color="white" fontSize={size * 0.36} fontWeight="700">
+        <Text color="$textMuted" fontSize={size * 0.36} fontWeight="700">
           {initials(displayName)}
         </Text>
       )}

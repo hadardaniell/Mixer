@@ -47,10 +47,10 @@ export function IngredientsList({
       paddingBottom="$3"
       gap="$2"
       shadowColor="black"
-      shadowOpacity={0.08}
-      shadowRadius={18}
-      shadowOffset={{ width: 0, height: 8 }}
-      elevation={4}
+      shadowOpacity={0.28}
+      shadowRadius={14}
+      shadowOffset={{ width: 0, height: 6 }}
+      elevation={10}
     >
       <XStack
         alignItems="center"
@@ -77,7 +77,7 @@ export function IngredientsList({
           </StepperButton>
         </XStack>
 
-        <Text fontSize={17} fontWeight="700" color="$text" textAlign="right">
+        <Text fontSize={20} fontWeight="700" letterSpacing={-0.6} color="$text" textAlign="right">
           {t('recipe.ingredients')}
         </Text>
       </XStack>
@@ -149,6 +149,12 @@ function StepperButton({
   );
 }
 
+/**
+ * Ticking an ingredient is a *selection* state, which is one of the brand
+ * color's sanctioned uses — so the fill is `$primary` rather than the teal it
+ * used to be. `$primary` is 3.0:1 on white, fine for a filled shape, and the
+ * check itself is a graphic rather than text.
+ */
 function Checkbox({ checked }: { checked: boolean }) {
   return (
     <View
@@ -158,10 +164,10 @@ function Checkbox({ checked }: { checked: boolean }) {
       alignItems="center"
       justifyContent="center"
       borderWidth={checked ? 0 : 1.5}
-      borderColor={checked ? '$accentTeal' : '$gray6'}
-      backgroundColor={checked ? '$accentTeal' : 'transparent'}
+      borderColor={checked ? '$primary' : '$gray6'}
+      backgroundColor={checked ? '$primary' : 'transparent'}
     >
-      {checked ? <Check size={15} color="#FFFFFF" /> : null}
+      {checked ? <Check size={15} color="#FFFFFF" strokeWidth={3} /> : null}
     </View>
   );
 }

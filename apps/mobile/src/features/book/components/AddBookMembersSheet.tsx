@@ -155,13 +155,13 @@ export function AddBookMembersSheet({
         disabled={selected.size === 0 || busy}
         height={54}
         borderRadius={20}
-        backgroundColor="$primary"
+        backgroundColor="$buttonPrimaryBg"
         alignItems="center"
         justifyContent="center"
         opacity={selected.size === 0 || busy ? 0.55 : 1}
         pressStyle={{ backgroundColor: '$buttonPrimaryBgHover' }}
       >
-        <Text color="$textOnPrimary" fontSize={16} fontWeight="700">
+        <Text color="$buttonPrimaryText" fontSize={16} fontWeight="700">
           {busy
             ? t('book.addMembersSheet.adding')
             : t('book.addMembersSheet.confirm', { count: selected.size })}

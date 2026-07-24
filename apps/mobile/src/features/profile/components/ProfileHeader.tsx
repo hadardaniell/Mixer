@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
 
 import { initials } from '@/features/profile/lib/initials';
+import { CountUp } from '@/shared/ui/CountUp';
 
 interface ProfileHeaderProps {
   user: PublicUser | null;
@@ -33,49 +34,41 @@ export function ProfileHeader({
   const { t } = useTranslation();
   const theme = useTheme();
   const ink = theme.text?.val as string;
+  const brand = theme.textOnPrimary?.val as string;
   const avatarSrc = avatarPreview ?? user?.avatarUrl;
 
   return (
     <YStack gap="$4" alignItems="center">
-      {/* Action bar — forced LTR so settings stays on the left in every language. */}
+      {/* Action bar — forced LTR so settings stays on the left in every language.
+          Sits over the banner (rendered full-bleed by the screen); buttons are
+          translucent so the wash shows through. */}
       <XStack
         width="100%"
         justifyContent="space-between"
         alignItems="center"
         style={{ direction: 'ltr' } as never}
       >
-        <IconButton icon={Settings} accent="$accentLavender" color={ink} onPress={onSettings} />
-        {isSelf ? (
-          <IconButton icon={UserPlus} accent="$accentLime" color={ink} onPress={onAddFriends} />
-        ) : null}
+        <IconButton icon={Settings} color={ink} onPress={onSettings} />
+        {isSelf ? <IconButton icon={UserPlus} color={ink} onPress={onAddFriends} /> : null}
       </XStack>
 
-      {/* Avatar. On your own profile the camera badge takes the accent blob's spot. */}
-      <View width={112} height={112} alignItems="center" justifyContent="center">
-        {isSelf ? null : (
-          <View
-            position="absolute"
-            width={44}
-            height={44}
-            borderRadius={22}
-            backgroundColor="$accentLavender"
-            bottom={4}
-            left={0}
-          />
-        )}
+      {/* Avatar on a brand tint (not plain grey), with the camera badge. */}
+      <View width={104} height={104} alignItems="center" justifyContent="center">
         <View
-          width={104}
-          height={104}
-          borderRadius={52}
+          width={100}
+          height={100}
+          borderRadius={999}
           overflow="hidden"
-          backgroundColor="$accentLavender"
+          backgroundColor="$primarySubtle"
+          borderWidth={3}
+          borderColor="$surface"
           alignItems="center"
           justifyContent="center"
         >
           {avatarSrc ? (
             <Image source={{ uri: avatarSrc }} style={{ width: '100%', height: '100%' }} />
           ) : (
-            <Text color="$primary" fontSize={36} fontWeight="700">
+            <Text color="$textOnPrimary" fontSize={34} fontWeight="700">
               {initials(user?.displayName)}
             </Text>
           )}
@@ -86,10 +79,10 @@ export function ProfileHeader({
               height="100%"
               alignItems="center"
               justifyContent="center"
-              backgroundColor="$accentLavender"
+              backgroundColor="$primarySubtle"
               opacity={0.7}
             >
-              <ActivityIndicator color={theme.primary?.val as string} />
+              <ActivityIndicator color={brand} />
             </View>
           ) : null}
         </View>
@@ -99,8 +92,7 @@ export function ProfileHeader({
           <YStack
             onPress={onChangeAvatar}
             position="absolute"
-            bottom={4}
-            // Physical left in both directions — it replaces the accent blob.
+            bottom={0}
             left={0}
             width={34}
             height={34}
@@ -111,27 +103,24 @@ export function ProfileHeader({
             alignItems="center"
             justifyContent="center"
             shadowColor="black"
-            shadowOpacity={0.06}
-            shadowRadius={12}
-            shadowOffset={{ width: 0, height: 4 }}
-            elevation={2}
+            shadowOpacity={0.12}
+            shadowRadius={8}
+            shadowOffset={{ width: 0, height: 3 }}
+            elevation={3}
             pressStyle={{ opacity: 0.85 }}
             accessibilityRole="button"
             accessibilityLabel={t('profile.changePhoto')}
           >
-            <Camera size={17} color={theme.primary?.val as string} />
+            <Camera size={17} color={ink} strokeWidth={1.9} />
           </YStack>
         ) : null}
       </View>
 
-      <YStack gap="$1" alignItems="center">
-        <Text fontSize={26} fontWeight="700" letterSpacing={-0.5} color="$text">
-          {user?.displayName ?? ''}
-        </Text>
+      <Text fontSize={24} fontWeight="700" letterSpacing={-0.5} color="$text">
+        {user?.displayName ?? ''}
+      </Text>
 
-      </YStack>
-
-      {/* Stats — start→end: recipes, books, friends */}
+      {/* Stats — recipes / books / friends, counting up on entry. */}
       <XStack alignItems="center" gap="$4">
         <Stat value={stats.recipes} label={t('profile.stats.recipes')} />
         <Divider />
@@ -159,9 +148,7 @@ function Stat({
       onPress={onPress}
       pressStyle={onPress ? { opacity: 0.6 } : undefined}
     >
-      <Text fontSize={22} fontWeight="700" color="$text">
-        {value}
-      </Text>
+      <CountUp value={value} fontSize={22} fontWeight="700" color="$text" />
       <Text fontSize={13} color="$textMuted">
         {label}
       </Text>
@@ -173,43 +160,35 @@ function Divider() {
   return <View width={1} height={32} backgroundColor="$border" />;
 }
 
+/** Plain surface icon tile — no accent blob (that pattern is retired), slightly
+ *  translucent so the banner wash shows through. */
 function IconButton({
   icon: Icon,
-  accent,
   color,
   onPress,
 }: {
   icon: LucideIcon;
-  accent: string;
   color: string;
   onPress: () => void;
 }) {
   return (
     <YStack
       onPress={onPress}
-      width={44}
-      height={44}
-      borderRadius={14}
+      width={40}
+      height={40}
+      borderRadius={13}
       backgroundColor="$surface"
+      opacity={0.85}
       alignItems="center"
       justifyContent="center"
       shadowColor="black"
       shadowOpacity={0.06}
-      shadowRadius={12}
-      shadowOffset={{ width: 0, height: 4 }}
-      elevation={1}
-      pressStyle={{ opacity: 0.85 }}
+      shadowRadius={10}
+      shadowOffset={{ width: 0, height: 3 }}
+      elevation={2}
+      pressStyle={{ opacity: 0.7 }}
     >
-      <View
-        position="absolute"
-        width={16}
-        height={16}
-        borderRadius={8}
-        backgroundColor={accent}
-        bottom={5}
-        right={5}
-      />
-      <Icon size={20} color={color} />
+      <Icon size={20} color={color} strokeWidth={1.9} />
     </YStack>
   );
 }

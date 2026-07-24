@@ -6,13 +6,14 @@ import { Pressable } from 'react-native';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { useDeleteRecipe } from '@/features/recipe/hooks/useDeleteRecipe';
+import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
 
 const DRAFT_ACCENTS = ['$accentMint', '$accentPink', '$accentPeach', '$accentLavender'] as const;
 
-function pickAccent(id: string): (typeof DRAFT_ACCENTS)[number] {
+function pickAccent(id: string): { color: (typeof DRAFT_ACCENTS)[number]; variant: number } {
   let sum = 0;
   for (let i = 0; i < id.length; i += 1) sum += id.charCodeAt(i);
-  return DRAFT_ACCENTS[sum % DRAFT_ACCENTS.length]!;
+  return { color: DRAFT_ACCENTS[sum % DRAFT_ACCENTS.length]!, variant: sum % 4 };
 }
 
 function daysAgo(iso: string): number {
@@ -28,9 +29,9 @@ export function DraftCard({ draft }: { draft: Recipe }) {
   const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
-  const ink = theme.text?.val as string;
   const del = useDeleteRecipe();
 
+  const accent = pickAccent(draft.id);
   const openEdit = () => router.push(`/new-recipe/manual?id=${draft.id}` as never);
 
   return (
@@ -42,23 +43,19 @@ export function DraftCard({ draft }: { draft: Recipe }) {
       gap="$2"
       alignItems="center"
       shadowColor="black"
-      shadowOpacity={0.06}
-      shadowRadius={14}
-      shadowOffset={{ width: 0, height: 6 }}
-      elevation={2}
+      shadowOpacity={0.16}
+      shadowRadius={12}
+      shadowOffset={{ width: 0, height: 5 }}
+      elevation={6}
     >
       {/* Tap area → edit. Kept a sibling of the trash button so they never overlap. */}
       <XStack flex={1} onPress={openEdit} alignItems="center" gap="$2" pressStyle={{ opacity: 0.9 }}>
-        <YStack
-          width={40}
-          height={40}
-          borderRadius={12}
-          backgroundColor={pickAccent(draft.id)}
-          alignItems="center"
-          justifyContent="center"
-        >
-          <FileText size={20} color={ink} strokeWidth={1.8} />
-        </YStack>
+        <ConceptualIcon
+          Icon={FileText}
+          blobColor={accent.color}
+          variant={accent.variant}
+          size={42}
+        />
 
         <YStack flex={1} gap={2}>
           <Text color="$text" fontSize={13} fontWeight="700" numberOfLines={1}>
@@ -77,7 +74,7 @@ export function DraftCard({ draft }: { draft: Recipe }) {
         disabled={del.isPending}
         onPress={() => del.mutate(draft.id)}
       >
-        <Trash2 size={18} color={ink} />
+        <Trash2 size={18} color={theme.textMuted?.val as string} />
       </Pressable>
     </XStack>
   );

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { YStack } from 'tamagui';
 
@@ -13,11 +13,7 @@ import { authApi } from '@/features/auth/services/authApi';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
-
-const HERO = {
-  1: require('../../../assets/images/register step 1.png'),
-  2: require('../../../assets/images/register step 2.png'),
-} as const;
+import { MixerBowl } from '@/shared/ui/MixerBowl';
 
 export function RegisterScreen() {
   const { t } = useTranslation();
@@ -130,15 +126,9 @@ export function RegisterScreen() {
           <YStack flex={1}>
             <AuthHeader onBack={handleBack} />
 
-            {/* 1em (16px) gap between the header and the hero image.
-                Wrapper clips 5px off the top and bottom of the picture
-                without changing its proportions. */}
-            <YStack width="100%" height={165} marginTop={16} overflow="hidden">
-              <Image
-                source={HERO[step]}
-                resizeMode="contain"
-                style={{ width: '100%', height: 190, marginTop: -15 }}
-              />
+            {/* The Mixer mark — the same bowl as Start, as a still logo. */}
+            <YStack alignItems="center" marginTop={20}>
+              <MixerBowl size={84} />
             </YStack>
 
             <YStack flex={1} marginTop="$4">

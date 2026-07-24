@@ -161,8 +161,11 @@ export function BookHero({
               borderColor="$primary"
               pressStyle={{ backgroundColor: '$bgSubtle' }}
             >
-              <Plus size={16} color={theme.primary?.val as string} strokeWidth={2.5} />
-              <Text color="$primary" fontSize={14} fontWeight="600">
+              {/* The label takes step 11, not `$primary`. Step 9 is 3.0:1 on
+                  white and fails as text; it's fine on the outline, which is a
+                  graphic and only needs 3:1. */}
+              <Plus size={16} color={theme.textOnPrimary?.val as string} strokeWidth={2.5} />
+              <Text color="$textOnPrimary" fontSize={14} fontWeight="700">
                 {t('book.addMembers')}
               </Text>
             </XStack>

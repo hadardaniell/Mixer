@@ -49,7 +49,11 @@ export function ManualStepper({ current, total, onBack, isEdit = false }: Manual
         {steps.map((n) => {
           const isCurrent = n === current;
           const isDone = n < current;
-          const active = isCurrent || isDone;
+          // Three states: current = bright periwinkle `$primary` #6C8EFF + white
+          // numeral (the focal point); done = soft periwinkle fill + brand-blue
+          // numeral; upcoming = white with a hairline.
+          const bg = isCurrent ? '$primary' : isDone ? '$primarySubtle' : '$surface';
+          const numColor = isCurrent ? '#FFFFFF' : isDone ? '$textOnPrimary' : '$textMuted';
           return (
             <XStack key={n} alignItems="center" flex={n === total ? 0 : 1}>
               <YStack
@@ -58,15 +62,11 @@ export function ManualStepper({ current, total, onBack, isEdit = false }: Manual
                 borderRadius={999}
                 alignItems="center"
                 justifyContent="center"
-                backgroundColor={isCurrent ? '$accentLimeVivid' : '$surface'}
-                borderWidth={isCurrent ? 0 : 1}
-                borderColor={isDone ? '$accentLimeVivid' : '$border'}
+                backgroundColor={bg}
+                borderWidth={isCurrent || isDone ? 0 : 1}
+                borderColor="$border"
               >
-                <Text
-                  fontSize={14}
-                  fontWeight="600"
-                  color={isCurrent ? '$textOnPrimary' : isDone ? '$text' : '$textMuted'}
-                >
+                <Text fontSize={14} fontWeight="700" color={numColor}>
                   {n}
                 </Text>
               </YStack>
@@ -74,7 +74,7 @@ export function ManualStepper({ current, total, onBack, isEdit = false }: Manual
                 <YStack
                   flex={1}
                   height={2}
-                  backgroundColor={n < current ? '$accentLimeVivid' : '$border'}
+                  backgroundColor={n < current ? '$primary' : '$border'}
                 />
               ) : null}
             </XStack>

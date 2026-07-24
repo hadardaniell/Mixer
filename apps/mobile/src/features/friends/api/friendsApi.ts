@@ -16,6 +16,12 @@ interface UserSearchResponse {
   users: UserSearchResult[];
 }
 
+/** A matched contact carries the same fields the row needs, plus the phone that
+ *  matched (unused by the UI today but handy for de-duping / display). */
+export interface MatchedContact extends UserSearchResult {
+  phoneNumber?: string;
+}
+
 export interface Friend {
   id: string;
   displayName?: string;
@@ -33,6 +39,15 @@ export const friendsApi = {
     http<UserSearchResponse>(
       `/friends/search?q=${encodeURIComponent(q)}&limit=${limit}`,
     ),
+
+  // Matches the user's device contacts (E.164 phone numbers) against registered
+  // users. The response rows are shaped exactly like a user-search result, so
+  // `AddFriendRow` renders them unchanged.
+  syncContacts: (contacts: string[]) =>
+    http<{ users: MatchedContact[] }>('/friends/sync-contacts', {
+      method: 'POST',
+      body: JSON.stringify({ contacts }),
+    }),
 
   sendRequest: (targetUserId: string) =>
     http<{ status: 'pending' }>('/friends/request', {

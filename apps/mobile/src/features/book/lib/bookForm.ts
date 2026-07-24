@@ -1,5 +1,7 @@
 import type { CreateRecipeBookInput } from '@mixer/contracts';
 
+import { DEFAULT_COVER_KEY } from '@/shared/ui/BookCoverArt';
+
 export type BookPrivacy = 'personal' | 'shared';
 
 export interface BookForm {
@@ -22,7 +24,7 @@ export const initialBookForm: BookForm = {
   recipeIds: [],
   privacy: 'personal',
   invitedIds: [],
-  coverKey: 'rbc1',
+  coverKey: DEFAULT_COVER_KEY,
 };
 
 export type BookFormAction =

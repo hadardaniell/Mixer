@@ -55,10 +55,10 @@ export function RecipeActionBar({ onShare, onSaveToBook, onCopy, copied }: Recip
       paddingVertical="$3"
       alignItems="center"
       shadowColor="black"
-      shadowOpacity={0.08}
-      shadowRadius={18}
-      shadowOffset={{ width: 0, height: 8 }}
-      elevation={4}
+      shadowOpacity={0.28}
+      shadowRadius={14}
+      shadowOffset={{ width: 0, height: 6 }}
+      elevation={10}
       style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
     >
       {items.map((item, index) => (

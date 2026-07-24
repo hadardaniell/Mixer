@@ -21,7 +21,7 @@ export function Step1Basics({ form, dispatch }: Props) {
 
   return (
     <BookStepShell
-      // Icon={BookHeart}
+      Icon={BookHeart}
       iconBg="$accentPeach"
       title={t('createBook.step1.title')}
       subtitle={t('createBook.step1.subtitle')}

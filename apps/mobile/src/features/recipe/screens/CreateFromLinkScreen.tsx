@@ -2,7 +2,7 @@ import { Globe, Link as LinkIcon, MessageCircle, Play } from 'lucide-react-nativ
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
@@ -12,10 +12,10 @@ import { CreateFlowHeader } from '@/features/recipe/components/CreateFlowHeader'
 import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromExtraction';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { isRTL } from '@/shared/lib/i18n';
+import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
 import { IconChip } from '@/shared/ui/IconChip';
 
 const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
-const LINK_HERO = require('../../../assets/images/create recipes/create by link.jpg');
 
 export function CreateFromLinkScreen() {
   const { t } = useTranslation();
@@ -65,20 +65,9 @@ export function CreateFromLinkScreen() {
           subtitle={t('newRecipe.link.subtitle')}
         />
 
-        {/* Hero */}
-        <YStack
-          backgroundColor="$surface"
-          borderRadius={24}
-          padding="$4"
-          gap="$2"
-          alignItems="center"
-          shadowColor="black"
-          shadowOpacity={0.08}
-          shadowRadius={28}
-          shadowOffset={{ width: 0, height: 14 }}
-          elevation={5}
-        >
-          <Image source={LINK_HERO} style={{ width: 200, height: 184 }} resizeMode="contain" />
+        {/* Hero — conceptual icon on the canvas, no card. */}
+        <YStack alignItems="center" gap="$2" paddingVertical="$2">
+          <ConceptualIcon Icon={LinkIcon} blobColor="$accentLavender" variant={0} size={92} />
           <Text color="$text" fontSize={18} fontWeight="700" textAlign="center">
             {t('newRecipe.link.heroTitle')}
           </Text>
@@ -87,15 +76,15 @@ export function CreateFromLinkScreen() {
           </Text>
         </YStack>
 
-        {/* Link input */}
+        {/* Link input — neutral border, thickens to ink on focus. */}
         <XStack
           alignItems="center"
           gap="$2"
           paddingHorizontal="$3"
           height={56}
           borderRadius={14}
-          borderWidth={1.5}
-          borderColor="$primary"
+          borderWidth={1}
+          borderColor="$border"
           backgroundColor="$surface"
         >
           <LinkIcon size={22} color={ink} />

@@ -17,9 +17,11 @@ export default function BooksFriendsScreen() {
       title={t('home.booksWithFriends')}
       data={feed.booksWithFriends}
       keyExtractor={(b) => b.id}
+      numColumns={1}
       renderItem={({ item }) => (
         <BookCard
           book={item}
+          width="100%"
           isFavorited={item.isFavorite}
           onToggleFavorite={() =>
             toggleBook.mutate({ id: item.id, next: !item.isFavorite })
