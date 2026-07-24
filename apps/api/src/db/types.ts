@@ -175,3 +175,17 @@ export type NotificationDoc = {
   createdAt: Date;
   expiresAt: Date | null;
 };
+
+export type RecipeTranslationDoc = {
+  _id: ObjectId;
+  recipeId: ObjectId;
+  language: 'he' | 'en';
+  title: string;
+  description?: string;
+  tags?: string[];
+  cuisine?: string;
+  ingredients: RecipeIngredient[];
+  steps: RecipeStep[];
+  createdAt: Date;
+
+};

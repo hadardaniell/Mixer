@@ -6,6 +6,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
 export interface RecipeToTranslate {
   title: string;
   description?: string;
+  tags?: string[]; 
+  cuisine?: string;
   ingredients: Array<{
     name: string;
     amount?: number;
@@ -39,8 +41,14 @@ export async function translateRecipeWithGemini(
 
   const prompt = `
     You are an expert culinary translator.
-    Translate all text fields (title, description, ingredient names, ingredient units, ingredient notes, step text) of the following recipe into ${languageName}.
+    Translate all text fields (title, description, tags, ingredient names, ingredient units, ingredient notes, step text) of the following recipe into ${languageName}.
     
+    Rules for Cuisine:
+  - Translate the cuisine type accurately into ${languageName} (e.g., 'American' -> 'אמריקאי', 'Italian' -> 'איטלקי', 'Asian' -> 'אסיאתי').
+
+    Rules for Tags:
+    - For array fields like 'tags', translate every string element within the array into ${languageName} while preserving the array structure.
+
     Rules for Units:
     - Expand and translate single-letter and abbreviated measurement units accurately into ${languageName}.
     - English to Hebrew unit mappings:
