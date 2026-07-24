@@ -21,15 +21,15 @@ export type UserDoc = {
 
 export type FriendshipStatus = 'pending' | 'accepted' | 'rejected' | 'blocked';
 
-export type FriendshipDoc = {
-  _id: ObjectId;
-  requesterId: ObjectId;
-  addresseeId: ObjectId;
-  status: FriendshipStatus;
-  participants: [ObjectId, ObjectId];
-  createdAt: Date;
-  updatedAt: Date;
-};
+// export type FriendshipDoc = {
+//   _id: ObjectId;
+//   requesterId: ObjectId;
+//   addresseeId: ObjectId;
+//   status: FriendshipStatus;
+//   participants: [ObjectId, ObjectId];
+//   createdAt: Date;
+//   updatedAt: Date;
+// };
 
 export type RefreshTokenDoc = {
   _id: ObjectId;
