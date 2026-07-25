@@ -118,6 +118,39 @@ export function stepPatch(step: number, form: ManualForm): Partial<CreateRecipeI
   }
 }
 
+/**
+ * The full recipe payload built from the form, for the inline recipe editor
+ * (which saves every field at once rather than step-by-step). Combines the
+ * per-step patches and drops rows the user left blank so we never send an
+ * empty-name ingredient or empty step to the API.
+ */
+export function manualFormToInput(form: ManualForm): Partial<CreateRecipeInput> {
+  return {
+    title: form.title.trim(),
+    description: form.description.trim() || undefined,
+    coverImageUrl: form.coverImageUrl,
+    prepTimeMinutes: form.prepTimeMinutes,
+    difficulty: form.difficulty,
+    servings: form.servings,
+    tags: form.category ? [form.category] : [],
+    ingredients: form.ingredients
+      .filter((it) => it.name.trim().length > 0)
+      .map((it) => ({
+        name: it.name.trim(),
+        amount: it.amount,
+        unit: it.unit?.trim() || undefined,
+        note: it.note?.trim() || undefined,
+      })),
+    steps: form.steps
+      .filter((s) => s.text.trim().length > 0)
+      .map((s, i) => ({
+        order: i,
+        text: s.text.trim(),
+        durationMinutes: s.durationMinutes,
+      })),
+  };
+}
+
 /** Seed the wizard form from an existing recipe (edit mode). Inverse of the
  *  per-step patches above: pulls the single known category tag back out, and
  *  orders steps by their stored `order`. */
