@@ -12,17 +12,23 @@ import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { ShareSheet } from '@/features/shares/components/ShareSheet';
 import { isRTL } from '@/shared/lib/i18n';
 
+import { PrimaryButton } from '@/shared/ui/PrimaryButton';
+
+import { IngredientsEditor } from '../components/IngredientsEditor';
 import { IngredientsList } from '../components/IngredientsList';
 import { PreparationSteps } from '../components/PreparationSteps';
 import { RecipeActionBar } from '../components/RecipeActionBar';
+import { RecipeMetaEditor } from '../components/RecipeMetaEditor';
 import { SaveToBookSheet } from '../components/SaveToBookSheet';
 import { RecipeHeader } from '../components/RecipeHeader';
 import { RecipeSkeleton } from '../components/RecipeSkeleton';
 import { RecipeSourceNote } from '../components/RecipeSourceNote';
 import { RecipeTip } from '../components/RecipeTip';
 import { StartCookingButton } from '../components/StartCookingButton';
+import { StepsEditor } from '../components/StepsEditor';
 import { recipeToText } from '../lib/recipeToText';
 import { useRecipe } from '../hooks/useRecipe';
+import { useRecipeEditor } from '../hooks/useRecipeEditor';
 
 interface RecipeScreenProps {
   recipeId: string;
@@ -38,6 +44,7 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
   const { user } = useAuth();
   const { data: recipe, isLoading, isError } = useRecipe(recipeId);
   const toggleFavorite = useToggleRecipeFavorite();
+  const editor = useRecipeEditor(recipe);
 
   // Quantity multiplier — the recipe's authored amounts are "כמות 1" (×1).
   const [multiplier, setMultiplier] = useState(1);
@@ -89,7 +96,9 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
 
   // The server only lets the owner share, and refuses drafts. Rather than let
   // the user pick friends and then fail, we surface the reason up front.
-  const canShare = recipe.ownerId === user?.id && recipe.status !== 'draft';
+  const isOwner = recipe.ownerId === user?.id;
+  const canShare = isOwner && recipe.status !== 'draft';
+  const { editing, form, dispatch } = editor;
 
   const handleShare = () => {
     if (canShare) {
@@ -119,6 +128,7 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
         paddingBottom: insets.bottom + 24,
       }}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       <YStack
         width="100%"
@@ -131,39 +141,87 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
           isFavorited={isFavorited}
           onToggleFavorite={() => toggleFavorite.mutate({ id: recipe.id, next: !isFavorited })}
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
+          canEdit={isOwner}
+          editing={editing}
+          onStartEdit={editor.start}
+          onCancelEdit={editor.cancel}
+          editTitle={form.title}
+          editDescription={form.description}
+          editCoverImageUrl={form.coverImageUrl}
+          onChangeTitle={(title) => dispatch({ type: 'patch', value: { title } })}
+          onChangeDescription={(description) =>
+            dispatch({ type: 'patch', value: { description } })
+          }
+          onPickImage={editor.pickImage}
+          imageUploading={editor.imageUploading}
         />
 
         {/* <StartCookingButton label={t('recipe.startCooking')} onPress={() => {}} /> */}
 
-        <YStack gap="$1">
-          <RecipeActionBar
-            onShare={handleShare}
-            onSaveToBook={() => setBookSheetOpen(true)}
-            onCopy={handleCopy}
-            copied={copied}
+        {editing ? (
+          <RecipeMetaEditor form={form} dispatch={dispatch} />
+        ) : (
+          <YStack gap="$1">
+            <RecipeActionBar
+              onShare={handleShare}
+              onSaveToBook={() => setBookSheetOpen(true)}
+              onCopy={handleCopy}
+              copied={copied}
+            />
+            {shareNotice ? (
+              <Text fontSize={13} fontWeight="600" color="$danger" textAlign="center">
+                {t(`share.blocked.${shareNotice}`)}
+              </Text>
+            ) : null}
+          </YStack>
+        )}
+
+        {editing ? (
+          <IngredientsEditor form={form} dispatch={dispatch} />
+        ) : (
+          <IngredientsList
+            ingredients={recipe.ingredients}
+            multiplier={multiplier}
+            onMultiplierChange={setMultiplier}
+            checked={checked}
+            onToggle={toggleChecked}
           />
-          {shareNotice ? (
-            <Text fontSize={13} fontWeight="600" color="$danger" textAlign="center">
-              {t(`share.blocked.${shareNotice}`)}
+        )}
+
+        {editing ? (
+          <StepsEditor form={form} dispatch={dispatch} />
+        ) : (
+          <PreparationSteps steps={recipe.steps} />
+        )}
+
+        {editing ? (
+          <YStack gap="$2">
+            {editor.error ? (
+              <Text fontSize={13} fontWeight="600" color="$danger" textAlign="center">
+                {t('recipe.edit.saveError')}
+              </Text>
+            ) : null}
+            <PrimaryButton
+              label={editor.isSaving ? t('recipe.edit.saving') : t('recipe.edit.save')}
+              onPress={editor.save}
+              loading={editor.isSaving}
+              disabled={!editor.canSave}
+            />
+            <Text
+              onPress={editor.cancel}
+              fontSize={15}
+              fontWeight="600"
+              color="$textMuted"
+              textAlign="center"
+              paddingVertical="$2"
+              pressStyle={{ opacity: 0.6 }}
+            >
+              {t('recipe.edit.cancel')}
             </Text>
-          ) : null}
-        </YStack>
-
-        <IngredientsList
-          ingredients={recipe.ingredients}
-          multiplier={multiplier}
-          onMultiplierChange={setMultiplier}
-          checked={checked}
-          onToggle={toggleChecked}
-        />
-
-        <PreparationSteps steps={recipe.steps} />
-
-        {/* {tipNotes.map((note, index) => (
-          <RecipeTip key={index} text={note} />
-        ))} */}
-
-        <RecipeSourceNote recipe={recipe} />
+          </YStack>
+        ) : (
+          <RecipeSourceNote recipe={recipe} />
+        )}
       </YStack>
       </ScrollView>
 

@@ -397,6 +397,13 @@
     "saveToBookSheet": {
       "title": "Save to a book",
       "empty": "You don't have any books yet"
+    },
+    "edit": {
+      "action": "Edit",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "saveError": "Couldn't save your changes. Please try again."
     }
   },
   "share": {
