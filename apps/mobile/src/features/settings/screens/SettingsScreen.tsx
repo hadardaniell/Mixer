@@ -2,11 +2,12 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { Globe, LogOut } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, YStack } from 'tamagui';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { confirmAction } from '@/shared/lib/confirm';
 import { SettingsAccountCard } from '@/features/settings/components/SettingsAccountCard';
 import { SettingsHeader } from '@/features/settings/components/SettingsHeader';
 import { SettingsRow } from '@/features/settings/components/SettingsRow';
@@ -23,16 +24,16 @@ export function SettingsScreen() {
   const { language } = useLanguage();
 
   const confirmSignOut = () => {
-    Alert.alert(t('settings.logOut'), t('settings.logOutMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.logOut'),
-        style: 'destructive',
-        onPress: () => {
-          void signOut().then(() => router.replace('/start'));
-        },
+    confirmAction({
+      title: t('settings.logOut'),
+      message: t('settings.logOutMessage'),
+      confirmLabel: t('settings.logOut'),
+      cancelLabel: t('common.cancel'),
+      destructive: true,
+      onConfirm: () => {
+        void signOut().then(() => router.replace('/start'));
       },
-    ]);
+    });
   };
 
   return (

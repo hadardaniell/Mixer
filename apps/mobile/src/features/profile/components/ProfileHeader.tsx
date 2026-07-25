@@ -52,7 +52,9 @@ export function ProfileHeader({
         {isSelf ? <IconButton icon={UserPlus} color={ink} onPress={onAddFriends} /> : null}
       </XStack>
 
-      {/* Avatar on a brand tint (not plain grey), with the camera badge. */}
+      {/* Avatar on a brand tint (not plain grey), with the camera badge. The
+          photo itself is tappable (for your own profile) — the camera badge is
+          a second, more explicit entry point to the same picker. */}
       <View width={104} height={104} alignItems="center" justifyContent="center">
         <View
           width={100}
@@ -64,6 +66,10 @@ export function ProfileHeader({
           borderColor="$surface"
           alignItems="center"
           justifyContent="center"
+          onPress={isSelf ? onChangeAvatar : undefined}
+          pressStyle={isSelf ? { opacity: 0.85 } : undefined}
+          accessibilityRole={isSelf ? 'button' : undefined}
+          accessibilityLabel={isSelf ? t('profile.changePhoto') : undefined}
         >
           {avatarSrc ? (
             <Image source={{ uri: avatarSrc }} style={{ width: '100%', height: '100%' }} />
