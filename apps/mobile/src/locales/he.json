@@ -31,7 +31,7 @@
     "recentlyViewed": "נצפו לאחרונה",
     "recipesCount": "{{count}} מתכונים",
     "greeting": "שלום, {{name}}",
-    "searchPlaceholder": "חפשי מתכון, ספר או רכיב...",
+    "searchPlaceholder": "חפשו מתכון, ספר או רכיב...",
     "recentlyImported": "יובאו לאחרונה",
     "linked": "מקושר",
     "booksWithFriends": "ספרים עם חברים",
@@ -125,10 +125,10 @@
   },
   "newRecipe": {
     "title": "יצירת מתכון",
-    "subtitle": "איך תרצי להתחיל?",
+    "subtitle": "איך תרצו להתחיל?",
     "hero": {
       "title": "בחרו דרך ליצור מתכון חדש",
-      "subtitle": "יש לך רעיון למתכון? בואי נתחיל!"
+      "subtitle": "יש לך רעיון למתכון? בואו נתחיל!"
     },
     "options": {
       "link": "מקישור",
@@ -145,15 +145,15 @@
     },
     "creating": "יוצר מתכון...",
     "errors": {
-      "extractFailed": "לא הצלחנו לחלץ את המתכון. נסי שוב.",
-      "notSameRecipe": "התמונות לא נראות מאותו מתכון. נסי תמונות של אותו מתכון.",
+      "extractFailed": "לא הצלחנו לחלץ את המתכון. נסו שוב.",
+      "notSameRecipe": "התמונות לא נראות מאותו מתכון. נסו תמונות של אותו מתכון.",
       "uploadFailed": "לא הצלחנו להעלות את התמונה. נסו שוב."
     },
     "link": {
       "title": "מתכון מקישור",
       "subtitle": "הדביקו קישור ונצור ממנו מתכון מסודר",
       "heroTitle": "כל מתכון מתחיל בקישור",
-      "heroSubtitle": "הדביקו קישור לתוכן שאת אוהבת – וניצור ממנו מתכון מסודר עבורך",
+      "heroSubtitle": "הדביקו קישור לתוכן שאתם אוהבים – וניצור ממנו מתכון מסודר עבורכם",
       "inputPlaceholder": "הדביקו כאן קישור...",
       "supportedTitle": "נתמך מקישורים של",
       "supported": {
@@ -166,9 +166,9 @@
     },
     "image": {
       "title": "מתכון מתמונה",
-      "subtitle": "העלי תמונה ונחלץ ממנה את המתכון",
-      "dropzone": "גררי או העלי תמונה",
-      "replace": "החליפי תמונה",
+      "subtitle": "העלו תמונה ונחלץ ממנה את המתכון",
+      "dropzone": "גררו או העלו תמונה",
+      "replace": "החליפו תמונה",
       "cta": "המשך"
     },
     "text": {
@@ -176,7 +176,7 @@
       "subtitle": "כתבו מה שתרצו ואנחנו נסדר את זה למתכון",
       "placeholder": "למשל: רעיון למתכון, מצרכים, שלבי הכנה או טקסט חופשי...",
       "cta": "יצירת מתכון",
-      "inspireTitle": "מחפשת השראה?",
+      "inspireTitle": "מחפשים השראה?",
       "inspire": {
         "instructions": "הוראות",
         "ingredients": "מצרכים",
@@ -200,7 +200,7 @@
         "descLabel": "תיאור קצר",
         "descPlaceholder": "כמה מילים על המתכון...",
         "photoLabel": "הוספת תמונה (אופציונלי)",
-        "photoHint": "לחצי להוספת תמונה",
+        "photoHint": "לחצו להוספת תמונה",
         "photoUploading": "מעלה…",
         "photoChange": "להחלפת התמונה"
       },
@@ -247,7 +247,7 @@
         "ingredientsHeading": "רכיבים",
         "stepsHeading": "אופן ההכנה"
       },
-      "saveError": "לא הצלחנו לשמור את המתכון. נסי שוב."
+      "saveError": "לא הצלחנו לשמור את המתכון. נסו שוב."
     }
   },
   "createBook": {
@@ -256,7 +256,7 @@
     "back": "הקודם",
     "create": "יצירת ספר",
     "saving": "שומר...",
-    "saveError": "לא הצלחנו ליצור את הספר. נסי שוב.",
+    "saveError": "לא הצלחנו ליצור את הספר. נסו שוב.",
     "loading": "טוען...",
     "preview": {
       "label": "תצוגה מקדימה",
@@ -270,7 +270,7 @@
       "descLabel": "תיאור קצר (אופציונלי)",
       "descPlaceholder": "כמה מילים על האוסף שלך...",
       "tagsLabel": "תגיות",
-      "tagsPlaceholder": "הוסיפי תגית ולחצי +"
+      "tagsPlaceholder": "הוסיפו תגית ולחצו +"
     },
     "step2": {
       "title": "בחרו מתכונים",
@@ -285,9 +285,9 @@
       "title": "שיתוף והתחלה",
       "subtitle": "מי יכול לראות את הספר?",
       "private": "פרטי",
-      "privateDesc": "רק את/ה תראה/י את הספר",
+      "privateDesc": "רק אתם תראו את הספר",
       "shared": "עם חברים",
-      "sharedDesc": "שתפי ותעלי יחד מתכונים",
+      "sharedDesc": "שתפו ותעלו יחד מתכונים",
       "inviteLabel": "הזמנת חברים (אופציונלי)",
       "invitePlaceholder": "חפשו חברים להזמנה...",
       "inviteComingSoon": "הזמנת חברים תהיה זמינה בקרוב",
@@ -310,25 +310,25 @@
     "noSearchResults": "אין תוצאות עבור \"{{query}}\"",
     "removeRecipeTitle": "הסרה מהספר",
     "removeRecipeMessage": "להסיר את \"{{name}}\" מהספר? המתכון עצמו יישאר באוסף שלך.",
-    "removeRecipeConfirm": "הסירי",
+    "removeRecipeConfirm": "הסירו",
     "leave": "יציאה מהספר",
     "leaveTitle": "יציאה מהספר",
     "leaveMessage": "לא תהיה לך יותר גישה לספר ולמתכונים שבו.",
-    "leaveConfirm": "צאי",
+    "leaveConfirm": "צאו",
     "deleteTitle": "מחיקת הספר",
     "deleteMessage": "למחוק את \"{{name}}\"? המתכונים שבתוכו לא יימחקו.",
-    "deleteConfirm": "מחקי",
+    "deleteConfirm": "מחקו",
     "roles": {
       "owner": "בעלים",
-      "editor": "עורכת",
+      "editor": "עורך",
       "viewer": "צופה"
     },
     "members": {
       "title": "חברים בספר",
-      "you": "{{name}} (את)",
-      "removeTitle": "הסרת חברה",
+      "you": "{{name}} (אתם)",
+      "removeTitle": "הסרת חבר",
       "removeMessage": "להסיר את {{name}} מהספר?",
-      "removeConfirm": "הסירי"
+      "removeConfirm": "הסירו"
     },
     "addMembersSheet": {
       "title": "הוספת חברים",
@@ -388,9 +388,11 @@
     },
     "actions": {
       "share": "שיתוף",
+      "saveAs": "שמירה בשם",
       "saveToBook": "שמירה לספר",
       "copy": "העתקת מתכון"
     },
+    "createdBy": "נוצר על ידי {{name}}",
     "saveToBookSheet": {
       "title": "שמירה לספר",
       "empty": "אין לך ספרים עדיין"
@@ -401,6 +403,13 @@
       "saving": "שומר…",
       "cancel": "ביטול",
       "saveError": "שמירת השינויים נכשלה. נסו שוב."
+    },
+    "delete": {
+      "action": "מחיקת המתכון",
+      "deleting": "מוחק…",
+      "title": "מחיקת מתכון",
+      "message": "המתכון יימחק לצמיתות. אי אפשר לבטל את הפעולה.",
+      "confirm": "מחיקה"
     }
   },
   "share": {
@@ -417,15 +426,14 @@
       "partialError": "{{count}} לא נשלחו — ייתכן שכבר שיתפתם איתם"
     },
     "blocked": {
-      "draft": "יש לפרסם את המתכון לפני שיתוף",
-      "notOwner": "רק בעל המתכון יכול לשתף אותו"
+      "draft": "יש לפרסם את המתכון לפני שיתוף"
     }
   },
   "add": {
     "title": "מה נוסיף?",
     "newRecipe": "מתכון חדש",
     "newRecipeDesc": "מקישור, צילום, ידני או קובץ",
-    "newBook": "ספר מתכונים",
+    "newBook": "ספר מתכונים חדש",
     "newBookDesc": "אסוף מתכונים לפי נושא, שתף עם חברים",
     "mealBuilder": "בניית ארוחה",
     "mealBuilderDesc": "צ'אט חכם שמרכיב לך תפריט"
@@ -442,7 +450,7 @@
     "fromFileDesc": "PDF, DOCX או טקסט"
   },
   "profile": {
-    "bioDefault": "אוספת, יוצרת ומשתפת מתכונים",
+    "bioDefault": "אוספים, יוצרים ומשתפים מתכונים",
     "stats": {
       "books": "ספרים",
       "recipes": "מתכונים",

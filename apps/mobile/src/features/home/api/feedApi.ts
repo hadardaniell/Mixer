@@ -9,6 +9,7 @@ import type {
 } from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';
+import { buildImageFormData, type UploadableFile } from '@/shared/lib/imageFormData';
 
 interface ListResponse<T> {
   items: T[];
@@ -79,10 +80,8 @@ export const feedApi = {
 
   // Uploads a cover image to Firebase Storage and returns its public URL.
   // Sent as multipart/form-data; the server reads the first file part.
-  uploadRecipeImage: (file: { uri: string; name: string; type: string }) => {
-    const form = new FormData();
-    // React Native's FormData accepts a { uri, name, type } file descriptor.
-    form.append('file', file as unknown as Blob);
+  uploadRecipeImage: async (file: UploadableFile) => {
+    const form = await buildImageFormData(file);
     return http<{ imageUrl: string }>('/recipes/upload-image', {
       method: 'POST',
       body: form,
@@ -103,6 +102,12 @@ export const feedApi = {
 
   deleteRecipe: (id: string) =>
     http<void>(`/recipes/${id}`, { method: 'DELETE' }),
+
+  // "Save as" — server-side duplicate of a recipe you can read into a private
+  // copy you own (added to your personal book). Used for recipes that aren't
+  // yours, where sharing isn't available.
+  saveAsRecipe: (id: string) =>
+    http<Recipe>(`/recipes/${id}/save-as`, { method: 'POST' }),
 
   addRecipeToBook: (bookId: string, recipeId: string) =>
     http<RecipeBook>(`/recipe-books/${bookId}/recipes/${recipeId}`, { method: 'POST' }),

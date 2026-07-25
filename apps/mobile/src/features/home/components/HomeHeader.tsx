@@ -1,6 +1,6 @@
 import { Bell } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Pressable } from 'react-native';
+import { Image, Pressable } from 'react-native';
 import { Text, useTheme, View, XStack } from 'tamagui';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -41,10 +41,15 @@ export function HomeHeader({ onNotificationsPress }: HomeHeaderProps) {
         backgroundColor="$bgSubtle"
         alignItems="center"
         justifyContent="center"
+        overflow="hidden"
       >
-        <Text color="$textMuted" fontSize={13} fontWeight="700">
-          {initial || '?'}
-        </Text>
+        {user?.avatarUrl ? (
+          <Image source={{ uri: user.avatarUrl }} style={{ width: '100%', height: '100%' }} />
+        ) : (
+          <Text color="$textMuted" fontSize={13} fontWeight="700">
+            {initial || '?'}
+          </Text>
+        )}
       </View>
 
       <Text flex={1} color="$text" fontSize={15} fontWeight="700" letterSpacing={-0.2} numberOfLines={1}>

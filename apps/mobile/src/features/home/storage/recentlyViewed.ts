@@ -49,6 +49,14 @@ export function getRecentlyViewed(): RecentlyViewedEntry[] {
   return load();
 }
 
+/** Drop a recipe from the ring — e.g. after it's deleted, so the home row
+ *  doesn't keep trying to hydrate an id that no longer exists. */
+export function removeRecentlyViewed(recipeId: string): void {
+  const current = load();
+  const next = current.filter((e) => e.recipeId !== recipeId);
+  if (next.length !== current.length) save(next);
+}
+
 export function clearRecentlyViewed(): void {
   storage.delete(StorageKeys.recentlyViewedRecipes);
   for (const l of listeners) l();

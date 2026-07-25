@@ -1,12 +1,9 @@
 import type { PublicUser, UpdateOwnUserInput } from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';
+import { buildImageFormData, type UploadableFile } from '@/shared/lib/imageFormData';
 
-export interface UploadableAvatar {
-  uri: string;
-  name: string;
-  type: string;
-}
+export type UploadableAvatar = UploadableFile;
 
 export const settingsApi = {
   me: () => http<PublicUser>('/users/me'),
@@ -18,10 +15,8 @@ export const settingsApi = {
     }),
 
   /** Multipart avatar upload; the API stores it in Firebase and returns the updated user. */
-  uploadAvatar: (file: UploadableAvatar) => {
-    const form = new FormData();
-    // React Native's FormData accepts a { uri, name, type } file descriptor.
-    form.append('file', file as unknown as Blob);
+  uploadAvatar: async (file: UploadableAvatar) => {
+    const form = await buildImageFormData(file);
     return http<PublicUser>('/users/me/avatar', { method: 'POST', body: form });
   },
 };

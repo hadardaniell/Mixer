@@ -1,12 +1,17 @@
-import { Bookmark, Check, Copy, Share2, type LucideIcon } from 'lucide-react-native';
+import { Bookmark, Check, Copy, CopyPlus, Share2, type LucideIcon } from 'lucide-react-native';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, useTheme, View, XStack } from 'tamagui';
+import { Spinner, Text, useTheme, View, XStack } from 'tamagui';
 
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 
 interface RecipeActionBarProps {
+  /** Owners share; everyone else gets "save a copy" in the same slot, since a
+   *  recipe that isn't yours can't be shared. */
+  isOwner: boolean;
   onShare: () => void;
+  onSaveAs: () => void;
+  savingAs?: boolean;
   onSaveToBook: () => void;
   onCopy: () => void;
   /** Briefly true after a copy — swaps the copy icon for a green check. */
@@ -14,24 +19,44 @@ interface RecipeActionBarProps {
 }
 
 /**
- * The white card of secondary actions under the CTA: share, save-to-book and
- * copy-as-text, split by thin dividers.
+ * The white card of secondary actions under the CTA: the first slot is share
+ * (owner) or save-a-copy (everyone else), then save-to-book and copy-as-text,
+ * split by thin dividers.
  */
-export function RecipeActionBar({ onShare, onSaveToBook, onCopy, copied }: RecipeActionBarProps) {
+export function RecipeActionBar({
+  isOwner,
+  onShare,
+  onSaveAs,
+  savingAs,
+  onSaveToBook,
+  onCopy,
+  copied,
+}: RecipeActionBarProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const isRtl = useIsRtl();
   const ink = theme.text?.val as string;
   const rowDirection = isRtl ? 'row-reverse' : 'row';
 
+  const firstItem = isOwner
+    ? { key: 'share', label: t('recipe.actions.share'), Icon: Share2, onPress: onShare }
+    : {
+        key: 'saveAs',
+        label: t('recipe.actions.saveAs'),
+        Icon: CopyPlus,
+        onPress: onSaveAs,
+        loading: savingAs,
+      };
+
   const items: Array<{
     key: string;
     label: string;
     Icon: LucideIcon;
     iconColor?: string;
+    loading?: boolean;
     onPress: () => void;
   }> = [
-    { key: 'share', label: t('recipe.actions.share'), Icon: Share2, onPress: onShare },
+    firstItem,
     {
       key: 'saveToBook',
       label: t('recipe.actions.saveToBook'),
@@ -66,19 +91,24 @@ export function RecipeActionBar({ onShare, onSaveToBook, onCopy, copied }: Recip
           {index > 0 ? <View width={1} height={28} backgroundColor="$border" /> : null}
           <XStack
             flex={1}
-            onPress={item.onPress}
+            onPress={item.loading ? undefined : item.onPress}
             accessibilityRole="button"
             alignItems="center"
             justifyContent="center"
             gap={6}
             paddingVertical="$1"
             flexDirection={rowDirection}
+            opacity={item.loading ? 0.5 : 1}
             pressStyle={{ opacity: 0.6 }}
           >
             <Text fontSize={13} fontWeight="600" color="$text">
               {item.label}
             </Text>
-            <item.Icon size={18} color={item.iconColor ?? ink} />
+            {item.loading ? (
+              <Spinner size="small" color={ink} />
+            ) : (
+              <item.Icon size={18} color={item.iconColor ?? ink} />
+            )}
           </XStack>
         </Fragment>
       ))}

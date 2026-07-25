@@ -391,9 +391,11 @@
     },
     "actions": {
       "share": "Share",
+      "saveAs": "Save a copy",
       "saveToBook": "Save to book",
       "copy": "Copy recipe"
     },
+    "createdBy": "Created by {{name}}",
     "saveToBookSheet": {
       "title": "Save to a book",
       "empty": "You don't have any books yet"
@@ -404,6 +406,13 @@
       "saving": "Saving…",
       "cancel": "Cancel",
       "saveError": "Couldn't save your changes. Please try again."
+    },
+    "delete": {
+      "action": "Delete recipe",
+      "deleting": "Deleting…",
+      "title": "Delete recipe",
+      "message": "This recipe will be permanently deleted. This can't be undone.",
+      "confirm": "Delete"
     }
   },
   "share": {
@@ -420,8 +429,7 @@
       "partialError": "{{count}} couldn't be sent — they may already have it"
     },
     "blocked": {
-      "draft": "Publish this recipe before sharing it",
-      "notOwner": "Only the recipe's owner can share it"
+      "draft": "Publish this recipe before sharing it"
     }
   },
   "add": {
