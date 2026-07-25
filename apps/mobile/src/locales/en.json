@@ -413,6 +413,11 @@
       "title": "Delete recipe",
       "message": "This recipe will be permanently deleted. This can't be undone.",
       "confirm": "Delete"
+    },
+    "convert": {
+      "label": "Convert units",
+      "original": "Original",
+      "none": "No conversion available for this ingredient"
     }
   },
   "share": {
