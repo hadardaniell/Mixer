@@ -1,18 +1,19 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { Globe, LogOut } from 'lucide-react-native';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, YStack } from 'tamagui';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { confirmAction } from '@/shared/lib/confirm';
 import { SettingsAccountCard } from '@/features/settings/components/SettingsAccountCard';
 import { SettingsHeader } from '@/features/settings/components/SettingsHeader';
 import { SettingsRow } from '@/features/settings/components/SettingsRow';
 import { SettingsSection } from '@/features/settings/components/SettingsSection';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 
 export function SettingsScreen() {
@@ -23,17 +24,11 @@ export function SettingsScreen() {
   const { user, signOut } = useAuth();
   const { language } = useLanguage();
 
-  const confirmSignOut = () => {
-    confirmAction({
-      title: t('settings.logOut'),
-      message: t('settings.logOutMessage'),
-      confirmLabel: t('settings.logOut'),
-      cancelLabel: t('common.cancel'),
-      destructive: true,
-      onConfirm: () => {
-        void signOut().then(() => router.replace('/start'));
-      },
-    });
+  const [signOutOpen, setSignOutOpen] = useState(false);
+
+  const handleSignOut = () => {
+    setSignOutOpen(false);
+    void signOut().then(() => router.replace('/start'));
   };
 
   return (
@@ -62,13 +57,29 @@ export function SettingsScreen() {
         </SettingsSection>
 
         <SettingsSection>
-          <SettingsRow icon={LogOut} label={t('settings.logOut')} destructive onPress={confirmSignOut} />
+          <SettingsRow
+            icon={LogOut}
+            label={t('settings.logOut')}
+            destructive
+            onPress={() => setSignOutOpen(true)}
+          />
         </SettingsSection>
 
         <Text fontSize={12} color="$textSubtle" textAlign="center">
           {t('settings.version', { version: Constants.expoConfig?.version ?? '—' })}
         </Text>
       </YStack>
+
+      <ConfirmDialog
+        open={signOutOpen}
+        title={t('settings.logOut')}
+        message={t('settings.logOutConfirm')}
+        confirmLabel={t('settings.logOut')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={handleSignOut}
+        onCancel={() => setSignOutOpen(false)}
+      />
     </ScrollView>
   );
 }

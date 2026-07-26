@@ -11,6 +11,8 @@ import type {
   ManualIngredient,
 } from '@/features/recipe/lib/manualRecipe';
 
+import { UnitPicker } from '../UnitPicker';
+
 import { ManualTextInput } from './ManualTextInput';
 import { StepShell } from './StepShell';
 
@@ -80,10 +82,9 @@ export function Step3Ingredients({ form, dispatch }: Props) {
             keyboardType="numeric"
             style={{ flex: 1 }}
           />
-          <ManualTextInput
-            value={unit}
-            onChangeText={setUnit}
-            placeholder={t('newRecipe.manual.step3.unitPlaceholder')}
+          <UnitPicker
+            value={unit || undefined}
+            onChange={(u) => setUnit(u ?? '')}
             style={{ flex: 1 }}
           />
         </XStack>

@@ -29,5 +29,8 @@ export function recipeToText(recipe: Recipe, t: TFunction, multiplier = 1): stri
     blocks.push([t('recipe.preparation'), ...lines].join('\n'));
   }
 
+  // App signature on its own line at the very bottom of the pasted text.
+  blocks.push('Mixer');
+
   return blocks.join('\n\n');
 }

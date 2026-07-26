@@ -1,19 +1,25 @@
 import { router } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { FlatList, type ListRenderItem, Pressable } from 'react-native';
+import { FlatList, type ListRenderItem, Pressable, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
 
 import { isRTL } from '@/shared/lib/i18n';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 
+const H_PADDING = 16;
+const GRID_GAP = 14;
+/** Target card width — the column count is whatever fits at roughly this size. */
+const TARGET_CARD_WIDTH = 172;
+
 interface ShowAllScreenProps<T> {
   title: string;
   data: T[];
   keyExtractor: (item: T) => string;
   renderItem: ListRenderItem<T>;
-  /** Items per grid row. Defaults to 2 (cards). */
+  /** Fix the columns (e.g. 1 for full-width rows). Omit to fit as many cards as
+   *  the screen width allows — the cards then fill the row on any device. */
   numColumns?: number;
   /** Custom empty-state copy. */
   emptyText?: string;
@@ -29,15 +35,33 @@ export function ShowAllScreen<T>({
   data,
   keyExtractor,
   renderItem,
-  numColumns = 2,
+  numColumns,
   emptyText,
 }: ShowAllScreenProps<T>) {
   const { t } = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { language } = useLanguage();
   const isRtl = isRTL(language);
   const ink = theme.text?.val as string;
+
+  // Fit as many cards as the width allows (min 2, capped so cards don't get
+  // tiny), unless the caller fixed the column count. Each cell gets an exact
+  // width so the row fills edge-to-edge with a consistent gap — no dead space.
+  const available = width - H_PADDING * 2;
+  const fittedColumns = Math.max(
+    2,
+    Math.min(5, Math.floor((available + GRID_GAP) / (TARGET_CARD_WIDTH + GRID_GAP))),
+  );
+  const columns = numColumns ?? fittedColumns;
+  const cellWidth = (available - (columns - 1) * GRID_GAP) / columns;
+
+  // Cards fill their cell; full-width rows (columns === 1) render as-is.
+  const gridRenderItem: ListRenderItem<T> =
+    columns > 1
+      ? (info) => <View width={cellWidth}>{renderItem(info)}</View>
+      : renderItem;
 
   return (
     <YStack
@@ -70,12 +94,22 @@ export function ShowAllScreen<T>({
         </View>
       ) : (
         <FlatList
+          // FlatList can't change numColumns in place — remount when it changes
+          // (e.g. web resize / rotation).
+          key={`cols-${columns}`}
           data={data}
           keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          numColumns={numColumns}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 14 }}
-          columnWrapperStyle={numColumns > 1 ? { gap: 14, justifyContent: 'flex-start' } : undefined}
+          renderItem={gridRenderItem}
+          numColumns={columns}
+          contentContainerStyle={{
+            paddingHorizontal: H_PADDING,
+            paddingTop: 8,
+            paddingBottom: 24,
+            gap: GRID_GAP,
+          }}
+          columnWrapperStyle={
+            columns > 1 ? { gap: GRID_GAP, justifyContent: 'flex-start' } : undefined
+          }
           showsVerticalScrollIndicator={false}
         />
       )}

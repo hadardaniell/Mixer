@@ -34,7 +34,7 @@ IMPORTANT RULES:
 - Ignore ALL advertisements, sponsored content, social media links, blog links, or calls to action.
 - The recipe title must come ONLY from the main heading of the recipe.
 - Steps must be actual cooking instructions only.
-- Keep title, description, ingredients, and steps in the same language as the input text.
+- Keep title, description, ingredients, steps, tags and cuisine in the same language as the input text — e.g. for a Hebrew recipe, the tags must be Hebrew words.
 - The "difficulty" field must always be one of: "easy", "medium", "hard" — in English.
 Return ONLY the JSON object, no explanation, no markdown, no code blocks.
 If a field cannot be determined from the text, omit it.`;

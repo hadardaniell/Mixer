@@ -418,6 +418,10 @@
       "label": "Convert units",
       "original": "Original",
       "none": "No conversion available for this ingredient"
+    },
+    "units": {
+      "title": "Choose a unit",
+      "none": "None"
     }
   },
   "share": {
@@ -495,6 +499,7 @@
     },
     "logOut": "Log out",
     "logOutMessage": "You'll need to sign in again to reach your recipes.",
+    "logOutConfirm": "Are you sure you want to log out? You'll need to sign in again to reach your recipes.",
     "version": "Version {{version}}",
     "profile": {
       "title": "Personal details",

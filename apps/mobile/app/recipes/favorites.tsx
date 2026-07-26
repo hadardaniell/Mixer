@@ -20,6 +20,7 @@ export default function RecipesFavoritesScreen() {
       renderItem={({ item }) => (
         <RecipeCard
           recipe={item}
+          width="100%"
           isFavorited={item.isFavorite}
           onToggleFavorite={() =>
             toggleRecipe.mutate({ id: item.id, next: !item.isFavorite })

@@ -3,13 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { YStack } from 'tamagui';
 
 import { useIsRtl } from '@/shared/lib/useIsRtl';
-import type {
-  Category,
-  Difficulty,
-  ManualForm,
-  ManualFormAction,
-} from '@/features/recipe/lib/manualRecipe';
+import type { Difficulty, ManualForm, ManualFormAction } from '@/features/recipe/lib/manualRecipe';
 
+import { CategoryPicker } from './CategoryPicker';
 import { ChipGroup } from './manual/ChipGroup';
 import { ManualTextInput } from './manual/ManualTextInput';
 
@@ -49,13 +45,6 @@ export function RecipeMetaEditor({ form, dispatch }: Props) {
     { value: 4, label: '4' },
     { value: 6, label: t('newRecipe.manual.step2.servingsMany') },
   ];
-  const categoryOptions: { value: Category; label: string }[] = [
-    { value: 'main', label: t('newRecipe.manual.step2.catMain') },
-    { value: 'dessert', label: t('newRecipe.manual.step2.catDessert') },
-    { value: 'healthy', label: t('newRecipe.manual.step2.catHealthy') },
-    { value: 'quick', label: t('newRecipe.manual.step2.catQuick') },
-  ];
-
   return (
     <YStack gap="$4" style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}>
       <ChipGroup
@@ -104,12 +93,9 @@ export function RecipeMetaEditor({ form, dispatch }: Props) {
         selectedBg="$accentMint"
       />
 
-      <ChipGroup
-        title={t('newRecipe.manual.step2.category')}
-        options={categoryOptions}
-        value={form.category}
-        onChange={(category) => patch({ category })}
-        selectedBg="$accentPink"
+      <CategoryPicker
+        value={form.categoryIds}
+        onChange={(categoryIds) => patch({ categoryIds })}
       />
     </YStack>
   );
