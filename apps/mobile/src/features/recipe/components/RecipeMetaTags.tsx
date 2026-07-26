@@ -3,6 +3,8 @@ import { ChefHat, Clock, Utensils, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
+import { categoryLabel, useCategories } from '@/features/categories/hooks/useCategories';
+import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { formatDuration } from '@/shared/lib/formatDuration';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 
@@ -40,8 +42,18 @@ export function RecipeMetaTags({ recipe }: RecipeMetaTagsProps) {
   const { t } = useTranslation();
   const theme = useTheme();
   const isRtl = useIsRtl();
+  const { language } = useLanguage();
+  const { byId } = useCategories();
   const hex = (alias: string) =>
     (theme as Record<string, { val: string } | undefined>)[alias]?.val as string;
+
+  // Prefer the recipe's curated categories (what browse-by-category filters on);
+  // fall back to its free-text tags for recipes not yet mapped to a category.
+  const categoryChips = recipe.categoryIds
+    .map((id) => byId.get(id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+    .map((c) => categoryLabel(c, language));
+  const chipsToShow = categoryChips.length > 0 ? categoryChips : recipe.tags;
 
   const totalTime = (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0) || undefined;
 
@@ -71,7 +83,7 @@ export function RecipeMetaTags({ recipe }: RecipeMetaTagsProps) {
       Icon: Clock,
     });
 
-  if (chips.length === 0 && recipe.tags.length === 0) return null;
+  if (chips.length === 0 && chipsToShow.length === 0) return null;
 
   return (
     <YStack gap="$2" alignItems="center" style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}>
@@ -96,9 +108,9 @@ export function RecipeMetaTags({ recipe }: RecipeMetaTagsProps) {
         </XStack>
       ) : null}
 
-      {recipe.tags.length > 0 ? (
+      {chipsToShow.length > 0 ? (
         <XStack flexWrap="wrap" justifyContent="center" gap="$2">
-          {recipe.tags.map((tag) => (
+          {chipsToShow.map((tag) => (
             <XStack
               key={tag}
               paddingHorizontal={12}

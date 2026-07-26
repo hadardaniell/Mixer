@@ -27,7 +27,7 @@ If it is NOT a recipe (e.g. a news article, social media post, lyrics, random te
 
 Return ONLY the JSON object, no explanation, no markdown, no code blocks.
 If a field cannot be determined from the text, omit it.
-Important: the input text may be in any language (including Hebrew). Keep title, description, ingredients, and steps in the same language as the input. However, the "difficulty" field must always be one of: "easy", "medium", "hard" — in English, regardless of input language.`;
+Important: the input text may be in any language (including Hebrew). Keep title, description, ingredients, steps, tags and cuisine in the same language as the input — e.g. for a Hebrew recipe, the tags must be Hebrew words. However, the "difficulty" field must always be one of: "easy", "medium", "hard" — in English, regardless of input language.`;
 
 export async function extractRecipeFromText(text: string): Promise<ExtractFromTextResult> {
   const completion = await groq.chat.completions.create({

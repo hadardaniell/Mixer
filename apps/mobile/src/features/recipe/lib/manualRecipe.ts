@@ -1,10 +1,6 @@
 import type { CreateRecipeInput, Recipe } from '@mixer/contracts';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
-/** Category chips in step 2 — stored as a single recipe tag. */
-export type Category = 'main' | 'dessert' | 'healthy' | 'quick';
-
-const CATEGORIES: Category[] = ['main', 'dessert', 'healthy', 'quick'];
 
 export interface ManualIngredient {
   name: string;
@@ -26,7 +22,9 @@ export interface ManualForm {
   prepTimeMinutes?: number;
   difficulty?: Difficulty;
   servings?: number;
-  category?: Category;
+  /** Curated category ids (from the `categories` collection), chosen in step 2.
+   *  Multi-select — a recipe can sit in several categories. */
+  categoryIds: string[];
   ingredients: ManualIngredient[];
   steps: ManualStep[];
 }
@@ -34,6 +32,7 @@ export interface ManualForm {
 export const initialManualForm: ManualForm = {
   title: '',
   description: '',
+  categoryIds: [],
   ingredients: [],
   steps: [],
 };
@@ -94,7 +93,7 @@ export function stepPatch(step: number, form: ManualForm): Partial<CreateRecipeI
         prepTimeMinutes: form.prepTimeMinutes,
         difficulty: form.difficulty,
         servings: form.servings,
-        tags: form.category ? [form.category] : [],
+        categoryIds: form.categoryIds,
       };
     case 3:
       return {
@@ -132,7 +131,7 @@ export function manualFormToInput(form: ManualForm): Partial<CreateRecipeInput> 
     prepTimeMinutes: form.prepTimeMinutes,
     difficulty: form.difficulty,
     servings: form.servings,
-    tags: form.category ? [form.category] : [],
+    categoryIds: form.categoryIds,
     ingredients: form.ingredients
       .filter((it) => it.name.trim().length > 0)
       .map((it) => ({
@@ -152,12 +151,9 @@ export function manualFormToInput(form: ManualForm): Partial<CreateRecipeInput> 
 }
 
 /** Seed the wizard form from an existing recipe (edit mode). Inverse of the
- *  per-step patches above: pulls the single known category tag back out, and
- *  orders steps by their stored `order`. */
+ *  per-step patches above: copies the category ids back, and orders steps by
+ *  their stored `order`. */
 export function recipeToManualForm(r: Recipe): ManualForm {
-  const category = r.tags.find((tag): tag is Category =>
-    (CATEGORIES as string[]).includes(tag),
-  );
   return {
     title: r.title,
     description: r.description ?? '',
@@ -165,7 +161,7 @@ export function recipeToManualForm(r: Recipe): ManualForm {
     prepTimeMinutes: r.prepTimeMinutes,
     difficulty: r.difficulty,
     servings: r.servings,
-    category,
+    categoryIds: [...r.categoryIds],
     ingredients: r.ingredients.map((it) => ({
       name: it.name,
       amount: it.amount,

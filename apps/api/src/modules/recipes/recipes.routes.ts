@@ -59,6 +59,32 @@ function canRead(req: { user?: { id: string; role: string } }, doc: RecipeDoc): 
   return req.user?.id === doc.ownerId.toString();
 }
 
+/**
+ * Best-effort mapping of a recipe's free-text tags onto the curated `categories`
+ * collection, so browse-by-category (which filters on `categoryIds`) has data to
+ * match. A tag matches a category when it equals — or loosely contains / is
+ * contained by — the category's slug or its Hebrew/English label (so קינוח
+ * matches קינוחים, and "pasta" matches the Pasta category). Best-effort: an
+ * unmatched tag just contributes nothing.
+ */
+async function deriveCategoryIds(
+  categories: import('mongodb').Collection<import('../../db/types.js').CategoryDoc>,
+  tags: string[],
+): Promise<ObjectId[]> {
+  const cleaned = tags.map((t) => t.trim().toLowerCase()).filter(Boolean);
+  if (cleaned.length === 0) return [];
+  const cats = await categories.find({ isActive: true }).toArray();
+  const ids: ObjectId[] = [];
+  for (const c of cats) {
+    const keys = [c.slug, c.label.he, c.label.en].map((k) => k.trim().toLowerCase());
+    const hit = cleaned.some((tag) =>
+      keys.some((k) => k.length > 1 && (k === tag || k.includes(tag) || tag.includes(k))),
+    );
+    if (hit) ids.push(c._id);
+  }
+  return ids;
+}
+
 export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     app.post(
       '/recipes/upload-image',
@@ -123,6 +149,11 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req, reply) => {
       const now = new Date();
       const body = req.body;
+      // Explicit categoryIds win; otherwise derive them from the recipe's tags
+      // so browse-by-category works without the client having to know category ids.
+      const categoryIds = body.categoryIds.length
+        ? body.categoryIds.map((id) => new ObjectId(id))
+        : await deriveCategoryIds(app.collections.categories, body.tags);
       const doc: RecipeDoc = {
         _id: new ObjectId(),
         ownerId: new ObjectId(req.user.id),
@@ -137,7 +168,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         difficulty: body.difficulty,
         cuisine: body.cuisine,
         tags: body.tags,
-        categoryIds: body.categoryIds.map((id) => new ObjectId(id)),
+        categoryIds,
         language: body.language,
         source: {
           type: body.source.type,
@@ -418,6 +449,10 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const $set: Partial<RecipeDoc> & { updatedAt: Date } = { ...rest, updatedAt: new Date() };
       if (categoryIds) {
         $set.categoryIds = categoryIds.map((id) => new ObjectId(id));
+      } else if (rest.tags) {
+        // Tags changed (e.g. the wizard saving step 2) — re-derive the category
+        // mapping so it stays in sync with the recipe's tags.
+        $set.categoryIds = await deriveCategoryIds(app.collections.categories, rest.tags);
       }
       if (source) {
         $set.source = {

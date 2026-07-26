@@ -12,6 +12,7 @@ import type {
 } from '@/features/recipe/lib/manualRecipe';
 
 import { ManualTextInput } from './manual/ManualTextInput';
+import { UnitPicker } from './UnitPicker';
 
 interface Props {
   form: ManualForm;
@@ -82,10 +83,9 @@ export function IngredientsEditor({ form, dispatch }: Props) {
               keyboardType="numeric"
               style={{ flex: 1, minHeight: 46 }}
             />
-            <ManualTextInput
-              value={it.unit ?? ''}
-              onChangeText={(unit) => update(index, { unit })}
-              placeholder={t('newRecipe.manual.step3.unitPlaceholder')}
+            <UnitPicker
+              value={it.unit || undefined}
+              onChange={(unit) => update(index, { unit })}
               style={{ flex: 1, minHeight: 46 }}
             />
             <Pressable

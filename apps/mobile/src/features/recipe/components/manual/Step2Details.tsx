@@ -3,12 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Text, XStack, YStack } from 'tamagui';
 
 import { useIsRtl } from '@/shared/lib/useIsRtl';
-import type {
-  Category,
-  Difficulty,
-  ManualForm,
-  ManualFormAction,
-} from '@/features/recipe/lib/manualRecipe';
+import type { Difficulty, ManualForm, ManualFormAction } from '@/features/recipe/lib/manualRecipe';
+
+import { CategoryPicker } from '../CategoryPicker';
 
 import { ChipGroup } from './ChipGroup';
 import { ManualTextInput } from './ManualTextInput';
@@ -42,13 +39,6 @@ export function Step2Details({ form, dispatch }: Props) {
     { value: 4, label: '4' },
     { value: 6, label: t('newRecipe.manual.step2.servingsMany') },
   ];
-  const categoryOptions: { value: Category; label: string }[] = [
-    { value: 'main', label: t('newRecipe.manual.step2.catMain') },
-    { value: 'dessert', label: t('newRecipe.manual.step2.catDessert') },
-    { value: 'healthy', label: t('newRecipe.manual.step2.catHealthy') },
-    { value: 'quick', label: t('newRecipe.manual.step2.catQuick') },
-  ];
-
   const Chip = ({
     label,
     selected,
@@ -138,12 +128,9 @@ export function Step2Details({ form, dispatch }: Props) {
           selectedBg="$accentMint"
         />
 
-        <ChipGroup
-          title={t('newRecipe.manual.step2.category')}
-          options={categoryOptions}
-          value={form.category}
-          onChange={(category) => patch({ category })}
-          selectedBg="$accentPink"
+        <CategoryPicker
+          value={form.categoryIds}
+          onChange={(categoryIds) => patch({ categoryIds })}
         />
       </YStack>
     </StepShell>
