@@ -8,7 +8,7 @@ const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
 // "636101330680-abc.apps.googleusercontent.com" → "com.googleusercontent.apps.636101330680-abc"
 const iosUrlScheme = googleIosClientId
   ? `com.googleusercontent.apps.${googleIosClientId.replace('.apps.googleusercontent.com', '')}`
-  : undefined;
+  : 'com.googleusercontent.apps.placeholder';
 
 const config: ExpoConfig = {
   name: 'Mixer',
@@ -39,7 +39,7 @@ const config: ExpoConfig = {
     'expo-localization',
     [
       '@react-native-google-signin/google-signin',
-      iosUrlScheme ? { iosUrlScheme } : {},
+      { iosUrlScheme },
     ],
     [
       'expo-image-picker',

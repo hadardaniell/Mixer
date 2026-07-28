@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node --env-file=.env dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
     "lint": "echo \"(@mixer/api) no lint configured\""
   },
   "dependencies": {
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@types/node": "^22.7.5",
     "tsx": "^4.19.1",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.0"
   }
 }

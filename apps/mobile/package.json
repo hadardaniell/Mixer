@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "prebuild": "expo prebuild",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "lint": "echo \"(@mixer/mobile) no lint configured\""
   },
   "dependencies": {
@@ -50,6 +51,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.0"
   }
 }
