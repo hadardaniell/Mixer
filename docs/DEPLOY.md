@@ -81,6 +81,24 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 First deploy takes a few minutes (image builds). Cloud Run URLs are stable across redeploys, so the
 web bundle keeps pointing at the same api/ai.
 
+---
+
+## Troubleshooting
+
+**"The user-provided container failed to start and listen on the port ... PORT=8080"** — the
+process crashed on boot (or ran out of memory). The GitHub Actions log only reports the symptom;
+the real error is in the container logs:
+
+```bash
+gcloud logging read \
+  'resource.type="cloud_run_revision" AND resource.labels.service_name="mixer-ai"' \
+  --limit 50 --freshness=1d --format='value(textPayload)'
+```
+
+Common causes: an env var the service reads at import time is missing (check the secrets table
+above), or the revision ran out of memory during startup. The Dockerfiles deliberately do **not**
+set `ENV PORT` — Cloud Run injects `PORT=8080` and the services must honour it.
+
 
 
 

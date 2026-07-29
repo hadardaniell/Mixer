@@ -32,7 +32,9 @@ RUN pnpm --filter @mixer/contracts build && pnpm --filter @mixer/ai build
 
 # --- runtime ---
 FROM base AS runtime
-ENV NODE_ENV=production PORT=3001
+# No ENV PORT here on purpose: the platform injects it (Cloud Run sends 8080),
+# and server.ts falls back to 3001 locally. docker-compose sets it explicitly.
+ENV NODE_ENV=production
 # ffmpeg for video processing, python3 for yt-dlp at runtime.
 # (The yt-dlp binary itself ships inside the yt-dlp-exec node module.)
 RUN apt-get update \
@@ -44,6 +46,10 @@ COPY --from=build /app/packages/contracts/package.json ./packages/contracts/pack
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/ai/package.json ./apps/ai/package.json
 COPY --from=build /app/apps/ai/dist ./apps/ai/dist
+# pnpm links workspace deps into the CONSUMER's node_modules (apps/ai/node_modules/@mixer/…),
+# which isn't copied above — recreate the link so `import '@mixer/contracts'` resolves.
+RUN mkdir -p apps/ai/node_modules/@mixer \
+ && ln -s /app/packages/contracts apps/ai/node_modules/@mixer/contracts
 WORKDIR /app/apps/ai
 EXPOSE 3001
 CMD ["node", "dist/server.js"]
