@@ -322,14 +322,50 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         cursor.toArray(),
         app.collections.recipes.countDocuments(filter),
       ]);
+
+      let targetLang: 'he' | 'en' = 'he';
+    if (req.user) {
+      const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
+      if (userDoc?.locale) {
+        targetLang = userDoc.locale as 'he' | 'en';
+      }
+    }
+ 
+    const recipeIds = items.map((r) => r._id);
+    const translations = await app.collections.recipeTranslations
+      ?.find({
+        recipeId: { $in: recipeIds },
+        language: targetLang,
+      })
+      .toArray() ?? [];
+
+    const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
+
+    const translatedItems = items.map((doc) => {
+      if (doc.language && doc.language !== targetLang) {
+        const cached = translationMap.get(doc._id.toString());
+        if (cached) {
+          return {
+            ...doc,
+            title: cached.title,
+            description: cached.description,
+            tags: cached.tags ?? doc.tags,
+            cuisine: cached.cuisine ?? doc.cuisine,
+            language: targetLang,
+          };
+        }
+      }
+      return doc;
+    });
+
       const favSet = req.user
         ? await favoritedIds(app.collections, req.user.id, 'recipe', items.map((r) => r._id))
         : null;
       return {
-        items: items.map((r) =>
-          favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
-        ),
-        total,
+        items: translatedItems.map((r) =>
+        favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
+      ),
+      total,
       };
     },
   );
@@ -719,12 +755,48 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
 
+        let targetLang: 'he' | 'en' = 'he';
+      if (req.user) {
+        const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
+        if (userDoc?.locale) {
+          targetLang = userDoc.locale as 'he' | 'en';
+        }
+      }
+
+      const recipeIds = scored.map((s) => s.recipe._id);
+      const translations = await app.collections.recipeTranslations
+        ?.find({
+          recipeId: { $in: recipeIds },
+          language: targetLang,
+        })
+        .toArray() ?? [];
+
+      const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
+
+      const translatedScored = scored.map(({ recipe, score }) => {
+        let finalRecipe = recipe;
+        if (recipe.language && recipe.language !== targetLang) {
+          const cached = translationMap.get(recipe._id.toString());
+          if (cached) {
+            finalRecipe = {
+              ...recipe,
+              title: cached.title,
+              description: cached.description,
+              tags: cached.tags ?? recipe.tags,
+              cuisine: cached.cuisine ?? recipe.cuisine,
+              language: targetLang,
+            };
+          }
+        }
+        return { recipe: finalRecipe, score };
+      });
+
       const favSet = req.user
-        ? await favoritedIds(app.collections, req.user.id, 'recipe', scored.map((s) => s.recipe._id))
+        ? await favoritedIds(app.collections, req.user.id, 'recipe', translatedScored.map((s) => s.recipe._id))
         : null;
 
       return {
-        items: scored.map(({ recipe }) =>
+       items: translatedScored.map(({ recipe }) =>
           favSet ? toRecipe(recipe, { isFavorite: favSet.has(recipe._id.toString()) }) : toRecipe(recipe),
         ),
       };
