@@ -60,9 +60,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      api_url: ${{ steps.api.outputs.url }}
-      ai_url: ${{ steps.ai.outputs.url }}
     steps:
       - uses: google-github-actions/auth@v2
         with:
@@ -71,25 +68,25 @@ jobs:
 
       # --- ai first, so the api can be told where it lives ---
       - name: Deploy ai
-        id: ai
         run: |
           gcloud run deploy mixer-ai \
             --image "$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/ai:$GITHUB_SHA" \
             --region "$REGION" --platform managed --allow-unauthenticated \
             --port 8080 --memory 2Gi --cpu 1 --timeout 300 \
             --set-env-vars "^##^GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}##GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
-          echo "url=$(gcloud run services describe mixer-ai --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
 
       # --- api ---
       - name: Deploy api
-        id: api
         run: |
+          # Read the ai URL back from Cloud Run instead of via a step output — those came
+          # through empty, and an empty AI_BASE_URL breaks the api silently at runtime.
+          AI_URL=$(gcloud run services describe mixer-ai --region "$REGION" --format='value(status.url)')
+          if [ -z "$AI_URL" ]; then echo "::error::could not resolve the ai service URL"; exit 1; fi
           gcloud run deploy mixer-api \
             --image "$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/api:$GITHUB_SHA" \
             --region "$REGION" --platform managed --allow-unauthenticated \
             --port 8080 --memory 1Gi --cpu 1 --timeout 300 \
-            --set-env-vars "^##^MONGO_URL=${{ secrets.MONGO_URL }}##MONGO_DB=${{ secrets.MONGO_DB }}##JWT_SECRET=${{ secrets.JWT_SECRET }}##GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}##PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}##FIREBASE_PROJECT_ID=$PROJECT_ID##AI_BASE_URL=${{ steps.ai.outputs.url }}"
-          echo "url=$(gcloud run services describe mixer-api --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
+            --set-env-vars "^##^MONGO_URL=${{ secrets.MONGO_URL }}##MONGO_DB=${{ secrets.MONGO_DB }}##JWT_SECRET=${{ secrets.JWT_SECRET }}##GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}##PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}##FIREBASE_PROJECT_ID=$PROJECT_ID##AI_BASE_URL=$AI_URL"
 
   web:
     name: Deploy web (Firebase Hosting)
@@ -105,11 +102,22 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mixer/contracts build
-      # app.config.ts silently falls back to http://localhost:3000 when these are empty,
-      # which produces a web app that builds and deploys fine but can't reach anything.
-      - name: Verify the bundle has real service URLs
+
+      # Ask Cloud Run directly rather than passing the URLs through job outputs, which
+      # arrived empty here (they contain values the runner treats as secret-derived).
+      # app.config.ts falls back to http://localhost:3000 when these are unset, so an
+      # empty value ships a bundle that deploys cleanly and can't reach anything.
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Resolve service URLs
         run: |
-          for pair in "API:${{ needs.services.outputs.api_url }}" "AI:${{ needs.services.outputs.ai_url }}" \
+          API_URL=$(gcloud run services describe mixer-api --region "$REGION" --format='value(status.url)')
+          AI_URL=$(gcloud run services describe mixer-ai --region "$REGION" --format='value(status.url)')
+          echo "api=$API_URL"
+          echo "ai=$AI_URL"
+          for pair in "API:$API_URL" "AI:$AI_URL" \
                       "GOOGLE_WEB_CLIENT_ID:${{ secrets.GOOGLE_WEB_CLIENT_ID }}"; do
             name="${pair%%:*}"; value="${pair#*:}"
             if [ -z "$value" ]; then
@@ -117,11 +125,12 @@ jobs:
               exit 1
             fi
           done
+          echo "EXPO_PUBLIC_API_BASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_AI_BASE_URL=$AI_URL" >> "$GITHUB_ENV"
+
       - name: Build web bundle
         env:
-          # baked into the static bundle so the web app calls the deployed services
-          EXPO_PUBLIC_API_BASE_URL: ${{ needs.services.outputs.api_url }}
-          EXPO_PUBLIC_AI_BASE_URL: ${{ needs.services.outputs.ai_url }}
+          # EXPO_PUBLIC_{API,AI}_BASE_URL come from the step above, via $GITHUB_ENV
           EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
         run: pnpm --filter @mixer/mobile build:web
       - name: Deploy to Firebase Hosting
