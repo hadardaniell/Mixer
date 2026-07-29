@@ -50,6 +50,11 @@ jobs:
       # resolve its imports (workspace links live outside the copied node_modules).
       # Resolve the whole entrypoint graph without booting the service — no env/DB needed.
       - name: Smoke test — module graph resolves
+        # Dummy keys: some SDK clients are constructed at module scope and throw on an
+        # empty key. Nothing is called, so the values are never used — no secrets needed,
+        # which keeps this job safe to run on PRs from forks.
         run: |
-          docker run --rm --entrypoint node "mixer-${{ matrix.service }}:ci" \
+          docker run --rm --entrypoint node \
+            -e GROQ_API_KEY=ci-smoke-test -e GEMINI_API_KEY=ci-smoke-test \
+            "mixer-${{ matrix.service }}:ci" \
             -e "import('./dist/app.js').then(() => console.log('imports ok'))"
