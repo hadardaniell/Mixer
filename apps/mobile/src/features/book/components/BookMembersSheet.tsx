@@ -1,8 +1,10 @@
 import { LogOut, Plus, UserMinus } from 'lucide-react-native';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { Sheet } from '@/shared/ui/Sheet';
 
 import type { BookMember } from '../hooks/useBookMembers';
@@ -38,28 +40,8 @@ export function BookMembersSheet({
 }: Props) {
   const { t } = useTranslation();
   const theme = useTheme();
-
-  const confirmRemove = (member: BookMember) => {
-    Alert.alert(
-      t('book.members.removeTitle'),
-      t('book.members.removeMessage', { name: member.displayName }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('book.members.removeConfirm'),
-          style: 'destructive',
-          onPress: () => onRemoveMember(member),
-        },
-      ],
-    );
-  };
-
-  const confirmLeave = () => {
-    Alert.alert(t('book.leaveTitle'), t('book.leaveMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('book.leaveConfirm'), style: 'destructive', onPress: onLeave },
-    ]);
-  };
+  const [pendingRemove, setPendingRemove] = useState<BookMember | null>(null);
+  const [leaveOpen, setLeaveOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} snapPoints={[72]}>
@@ -90,7 +72,7 @@ export function BookMembersSheet({
 
               {isOwner && m.role !== 'owner' ? (
                 <YStack
-                  onPress={() => confirmRemove(m)}
+                  onPress={() => setPendingRemove(m)}
                   hitSlop={8}
                   pressStyle={{ opacity: 0.7 }}
                   accessibilityRole="button"
@@ -125,7 +107,7 @@ export function BookMembersSheet({
             </XStack>
           ) : (
             <XStack
-              onPress={confirmLeave}
+              onPress={() => setLeaveOpen(true)}
               alignItems="center"
               gap="$3"
               paddingVertical="$3"
@@ -148,6 +130,34 @@ export function BookMembersSheet({
           )}
         </YStack>
       </ScrollView>
+
+      <ConfirmDialog
+        open={pendingRemove !== null}
+        title={t('book.members.removeTitle')}
+        message={t('book.members.removeMessage', { name: pendingRemove?.displayName ?? '' })}
+        confirmLabel={t('book.members.removeConfirm')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={() => {
+          if (pendingRemove) onRemoveMember(pendingRemove);
+          setPendingRemove(null);
+        }}
+        onCancel={() => setPendingRemove(null)}
+      />
+
+      <ConfirmDialog
+        open={leaveOpen}
+        title={t('book.leaveTitle')}
+        message={t('book.leaveMessage')}
+        confirmLabel={t('book.leaveConfirm')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={() => {
+          setLeaveOpen(false);
+          onLeave();
+        }}
+        onCancel={() => setLeaveOpen(false)}
+      />
     </Sheet>
   );
 }

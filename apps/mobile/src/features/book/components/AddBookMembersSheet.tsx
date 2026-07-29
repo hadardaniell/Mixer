@@ -1,11 +1,12 @@
 import { Check } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { useFriends } from '@/features/friends/hooks/useFriends';
 import { ManualTextInput } from '@/features/recipe/components/manual/ManualTextInput';
+import { Loader } from '@/shared/ui/Loader';
 import { Sheet } from '@/shared/ui/Sheet';
 
 import { MemberAvatar } from './MemberAvatar';
@@ -91,7 +92,7 @@ export function AddBookMembersSheet({
 
       {isLoading ? (
         <YStack paddingVertical="$6" alignItems="center">
-          <ActivityIndicator color={theme.primary?.val as string} />
+          <Loader />
         </YStack>
       ) : candidates.length === 0 ? (
         <Text color="$textMuted" fontSize={14} textAlign="center" paddingVertical="$5">

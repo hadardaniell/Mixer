@@ -1,13 +1,16 @@
 import { router } from 'expo-router';
 import { ArrowRight, UserMinus, UserPlus } from 'lucide-react-native';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Image, Pressable } from 'react-native';
+import { FlatList, Image, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spinner, Text, useTheme, View, XStack, YStack } from 'tamagui';
 
 import type { Friend } from '@/features/friends/api/friendsApi';
 import { useFriendActions } from '@/features/friends/hooks/useFriendActions';
 import { useFriends } from '@/features/friends/hooks/useFriends';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
+import { Loader } from '@/shared/ui/Loader';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 
 function initials(name?: string): string {
@@ -25,22 +28,7 @@ export function FriendsListScreen() {
 
   const { friends, isLoading, isError } = useFriends();
   const { unfriend } = useFriendActions();
-
-  const confirmRemove = (friend: Friend) => {
-    const name = friend.displayName ?? '';
-    Alert.alert(
-      t('friends.removeTitle'),
-      t('friends.removeMessage', { name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('friends.remove'),
-          style: 'destructive',
-          onPress: () => unfriend.mutate(friend.id),
-        },
-      ],
-    );
-  };
+  const [pendingRemove, setPendingRemove] = useState<Friend | null>(null);
 
   return (
     <YStack
@@ -72,7 +60,7 @@ export function FriendsListScreen() {
 
       {isLoading ? (
         <View flex={1} alignItems="center" justifyContent="center">
-          <Spinner color="$primary" />
+          <Loader />
         </View>
       ) : isError ? (
         <Centered text={t('friends.error')} />
@@ -86,13 +74,27 @@ export function FriendsListScreen() {
             <FriendRow
               friend={item}
               busy={unfriend.isPending && unfriend.variables === item.id}
-              onRemove={confirmRemove}
+              onRemove={setPendingRemove}
             />
           )}
           contentContainerStyle={{ paddingVertical: 8, paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <ConfirmDialog
+        open={pendingRemove !== null}
+        title={t('friends.removeTitle')}
+        message={t('friends.removeMessage', { name: pendingRemove?.displayName ?? '' })}
+        confirmLabel={t('friends.remove')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={() => {
+          if (pendingRemove) unfriend.mutate(pendingRemove.id);
+          setPendingRemove(null);
+        }}
+        onCancel={() => setPendingRemove(null)}
+      />
     </YStack>
   );
 }

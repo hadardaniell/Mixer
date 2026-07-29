@@ -4,7 +4,9 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Platform, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Spinner, Text, useTheme, View, XStack, YStack } from 'tamagui';
+import { Text, useTheme, View, XStack, YStack } from 'tamagui';
+
+import { Loader } from '@/shared/ui/Loader';
 
 import { AddFriendRow } from '@/features/friends/components/AddFriendRow';
 import { ContactsEmptyState } from '@/features/friends/components/ContactsEmptyState';
@@ -92,7 +94,7 @@ export function AddFriendsScreen() {
 
       {isLoading ? (
         <View flex={1} alignItems="center" justifyContent="center">
-          <Spinner color="$primary" />
+          <Loader />
         </View>
       ) : isError ? (
         <Centered text={t('friends.error')} />

@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+
+import { Loader } from '@/shared/ui/Loader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, YStack } from 'tamagui';
 
@@ -101,7 +103,7 @@ export function CreateManualScreen({ recipeId }: { recipeId?: string } = {}) {
   if (isEdit && !seeded) {
     return (
       <YStack flex={1} alignItems="center" justifyContent="center">
-        <ActivityIndicator color={theme.primary?.val as string} />
+        <Loader />
       </YStack>
     );
   }

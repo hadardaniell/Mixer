@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, YStack } from 'tamagui';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useToggleBookFavorite, useToggleRecipeFavorite } from '@/features/home/hooks/useFavoriteMutations';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 import type { RecipeCardData } from '@/shared/ui/RecipeCard';
 
@@ -52,6 +53,7 @@ export function BookScreen({ bookId }: BookScreenProps) {
   const [addRecipesOpen, setAddRecipesOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
+  const [dialog, setDialog] = useState<'delete' | 'leave' | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -92,22 +94,12 @@ export function BookScreen({ bookId }: BookScreenProps) {
 
   const confirmDelete = () => {
     setOverflowOpen(false);
-    Alert.alert(t('book.deleteTitle'), t('book.deleteMessage', { name: book.name }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('book.deleteConfirm'),
-        style: 'destructive',
-        onPress: () => mutations.deleteBook.mutate(undefined, { onSuccess: goBack }),
-      },
-    ]);
+    setDialog('delete');
   };
 
   const confirmLeaveFromOverflow = () => {
     setOverflowOpen(false);
-    Alert.alert(t('book.leaveTitle'), t('book.leaveMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('book.leaveConfirm'), style: 'destructive', onPress: leave },
-    ]);
+    setDialog('leave');
   };
 
   const removeMember = (member: BookMember) => mutations.removeMember.mutate(member.userId);
@@ -218,6 +210,25 @@ export function BookScreen({ bookId }: BookScreenProps) {
         }}
         onLeave={confirmLeaveFromOverflow}
         onDelete={confirmDelete}
+      />
+
+      <ConfirmDialog
+        open={dialog !== null}
+        title={dialog === 'delete' ? t('book.deleteTitle') : t('book.leaveTitle')}
+        message={
+          dialog === 'delete'
+            ? t('book.deleteMessage', { name: book.name })
+            : t('book.leaveMessage')
+        }
+        confirmLabel={dialog === 'delete' ? t('book.deleteConfirm') : t('book.leaveConfirm')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={() => {
+          if (dialog === 'delete') mutations.deleteBook.mutate(undefined, { onSuccess: goBack });
+          else if (dialog === 'leave') leave();
+          setDialog(null);
+        }}
+        onCancel={() => setDialog(null)}
       />
     </YStack>
   );
