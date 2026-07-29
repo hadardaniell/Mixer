@@ -1,0 +1,92 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+env:
+  REGION: me-west1 # Tel Aviv. Change if you prefer another Cloud Run region.
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  AR_REPO: mixer # Artifact Registry repository name (created in setup)
+
+jobs:
+  services:
+    name: Deploy api + ai (Cloud Run)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      api_url: ${{ steps.api.outputs.url }}
+      ai_url: ${{ steps.ai.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+
+      # --- ai first, so the api can be told where it lives ---
+      - name: Build & push ai image
+        run: |
+          IMG="$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/ai:$GITHUB_SHA"
+          docker build -f apps/ai/Dockerfile -t "$IMG" .
+          docker push "$IMG"
+          echo "AI_IMG=$IMG" >> "$GITHUB_ENV"
+      - name: Deploy ai
+        id: ai
+        run: |
+          gcloud run deploy mixer-ai \
+            --image "$AI_IMG" --region "$REGION" --platform managed --allow-unauthenticated \
+            --set-env-vars "^##^GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}##GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+          echo "url=$(gcloud run services describe mixer-ai --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
+
+      # --- api ---
+      - name: Build & push api image
+        run: |
+          IMG="$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/api:$GITHUB_SHA"
+          docker build -f apps/api/Dockerfile -t "$IMG" .
+          docker push "$IMG"
+          echo "API_IMG=$IMG" >> "$GITHUB_ENV"
+      - name: Deploy api
+        id: api
+        run: |
+          gcloud run deploy mixer-api \
+            --image "$API_IMG" --region "$REGION" --platform managed --allow-unauthenticated \
+            --set-env-vars "^##^MONGO_URL=${{ secrets.MONGO_URL }}##MONGO_DB=${{ secrets.MONGO_DB }}##JWT_SECRET=${{ secrets.JWT_SECRET }}##GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}##PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}##FIREBASE_PROJECT_ID=$PROJECT_ID##AI_BASE_URL=${{ steps.ai.outputs.url }}"
+          echo "url=$(gcloud run services describe mixer-api --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
+
+  web:
+    name: Deploy web (Firebase Hosting)
+    needs: services
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mixer/contracts build
+      - name: Build web bundle
+        env:
+          # baked into the static bundle so the web app calls the deployed services
+          EXPO_PUBLIC_API_BASE_URL: ${{ needs.services.outputs.api_url }}
+          EXPO_PUBLIC_AI_BASE_URL: ${{ needs.services.outputs.ai_url }}
+          EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+        run: pnpm --filter @mixer/mobile build:web
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.GCP_SA_KEY }}
+          projectId: ${{ secrets.GCP_PROJECT_ID }}
+          channelId: live

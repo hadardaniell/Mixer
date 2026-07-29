@@ -1,0 +1,38 @@
+# Local run of the two backend services in containers.
+# MongoDB stays on Atlas (via MONGO_URL in apps/api/.env), so it's not here.
+#
+#   docker compose up --build
+#
+# Requires: apps/api/.env, apps/ai/.env, and apps/api/firebase-service-account.json
+
+services:
+  ai:
+    build:
+      context: .
+      dockerfile: apps/ai/Dockerfile
+    ports:
+      - '3001:3001'
+    env_file:
+      - apps/ai/.env
+    environment:
+      - PORT=3001
+      - HOST=0.0.0.0
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - '3000:3000'
+    env_file:
+      - apps/api/.env
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      # reach the ai container over the compose network, not localhost
+      - AI_BASE_URL=http://ai:3001
+    volumes:
+      # the Firebase plugin reads this from the working dir (cwd = /app/apps/api)
+      - ./apps/api/firebase-service-account.json:/app/apps/api/firebase-service-account.json:ro
+    depends_on:
+      - ai

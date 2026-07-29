@@ -1,0 +1,17 @@
+# Keep the Docker build context lean and secret-free.
+**/node_modules
+**/dist
+.git
+.github
+.claude
+.expo
+apps/mobile/.expo
+apps/mobile/android
+apps/mobile/ios
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+# never bake secrets into an image
+**/firebase-service-account.json
+*.md
