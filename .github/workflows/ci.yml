@@ -42,6 +42,14 @@ jobs:
           context: .
           file: apps/${{ matrix.service }}/Dockerfile
           push: false
+          load: true # keep the image in the local daemon for the smoke test below
           tags: mixer-${{ matrix.service }}:ci
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+      # A successful build says nothing about whether the runtime stage can actually
+      # resolve its imports (workspace links live outside the copied node_modules).
+      # Resolve the whole entrypoint graph without booting the service — no env/DB needed.
+      - name: Smoke test — module graph resolves
+        run: |
+          docker run --rm --entrypoint node "mixer-${{ matrix.service }}:ci" \
+            -e "import('./dist/app.js').then(() => console.log('imports ok'))"

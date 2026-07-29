@@ -43,6 +43,7 @@ jobs:
         run: |
           gcloud run deploy mixer-ai \
             --image "$AI_IMG" --region "$REGION" --platform managed --allow-unauthenticated \
+            --port 8080 --memory 2Gi --cpu 1 --timeout 300 \
             --set-env-vars "^##^GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}##GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
           echo "url=$(gcloud run services describe mixer-ai --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
 
@@ -58,6 +59,7 @@ jobs:
         run: |
           gcloud run deploy mixer-api \
             --image "$API_IMG" --region "$REGION" --platform managed --allow-unauthenticated \
+            --port 8080 --memory 1Gi --cpu 1 --timeout 300 \
             --set-env-vars "^##^MONGO_URL=${{ secrets.MONGO_URL }}##MONGO_DB=${{ secrets.MONGO_DB }}##JWT_SECRET=${{ secrets.JWT_SECRET }}##GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}##PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}##FIREBASE_PROJECT_ID=$PROJECT_ID##AI_BASE_URL=${{ steps.ai.outputs.url }}"
           echo "url=$(gcloud run services describe mixer-api --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
 

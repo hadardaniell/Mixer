@@ -34,13 +34,19 @@ RUN pnpm --filter @mixer/contracts build && pnpm --filter @mixer/api build
 
 # --- runtime: only what's needed to run ---
 FROM base AS runtime
-ENV NODE_ENV=production PORT=3000
+# No ENV PORT here on purpose: the platform injects it (Cloud Run sends 8080),
+# and server.ts falls back to 3000 locally. docker-compose sets it explicitly.
+ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json /app/pnpm-workspace.yaml ./
 COPY --from=build /app/packages/contracts/package.json ./packages/contracts/package.json
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
+# pnpm links workspace deps into the CONSUMER's node_modules (apps/api/node_modules/@mixer/…),
+# which isn't copied above — recreate the link so `import '@mixer/contracts'` resolves.
+RUN mkdir -p apps/api/node_modules/@mixer \
+ && ln -s /app/packages/contracts apps/api/node_modules/@mixer/contracts
 # cwd = apps/api so the Firebase plugin finds firebase-service-account.json
 # (provided at runtime via a volume mount / mounted secret — never baked in).
 WORKDIR /app/apps/api
