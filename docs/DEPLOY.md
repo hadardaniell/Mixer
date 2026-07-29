@@ -56,9 +56,13 @@ IP / PrivateLink later.)
 
 Repo → **Settings → Secrets and variables → Actions → New repository secret**:
 
+> `GCP_PROJECT_ID` goes under the **Variables** tab, not Secrets. It isn't sensitive (it's
+> part of every public Cloud Run URL), and as a secret it actively breaks the deploy: GitHub
+> blanks out any job output that contains a secret value, so the Cloud Run URLs would arrive
+> empty at the web build and the bundle would ship pointing at `localhost`.
+
 | Secret | Value |
 |---|---|
-| `GCP_PROJECT_ID` | your project id |
 | `GCP_SA_KEY` | the **entire contents** of `mixer-ci-key.json` (then delete the file) |
 | `MONGO_URL` | from `apps/api/.env` |
 | `MONGO_DB` | from `apps/api/.env` |

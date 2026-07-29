@@ -10,7 +10,10 @@ concurrency:
 
 env:
   REGION: me-west1 # Tel Aviv. Change if you prefer another Cloud Run region.
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  # A repository VARIABLE, not a secret. The project id appears in every Cloud Run URL,
+  # and GitHub blanks out any job output containing a secret value — which silently gave
+  # the web build an empty api_url and shipped a bundle pointing at localhost.
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   AR_REPO: mixer # Artifact Registry repository name (created in setup)
 
 jobs:
@@ -118,5 +121,5 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.GCP_SA_KEY }}
-          projectId: ${{ secrets.GCP_PROJECT_ID }}
+          projectId: ${{ vars.GCP_PROJECT_ID }}
           channelId: live
