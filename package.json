@@ -16,6 +16,7 @@
     "build": "pnpm --filter @mixer/contracts build && pnpm -r --filter \"./apps/*\" run build",
     "typecheck": "pnpm -r run typecheck",
     "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\""
   },
   "devDependencies": {
