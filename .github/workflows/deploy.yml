@@ -94,6 +94,18 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mixer/contracts build
+      # app.config.ts silently falls back to http://localhost:3000 when these are empty,
+      # which produces a web app that builds and deploys fine but can't reach anything.
+      - name: Verify the bundle has real service URLs
+        run: |
+          for pair in "API:${{ needs.services.outputs.api_url }}" "AI:${{ needs.services.outputs.ai_url }}" \
+                      "GOOGLE_WEB_CLIENT_ID:${{ secrets.GOOGLE_WEB_CLIENT_ID }}"; do
+            name="${pair%%:*}"; value="${pair#*:}"
+            if [ -z "$value" ]; then
+              echo "::error::$name is empty — the web bundle would ship a broken default."
+              exit 1
+            fi
+          done
       - name: Build web bundle
         env:
           # baked into the static bundle so the web app calls the deployed services
