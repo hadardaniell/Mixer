@@ -15,6 +15,7 @@ import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
+import { generateAndStoreCoverImage } from './recipes.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -205,6 +206,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
             },
           );
         }
+      if (!doc.coverImageUrl) {
+        generateAndStoreCoverImage(app.collections.recipes, app.firebaseBucket, doc._id, doc);
+      }  
       generateAndStoreEmbedding(app.collections, doc._id, doc);
       return reply.code(201).send(toRecipe(doc));
     },
