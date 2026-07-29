@@ -1,9 +1,10 @@
 import { Plus } from 'lucide-react-native';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
 import { ManualTextInput } from '@/features/recipe/components/manual/ManualTextInput';
+import { ConfirmDialog } from '@/shared/ui/ConfirmDialog';
 import { RecipeCard, type RecipeCardData } from '@/shared/ui/RecipeCard';
 
 type Card = RecipeCardData & { isFavorite: boolean };
@@ -40,17 +41,11 @@ export function BookRecipeGrid({
   onRemoveRecipe,
 }: Props) {
   const { t } = useTranslation();
+  const [pendingRemove, setPendingRemove] = useState<Card | null>(null);
 
   const confirmRemove = (card: Card) => {
     if (!canEdit) return;
-    Alert.alert(t('book.removeRecipeTitle'), t('book.removeRecipeMessage', { name: card.name }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('book.removeRecipeConfirm'),
-        style: 'destructive',
-        onPress: () => onRemoveRecipe(card),
-      },
-    ]);
+    setPendingRemove(card);
   };
 
   return (
@@ -105,6 +100,20 @@ export function BookRecipeGrid({
           ))}
         </XStack>
       )}
+
+      <ConfirmDialog
+        open={pendingRemove !== null}
+        title={t('book.removeRecipeTitle')}
+        message={t('book.removeRecipeMessage', { name: pendingRemove?.name ?? '' })}
+        confirmLabel={t('book.removeRecipeConfirm')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={() => {
+          if (pendingRemove) onRemoveRecipe(pendingRemove);
+          setPendingRemove(null);
+        }}
+        onCancel={() => setPendingRemove(null)}
+      />
     </YStack>
   );
 }

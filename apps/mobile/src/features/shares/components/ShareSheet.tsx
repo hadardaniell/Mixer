@@ -2,7 +2,9 @@ import type { ShareResourceType } from '@mixer/contracts';
 import { Check } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
+
+import { Loader } from '@/shared/ui/Loader';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { MemberAvatar } from '@/features/book/components/MemberAvatar';
@@ -98,7 +100,7 @@ export function ShareSheet({ open, onOpenChange, resourceType, resourceId }: Pro
 
       {isLoading ? (
         <YStack paddingVertical="$6" alignItems="center">
-          <ActivityIndicator color={theme.primary?.val as string} />
+          <Loader />
         </YStack>
       ) : candidates.length === 0 ? (
         <Text color="$textMuted" fontSize={14} textAlign="center" paddingVertical="$5">

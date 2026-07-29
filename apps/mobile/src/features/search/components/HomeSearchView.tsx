@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView } from 'react-native';
-import { Text, useTheme, XStack, YStack } from 'tamagui';
+import { ScrollView } from 'react-native';
+import { Text, XStack, YStack } from 'tamagui';
 
 import { CategoryChip } from '@/features/categories/components/CategoryChip';
 import {
@@ -20,6 +20,7 @@ import { bookToCard } from '@/shared/lib/bookToCard';
 import { recipeToCard } from '@/shared/lib/recipeToCard';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 import { BookCard } from '@/shared/ui/BookCard';
+import { Loader } from '@/shared/ui/Loader';
 import { RecipeCard } from '@/shared/ui/RecipeCard';
 
 const MIN_QUERY = 2;
@@ -35,13 +36,11 @@ interface HomeSearchViewProps {
 export function HomeSearchView({ query }: HomeSearchViewProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const theme = useTheme();
   const { language } = useLanguage();
   const { categories } = useCategories();
   const tagOf = useRecipeCategoryTag();
   const toggleRecipe = useToggleRecipeFavorite();
   const toggleBook = useToggleBookFavorite();
-  const primary = theme.primary?.val as string;
 
   const debounced = useDebouncedValue(query.trim(), 300);
   const enabled = debounced.length >= MIN_QUERY;
@@ -89,7 +88,7 @@ export function HomeSearchView({ query }: HomeSearchViewProps) {
 
         {loading ? (
           <YStack paddingVertical="$5" alignItems="center">
-            <ActivityIndicator color={primary} />
+            <Loader />
           </YStack>
         ) : null}
 

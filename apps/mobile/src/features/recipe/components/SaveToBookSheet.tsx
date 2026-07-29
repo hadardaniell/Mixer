@@ -2,7 +2,9 @@ import type { RecipeBook } from '@mixer/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { PlusCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { Pressable, ScrollView } from 'react-native';
+
+import { Loader } from '@/shared/ui/Loader';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { feedApi } from '@/features/home/api/feedApi';
@@ -58,7 +60,7 @@ export function SaveToBookSheet({ open, onOpenChange, recipeId }: SaveToBookShee
 
       {booksQ.isLoading ? (
         <YStack paddingVertical="$6" alignItems="center">
-          <ActivityIndicator color={primary} />
+          <Loader />
         </YStack>
       ) : books.length === 0 ? (
         <Text color="$textMuted" fontSize={14} textAlign="center" paddingVertical="$5">

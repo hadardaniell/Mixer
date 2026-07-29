@@ -5,7 +5,9 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Spinner, Text, useTheme, View, XStack, YStack } from 'tamagui';
+import { Text, useTheme, View, XStack, YStack } from 'tamagui';
+
+import { Loader } from '@/shared/ui/Loader';
 
 import { NotificationRow } from '@/features/notifications/components/NotificationRow';
 import { useNotificationActions } from '@/features/notifications/hooks/useNotificationActions';
@@ -97,7 +99,7 @@ export function NotificationsScreen() {
 
       {isLoading ? (
         <View flex={1} alignItems="center" justifyContent="center">
-          <Spinner color="$primary" />
+          <Loader />
         </View>
       ) : isError ? (
         <View flex={1} alignItems="center" justifyContent="center" padding="$5">
