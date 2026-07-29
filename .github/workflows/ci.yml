@@ -28,6 +28,10 @@ jobs:
 
   docker-build:
     name: Docker build (${{ matrix.service }})
+    # PRs only: on a push to main, deploy.yml builds these same two images. Every change
+    # reaches main through a PR, so the images are already smoke-tested by the time they
+    # get there — building them twice just makes the deploy wait.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -58,3 +62,12 @@ jobs:
             -e GROQ_API_KEY=ci-smoke-test -e GEMINI_API_KEY=ci-smoke-test \
             "mixer-${{ matrix.service }}:ci" \
             -e "import('./dist/app.js').then(() => console.log('imports ok'))"
+
+      # Importing succeeds even when a dep resolves to the WRONG major (the hoisted root
+      # copy instead of the app's nested one) — that only blows up on the first request.
+      - name: Smoke test — deps resolve to the declared majors
+        run: |
+          docker run --rm --entrypoint node \
+            -v "$PWD/scripts:/smoke:ro" \
+            "mixer-${{ matrix.service }}:ci" \
+            /smoke/check-app-deps.cjs "/app/apps/${{ matrix.service }}"

@@ -14,8 +14,38 @@ env:
   AR_REPO: mixer # Artifact Registry repository name (created in setup)
 
 jobs:
+  # Both images are independent, so they build in parallel — and they reuse the same gha
+  # cache scopes that ci.yml populates, so an unchanged deps layer is a cache hit instead
+  # of a fresh `apt-get install` + `pnpm install`.
+  build:
+    name: Build & push ${{ matrix.service }} image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        service: [api, ai]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO }}/${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
   services:
     name: Deploy api + ai (Cloud Run)
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,42 +53,29 @@ jobs:
       api_url: ${{ steps.api.outputs.url }}
       ai_url: ${{ steps.ai.outputs.url }}
     steps:
-      - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
 
       # --- ai first, so the api can be told where it lives ---
-      - name: Build & push ai image
-        run: |
-          IMG="$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/ai:$GITHUB_SHA"
-          docker build -f apps/ai/Dockerfile -t "$IMG" .
-          docker push "$IMG"
-          echo "AI_IMG=$IMG" >> "$GITHUB_ENV"
       - name: Deploy ai
         id: ai
         run: |
           gcloud run deploy mixer-ai \
-            --image "$AI_IMG" --region "$REGION" --platform managed --allow-unauthenticated \
+            --image "$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/ai:$GITHUB_SHA" \
+            --region "$REGION" --platform managed --allow-unauthenticated \
             --port 8080 --memory 2Gi --cpu 1 --timeout 300 \
             --set-env-vars "^##^GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}##GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
           echo "url=$(gcloud run services describe mixer-ai --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"
 
       # --- api ---
-      - name: Build & push api image
-        run: |
-          IMG="$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/api:$GITHUB_SHA"
-          docker build -f apps/api/Dockerfile -t "$IMG" .
-          docker push "$IMG"
-          echo "API_IMG=$IMG" >> "$GITHUB_ENV"
       - name: Deploy api
         id: api
         run: |
           gcloud run deploy mixer-api \
-            --image "$API_IMG" --region "$REGION" --platform managed --allow-unauthenticated \
+            --image "$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/api:$GITHUB_SHA" \
+            --region "$REGION" --platform managed --allow-unauthenticated \
             --port 8080 --memory 1Gi --cpu 1 --timeout 300 \
             --set-env-vars "^##^MONGO_URL=${{ secrets.MONGO_URL }}##MONGO_DB=${{ secrets.MONGO_DB }}##JWT_SECRET=${{ secrets.JWT_SECRET }}##GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}##PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}##FIREBASE_PROJECT_ID=$PROJECT_ID##AI_BASE_URL=${{ steps.ai.outputs.url }}"
           echo "url=$(gcloud run services describe mixer-api --region "$REGION" --format='value(status.url)')" >> "$GITHUB_OUTPUT"

@@ -43,10 +43,11 @@ COPY --from=build /app/packages/contracts/package.json ./packages/contracts/pack
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
-# pnpm links workspace deps into the CONSUMER's node_modules (apps/api/node_modules/@mixer/…),
-# which isn't copied above — recreate the link so `import '@mixer/contracts'` resolves.
-RUN mkdir -p apps/api/node_modules/@mixer \
- && ln -s /app/packages/contracts apps/api/node_modules/@mixer/contracts
+# The app's OWN node_modules is not redundant with the hoisted root one: it holds the
+# @mixer/contracts workspace link, plus any dep whose version differs from the root's
+# (the root pins a newer fastify-type-provider-zod). Without it, resolution climbs to
+# /app/node_modules and silently picks the wrong major.
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 # cwd = apps/api so the Firebase plugin finds firebase-service-account.json
 # (provided at runtime via a volume mount / mounted secret — never baked in).
 WORKDIR /app/apps/api
