@@ -21,11 +21,25 @@
       "channel": "preview",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://mixer-api-636101330680.me-west1.run.app",
+        "EXPO_PUBLIC_AI_BASE_URL": "https://mixer-ai-636101330680.me-west1.run.app",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "636101330680-0kssp0jhguk8pqqgc9lc7mtfeqpcubp4.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "636101330680-mb2397rmnabju9urvbta74b00f3fe9jj.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "636101330680-q7fpaehcut9jhmvl3d4r4k06qsjrdj94.apps.googleusercontent.com"
       }
     },
     "production": {
       "channel": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://mixer-api-636101330680.me-west1.run.app",
+        "EXPO_PUBLIC_AI_BASE_URL": "https://mixer-ai-636101330680.me-west1.run.app",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "636101330680-0kssp0jhguk8pqqgc9lc7mtfeqpcubp4.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "636101330680-mb2397rmnabju9urvbta74b00f3fe9jj.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "636101330680-q7fpaehcut9jhmvl3d4r4k06qsjrdj94.apps.googleusercontent.com"
+      }
     }
   },
   "submit": {
