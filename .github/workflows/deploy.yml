@@ -30,6 +30,14 @@ jobs:
         service: [api, ai]
     steps:
       - uses: actions/checkout@v4
+      # An empty PROJECT_ID yields the tag "…pkg.dev//mixer/ai", whose only symptom is
+      # buildx's opaque "invalid reference format".
+      - name: Verify PROJECT_ID is set
+        run: |
+          if [ -z "$PROJECT_ID" ]; then
+            echo "::error::PROJECT_ID is empty — add GCP_PROJECT_ID under Settings → Secrets and variables → Actions → Variables."
+            exit 1
+          fi
       - uses: docker/setup-buildx-action@v3
       - uses: google-github-actions/auth@v2
         with:
