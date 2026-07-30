@@ -1,3 +1,4 @@
+import { tokens } from '@/features/auth/services/tokens';
 import { storage, StorageKeys } from '@/shared/config/storage';
 
 const MAX_ENTRIES = 50;
@@ -10,8 +11,31 @@ export interface RecentlyViewedEntry {
   viewedAt: number;
 }
 
+/**
+ * Scoped per account, because the underlying store is not: localStorage is keyed by
+ * browser and MMKV by install, so a shared key lets whoever signs in next inherit the
+ * previous user's list — and hydrating it 403s on their private recipes.
+ * Signed out, entries go to the bare key and are picked up once a user signs in.
+ */
+function storageKey(): string {
+  const userId = tokens.getUser()?.id;
+  return userId ? `${StorageKeys.recentlyViewedRecipes}.${userId}` : StorageKeys.recentlyViewedRecipes;
+}
+
+/**
+ * Data written before the key was scoped belongs to whoever was signed in then — which
+ * we can't know now. Migrating it would hand one user another's history, so drop it.
+ */
+function dropLegacyEntries(): void {
+  if (storage.getString(StorageKeys.recentlyViewedRecipes)) {
+    storage.delete(StorageKeys.recentlyViewedRecipes);
+  }
+}
+
 function load(): RecentlyViewedEntry[] {
-  const raw = storage.getString(StorageKeys.recentlyViewedRecipes);
+  const key = storageKey();
+  if (key !== StorageKeys.recentlyViewedRecipes) dropLegacyEntries();
+  const raw = storage.getString(key);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -29,7 +53,7 @@ function load(): RecentlyViewedEntry[] {
 }
 
 function save(entries: RecentlyViewedEntry[]): void {
-  storage.set(StorageKeys.recentlyViewedRecipes, JSON.stringify(entries));
+  storage.set(storageKey(), JSON.stringify(entries));
   for (const l of listeners) l();
 }
 
@@ -58,7 +82,7 @@ export function removeRecentlyViewed(recipeId: string): void {
 }
 
 export function clearRecentlyViewed(): void {
-  storage.delete(StorageKeys.recentlyViewedRecipes);
+  storage.delete(storageKey());
   for (const l of listeners) l();
 }
 
