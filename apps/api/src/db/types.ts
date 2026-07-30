@@ -169,7 +169,8 @@ export type NotificationDoc = {
     | 'OWNER_DELETED_RESOURCE'
     | 'FRIEND_REQUEST'
     | 'FRIEND_ACCEPTED'
-    | 'FRIEND_UNFRIENDED';
+    | 'FRIEND_UNFRIENDED'
+    | 'BOOK_INVITE';
   payload: Record<string, unknown>;
   read: boolean;
   createdAt: Date;

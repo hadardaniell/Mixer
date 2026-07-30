@@ -47,6 +47,13 @@ export type NotificationPayloadMap = {
     fromUserName: string;
     fromUserAvatar: string | null;
   };
+  BOOK_INVITE: {
+    fromUserId: string;
+    fromUserName: string;
+    bookId: string;
+    bookName: string;
+    role: 'editor' | 'viewer';
+  };
 };
 
 export type NotificationType = keyof NotificationPayloadMap;

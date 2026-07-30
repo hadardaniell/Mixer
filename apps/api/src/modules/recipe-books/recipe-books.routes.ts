@@ -12,6 +12,7 @@ import type { Filter } from 'mongodb';
 import type { RecipeBookDoc } from '../../db/types.js';
 import { toRecipeBook } from './recipe-books.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
+import { notificationService } from '../../services/notification.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 const IdAndUserParam = z.object({
@@ -91,9 +92,19 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         _id: new ObjectId(req.params.id),
       });
       if (!book) return reply.code(404).send({ error: 'book not found' });
+
       if (!memberRole(book, req.user.id)) {
-        return reply.code(403).send({ error: 'not a member' });
+        // Not a member — allow if they have an accepted live-link share for this book
+        const liveShare = await app.collections.sharedItems.findOne({
+          resourceType: 'book',
+          resourceId: book._id,
+          friendId: new ObjectId(req.user.id),
+          status: 'accepted',
+          savedAt: null,
+        });
+        if (!liveShare) return reply.code(403).send({ error: 'not a member' });
       }
+
       const favSet = await favoritedIds(app.collections, req.user.id, 'book', [book._id]);
       return toRecipeBook(book, { isFavorite: favSet.has(book._id.toString()) });
     },
@@ -138,6 +149,64 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       if (book.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'owner only' });
       }
+
+      const [liveShares, owner] = await Promise.all([
+        app.collections.sharedItems
+          .find({ resourceId: _id, status: 'accepted', savedAt: null })
+          .toArray(),
+        app.collections.users.findOne(
+          { _id: new ObjectId(req.user.id) },
+          { projection: { displayName: 1 } },
+        ),
+      ]);
+
+      // Auto-save a copy for every live-link friend and notify them
+      await Promise.all(
+        liveShares.map(async (share) => {
+          try {
+            const now = new Date();
+            const forked: RecipeBookDoc = {
+              ...book,
+              _id: new ObjectId(),
+              ownerId: share.friendId,
+              members: [],
+              createdAt: now,
+              updatedAt: now,
+            };
+            await app.collections.recipeBooks.insertOne(forked);
+            await Promise.all([
+              app.collections.sharedItems.updateOne(
+                { _id: share._id },
+                { $set: { savedAt: now, savedResourceId: forked._id } },
+              ),
+              notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+                fromUserId: req.user.id,
+                fromUserName: owner?.displayName ?? '',
+                resourceType: 'book',
+                resourceName: book.name,
+                savedCopyId: forked._id.toString(),
+              }),
+            ]);
+          } catch {
+            // best-effort — don't block deletion if fork fails
+          }
+        }),
+      );
+
+      // Notify collaborative members (excluding the owner) that the book is gone
+      const collaborators = book.members.filter((m) => m.userId.toString() !== req.user.id);
+      await Promise.all(
+        collaborators.map((m) =>
+          notificationService.send(m.userId.toString(), 'OWNER_DELETED_RESOURCE', {
+            fromUserId: req.user.id,
+            fromUserName: owner?.displayName ?? '',
+            resourceType: 'book',
+            resourceName: book.name,
+            savedCopyId: '',
+          }),
+        ),
+      );
+
       await app.collections.recipeBooks.deleteOne({ _id });
       return reply.code(204).send();
     },
@@ -214,7 +283,23 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         { _id, 'members.userId': { $ne: member.userId } },
         { $push: { members: member }, $set: { updatedAt: new Date() } },
       );
-      const updated = await app.collections.recipeBooks.findOne({ _id });
+
+      const [updated, inviter] = await Promise.all([
+        app.collections.recipeBooks.findOne({ _id }),
+        app.collections.users.findOne(
+          { _id: new ObjectId(req.user.id) },
+          { projection: { displayName: 1 } },
+        ),
+      ]);
+
+      await notificationService.send(req.body.userId, 'BOOK_INVITE', {
+        fromUserId: req.user.id,
+        fromUserName: inviter?.displayName ?? '',
+        bookId: _id.toString(),
+        bookName: book.name,
+        role: req.body.role,
+      });
+
       return toRecipeBook(updated!);
     },
   );
