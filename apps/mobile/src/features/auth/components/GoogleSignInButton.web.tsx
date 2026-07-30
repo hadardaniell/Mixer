@@ -1,8 +1,9 @@
-import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, YStack } from 'tamagui';
+import { Pressable } from 'react-native';
+import { Text, XStack } from 'tamagui';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { authApi } from '@/features/auth/services/authApi';
@@ -15,10 +16,72 @@ interface GoogleSignInButtonProps {
   variant?: 'pill' | 'card';
 }
 
+/**
+ * Google returns here with `?code=…`. It must match an Authorized redirect URI on the
+ * OAuth client exactly, so it's derived from the current origin rather than hardcoded —
+ * that keeps localhost dev and the deployed site on the same code path.
+ */
+function redirectUri(): string {
+  return `${window.location.origin}/login`;
+}
+
+/**
+ * A returned code is single-use, and React can mount this component twice (two auth
+ * screens, or StrictMode). Module scope, not a ref: the guard has to outlive remounts.
+ */
+let exchangeStarted = false;
+
 export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
   const { signIn } = useAuth();
   const [busy, setBusy] = useState(false);
+
+  // Completes the half of the flow that happens after Google redirects back.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (!code || exchangeStarted) return;
+    exchangeStarted = true;
+
+    // Drop the code from the address bar before doing anything else, so a refresh or a
+    // shared link can't replay it.
+    window.history.replaceState({}, '', window.location.pathname);
+
+    setBusy(true);
+    void (async () => {
+      try {
+        const res = await authApi.loginWithGoogleCode({ code, redirectUri: redirectUri() });
+        signIn(res);
+        // Brand-new Google users have no phoneNumber yet — collect it before
+        // letting them into the app.
+        router.replace((res.user.phoneNumber ? '/home' : '/complete-profile') as never);
+      } catch (e) {
+        if (
+          e instanceof HttpError &&
+          e.status === 409 &&
+          (e.body as { error?: string } | undefined)?.error === 'link_requires_password'
+        ) {
+          onError(t('auth.linkRequiresPassword'));
+        } else {
+          onError(t('auth.networkError'));
+        }
+      } finally {
+        setBusy(false);
+      }
+    })();
+    // Runs once on mount: the redirect is a full page load, so there is nothing to re-run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // `ux_mode: 'redirect'` navigates this tab instead of opening a popup. The popup flow
+  // needs the opened window to postMessage back to its opener, which iOS Safari blocks —
+  // the Google tab stays blank and sign-in never completes.
+  const startLogin = useGoogleLogin({
+    flow: 'auth-code',
+    ux_mode: 'redirect',
+    redirect_uri: typeof window === 'undefined' ? undefined : redirectUri(),
+    onError: () => onError(t('auth.networkError')),
+  });
 
   if (!env.googleWebClientId) {
     return (
@@ -28,50 +91,36 @@ export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
     );
   }
 
-  const handleCredential = async (idToken: string) => {
-    if (busy) return;
-    onError('');
-    setBusy(true);
-    try {
-      const res = await authApi.loginWithGoogle({ idToken });
-      signIn(res);
-      // Brand-new Google users have no phoneNumber yet — collect it before
-      // letting them into the app.
-      const next = res.user.phoneNumber ? '/home' : '/complete-profile';
-      router.replace(next as never);
-    } catch (e) {
-      if (
-        e instanceof HttpError &&
-        e.status === 409 &&
-        (e.body as { error?: string } | undefined)?.error === 'link_requires_password'
-      ) {
-        onError(t('auth.linkRequiresPassword'));
-      } else {
-        onError(t('auth.networkError'));
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // Google's GSI library renders its own button (their branding is required for
-  // the idToken flow). We size/shape it to sit alongside the design-system
-  // buttons — rectangular, large, outline.
+  // Mirrors the native button so both platforms look identical. The GSI-rendered button
+  // is not used here: its branding requirement applies to the id-token flow it drives.
   return (
-    <YStack width="100%" alignItems="center" paddingBottom={8}>
-      <GoogleLogin
-        onSuccess={(res) => {
-          if (res.credential) void handleCredential(res.credential);
-          else onError(t('auth.networkError'));
-        }}
-        onError={() => onError(t('auth.networkError'))}
-        text="continue_with"
-        shape="pill"
-        theme="outline"
-        size="large"
-        width="320"
-        useOneTap={false}
-      />
-    </YStack>
+    <Pressable
+      onPress={() => startLogin()}
+      disabled={busy}
+      accessibilityLabel={t('auth.continueWithGoogle')}
+      style={{ paddingBottom: 8 }}
+    >
+      <XStack
+        width="100%"
+        height={54}
+        paddingHorizontal={16}
+        borderRadius={999}
+        alignItems="center"
+        justifyContent="center"
+        gap="$2"
+        backgroundColor="$surface"
+        borderWidth={1}
+        borderColor="$border"
+        opacity={busy ? 0.6 : 1}
+        pressStyle={{ backgroundColor: '$bgSubtle' }}
+      >
+        <Text fontSize={20} fontWeight="700" color="#4285F4">
+          G
+        </Text>
+        <Text color="$text" fontSize={15} fontWeight="600">
+          {t('auth.continueWithGoogle')}
+        </Text>
+      </XStack>
+    </Pressable>
   );
 }

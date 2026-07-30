@@ -1,6 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import {
+  GoogleCodeLoginInputSchema,
   GoogleLoginInputSchema,
   LoginInputSchema,
   RefreshInputSchema,
@@ -8,6 +9,7 @@ import {
 } from '@mixer/contracts';
 import { config } from '../../config.js';
 import {
+  exchangeGoogleCode,
   findOrCreateGoogleUser,
   GoogleLinkRequiresPasswordError,
   hashPassword,
@@ -136,6 +138,39 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
         profile = await verifyGoogleIdToken(req.body.idToken);
       } catch {
         return reply.code(401).send({ error: 'invalid Google id token' });
+      }
+      let user;
+      try {
+        user = await findOrCreateGoogleUser(app.collections, profile);
+      } catch (e) {
+        if (e instanceof GoogleLinkRequiresPasswordError) {
+          return reply.code(409).send({ error: 'link_requires_password' });
+        }
+        throw e;
+      }
+      return issueTokens(app.collections, user, {
+        userAgent: req.headers['user-agent'],
+        ipAddress: req.ip,
+      });
+    },
+  );
+
+  // Browser counterpart to /auth/google: the client hands over an authorization code
+  // instead of an id token, because the popup flow that produces an id token is broken
+  // on iOS Safari. Same outcome, different way of getting the profile.
+  app.post(
+    '/auth/google/code',
+    { schema: { body: GoogleCodeLoginInputSchema, tags: ['auth'] } },
+    async (req, reply) => {
+      if (!config.googleClientId || !config.googleClientSecret) {
+        return reply.code(503).send({ error: 'google sign-in not configured' });
+      }
+      let profile;
+      try {
+        profile = await exchangeGoogleCode(req.body.code, req.body.redirectUri);
+      } catch (e) {
+        req.log.warn({ err: e }, 'google code exchange failed');
+        return reply.code(401).send({ error: 'invalid Google authorization code' });
       }
       let user;
       try {

@@ -1,5 +1,6 @@
 import type {
   AuthResponse,
+  GoogleCodeLoginInput,
   GoogleLoginInput,
   LoginInput,
   PublicUser,
@@ -19,6 +20,14 @@ export const authApi = {
 
   loginWithGoogle: (body: GoogleLoginInput) =>
     http<AuthResponse>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      skipAuth: true,
+    }),
+
+  /** Web redirect flow — the server exchanges the code, so no secret lives in the client. */
+  loginWithGoogleCode: (body: GoogleCodeLoginInput) =>
+    http<AuthResponse>('/auth/google/code', {
       method: 'POST',
       body: JSON.stringify(body),
       skipAuth: true,
