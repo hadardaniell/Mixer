@@ -1,8 +1,8 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as Font from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { I18nManager, Platform } from 'react-native';
+import { I18nManager, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TamaguiProvider, YStack } from 'tamagui';
@@ -16,6 +16,46 @@ import { initI18n, isRTL } from '@/shared/lib/i18n';
 import { SplashGate } from '@/shared/ui/SplashGate';
 import { APP_BACKGROUND_COLOR } from '@/theme/palette';
 import { tamaguiConfig } from '@/theme/tamagui.config';
+
+/**
+ * expo-router renders this in place of a crashed route. Without it a render error is a
+ * blank white screen, which is undebuggable on a device with no console — iOS Safari in
+ * particular. Deliberately built from plain react-native primitives and literal colors:
+ * it must still render when the theme, fonts or i18n are what failed.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: '#1b1b1f' }}
+      contentContainerStyle={{ padding: 24, paddingTop: 72 }}
+    >
+      <Text style={{ color: '#ff8a80', fontSize: 18, fontWeight: '700', marginBottom: 12 }}>
+        Something crashed
+      </Text>
+      <Text style={{ color: '#fff', fontSize: 14, marginBottom: 16 }} selectable>
+        {error.message}
+      </Text>
+      <Text style={{ color: '#b0b0b8', fontSize: 11, lineHeight: 16 }} selectable>
+        {error.stack}
+      </Text>
+      <Pressable
+        onPress={retry}
+        style={{
+          marginTop: 24,
+          alignSelf: 'flex-start',
+          paddingVertical: 10,
+          paddingHorizontal: 20,
+          borderRadius: 8,
+          backgroundColor: '#3a3a42',
+        }}
+      >
+        <View>
+          <Text style={{ color: '#fff', fontSize: 14 }}>Try again</Text>
+        </View>
+      </Pressable>
+    </ScrollView>
+  );
+}
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);

@@ -86,7 +86,7 @@ jobs:
             --image "$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/api:$GITHUB_SHA" \
             --region "$REGION" --platform managed --allow-unauthenticated \
             --port 8080 --memory 1Gi --cpu 1 --timeout 300 \
-            --set-env-vars "^##^MONGO_URL=${{ secrets.MONGO_URL }}##MONGO_DB=${{ secrets.MONGO_DB }}##JWT_SECRET=${{ secrets.JWT_SECRET }}##GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}##PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}##FIREBASE_PROJECT_ID=$PROJECT_ID##AI_BASE_URL=$AI_URL"
+            --set-env-vars "^##^MONGO_URL=${{ secrets.MONGO_URL }}##MONGO_DB=${{ secrets.MONGO_DB }}##JWT_SECRET=${{ secrets.JWT_SECRET }}##GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}##GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}##PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}##FIREBASE_PROJECT_ID=$PROJECT_ID##AI_BASE_URL=$AI_URL"
 
   web:
     name: Deploy web (Firebase Hosting)

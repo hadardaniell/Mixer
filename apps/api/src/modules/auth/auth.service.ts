@@ -44,6 +44,39 @@ export async function verifyGoogleIdToken(idToken: string): Promise<GoogleProfil
   };
 }
 
+/**
+ * Trade an authorization code for the user's profile. Used by the web redirect flow —
+ * the exchange has to happen server-side because it requires the client secret.
+ */
+export async function exchangeGoogleCode(
+  code: string,
+  redirectUri: string,
+): Promise<GoogleProfile> {
+  if (!config.googleClientId || !config.googleClientSecret) {
+    throw new Error('google code exchange not configured');
+  }
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: config.googleClientId,
+      client_secret: config.googleClientSecret,
+      // Must match the redirect_uri used to obtain the code, or Google rejects it.
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`google token exchange failed: ${res.status}`);
+  }
+  const body = (await res.json()) as { id_token?: string };
+  if (!body.id_token) {
+    throw new Error('google token exchange returned no id_token');
+  }
+  return verifyGoogleIdToken(body.id_token);
+}
+
 export async function findOrCreateGoogleUser(
   collections: Collections,
   profile: GoogleProfile,

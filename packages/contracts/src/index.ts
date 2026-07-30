@@ -77,6 +77,19 @@ export const GoogleLoginInputSchema = z.object({
 });
 export type GoogleLoginInput = z.infer<typeof GoogleLoginInputSchema>;
 
+/**
+ * Browser sign-in via the authorization-code redirect. The popup/id-token flow above
+ * needs the opened window to talk back to its opener, which iOS Safari breaks — the
+ * Google tab just goes blank. A redirect works everywhere; the server exchanges the
+ * code, so the client secret never reaches the browser.
+ */
+export const GoogleCodeLoginInputSchema = z.object({
+  code: z.string().min(1),
+  // Google requires the exact redirect_uri from the authorize step in the exchange.
+  redirectUri: z.string().url(),
+});
+export type GoogleCodeLoginInput = z.infer<typeof GoogleCodeLoginInputSchema>;
+
 export const CreateUserAsAdminInputSchema = z.object({
   email: z.string().email(),
   displayName: z.string().min(1).max(80),

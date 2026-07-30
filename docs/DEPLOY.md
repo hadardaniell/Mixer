@@ -67,7 +67,8 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 | `MONGO_URL` | from `apps/api/.env` |
 | `MONGO_DB` | from `apps/api/.env` |
 | `JWT_SECRET` | from `apps/api/.env` |
-| `GOOGLE_CLIENT_ID` | from `apps/api/.env` (optional — Google sign-in) |
+| `GOOGLE_CLIENT_ID` | the **web** client id — both web and native request their id token for it |
+| `GOOGLE_CLIENT_SECRET` | that same web client's secret — the server needs it for the browser code exchange |
 | `PEXELS_API_KEY` | from `apps/api/.env` (optional) |
 | `GROQ_API_KEY` | from `apps/ai/.env` |
 | `GEMINI_API_KEY` | from `apps/ai/.env` |
