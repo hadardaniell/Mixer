@@ -2,6 +2,23 @@ import { useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 
 import { fetchAiHealth, fetchHello } from '../src/api';
+import { storage, StorageKeys } from '@/shared/config/storage';
+
+const PROBE_KEY = 'debug.storageProbe';
+
+/**
+ * Does key/value storage actually survive an app restart? On a device with no console
+ * there is no other way to tell a browser that discards storage apart from code that
+ * clears it. Reports presence only — never the token values.
+ */
+function readStorageReport(): string[] {
+  return [
+    `probe: ${storage.getString(PROBE_KEY) ?? '— none —'}`,
+    `accessToken: ${storage.getString(StorageKeys.authAccessToken) ? 'present' : 'missing'}`,
+    `refreshToken: ${storage.getString(StorageKeys.authRefreshToken) ? 'present' : 'missing'}`,
+    `user: ${storage.getString(StorageKeys.authUser) ? 'present' : 'missing'}`,
+  ];
+}
 
 type Status =
   | { kind: 'idle' }
@@ -12,6 +29,7 @@ type Status =
 export default function Debug() {
   const [api, setApi] = useState<Status>({ kind: 'idle' });
   const [ai, setAi] = useState<Status>({ kind: 'idle' });
+  const [storageReport, setStorageReport] = useState<string[]>(readStorageReport);
 
   const callApi = async () => {
     setApi({ kind: 'loading' });
@@ -56,6 +74,23 @@ export default function Debug() {
         />
         <StatusLine status={ai} />
       </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Session storage</Text>
+        <Button
+          title="Write probe"
+          onPress={() => {
+            storage.set(PROBE_KEY, new Date().toISOString());
+            setStorageReport(readStorageReport());
+          }}
+        />
+        <Button title="Refresh reading" onPress={() => setStorageReport(readStorageReport())} />
+        {storageReport.map((line) => (
+          <Text key={line} style={styles.mono}>
+            {line}
+          </Text>
+        ))}
+      </View>
     </View>
   );
 }
@@ -73,4 +108,5 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '600' },
   ok: { fontSize: 15, color: '#1a7f37' },
   err: { fontSize: 13, color: '#cf222e' },
+  mono: { fontSize: 13, color: '#374151' },
 });
