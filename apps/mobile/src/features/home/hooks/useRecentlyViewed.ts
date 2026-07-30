@@ -2,6 +2,7 @@ import type { Recipe } from '@mixer/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
+import { tokens } from '@/features/auth/services/tokens';
 import { feedApi } from '@/features/home/api/feedApi';
 import {
   getRecentlyViewed,
@@ -24,7 +25,10 @@ export function useRecentlyViewed(limit = MAX_HOME_PREVIEW): {
   const [entries, setEntries] = useState<RecentlyViewedEntry[]>(() => getRecentlyViewed());
 
   useEffect(() => {
-    return subscribeRecentlyViewed(() => setEntries(getRecentlyViewed()));
+    const reread = () => setEntries(getRecentlyViewed());
+    // The list is stored per account, so signing in or out swaps which one is current.
+    const unsubs = [subscribeRecentlyViewed(reread), tokens.subscribe(reread)];
+    return () => unsubs.forEach((u) => u());
   }, []);
 
   const ids = useMemo(() => entries.slice(0, limit).map((e) => e.recipeId), [entries, limit]);
