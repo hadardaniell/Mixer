@@ -19,6 +19,7 @@ export const notificationsValidator: CollectionValidator = {
             'FRIEND_REQUEST',
             'FRIEND_ACCEPTED',
             'FRIEND_UNFRIENDED',
+            'BOOK_INVITE',
           ],
         },
         payload: { bsonType: 'object' },

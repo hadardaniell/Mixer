@@ -135,7 +135,16 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   try {
     await collections.recipes.createIndex(
       { title: 'text', description: 'text', tags: 'text' },
-      { name: 'recipe_text', weights: { title: 10, tags: 4, description: 1 } },
+      {
+        name: 'recipe_text',
+        weights: { title: 10, tags: 4, description: 1 },
+        // RecipeDoc has a `language` field ('he'|'en'). MongoDB would normally read
+        // that field to pick a stemmer, but 'he' is not a supported text-search
+        // language (code 17262). Point language_override at a non-existent field and
+        // disable stemming entirely so the index works for both Hebrew and English.
+        default_language: 'none',
+        language_override: 'searchLanguage',
+      },
     );
   } catch (e: any) {
     // 85 IndexOptionsConflict / 86 IndexKeySpecsConflict: an equivalent text
@@ -149,6 +158,14 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   // Friendship docs use `addresseeId` (not `recipientId`). The unique pair index
   // dedupes same-direction requests; the reverse direction is guarded in the
   // service before insert. `addresseeId + status` backs the incoming-requests query.
+  // Drop stale index from before the recipientId → addresseeId rename. Without
+  // this, new docs (which have no recipientId) all land on the same null key and
+  // only the first insert per requester succeeds.
+  try {
+    await collections.friendships.dropIndex('requesterId_1_recipientId_1');
+  } catch (e: any) {
+    if (e?.code !== 27) throw e; // 27 = IndexNotFound — already gone, fine
+  }
   await collections.friendships.createIndex({ requesterId: 1, addresseeId: 1 }, { unique: true });
   await collections.friendships.createIndex({ addresseeId: 1, status: 1 });
 
