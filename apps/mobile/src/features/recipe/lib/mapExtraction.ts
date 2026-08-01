@@ -28,6 +28,7 @@ export function mapExtraction(
   return {
     title: result.title?.trim() || fallbackTitle,
     description: result.description,
+    coverImageUrl: result.imageUrl,
     ingredients: result.ingredients ?? [],
     steps: result.steps ?? [],
     servings: result.servings,

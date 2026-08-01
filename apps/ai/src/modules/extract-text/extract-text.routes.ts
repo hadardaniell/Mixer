@@ -8,6 +8,7 @@ import {
   type ExtractFromUrlInput,
 } from '@mixer/contracts';
 import { extractRecipeFromText } from './extract-text.service.js';
+import { extractImageUrlFromUrl } from './url-image.service.js';
 import { downloadService, MAX_VIDEO_DURATION_SECONDS } from '../../download.service.js';
 import { videoLlamaService } from '../../videoLlama.service.js';
 
@@ -164,7 +165,9 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             }
 
             app.log.info(`[extract/url] Sending YouTube URL directly to Gemini`);
-            return await videoLlamaService.extractRecipeFromYouTube(url);
+            const recipe = await videoLlamaService.extractRecipeFromYouTube(url);
+            const imageUrl = await extractImageUrlFromUrl(url);
+            return { ...recipe, imageUrl: recipe.imageUrl || imageUrl };
           }
 
           app.log.info(`[extract/url] Starting download and frame extraction for video URL: ${url}`);
@@ -172,7 +175,9 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           tempDirectory = tempDir;
 
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
-          return await videoLlamaService.extractRecipe(audioPath, framePaths);
+          const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths);
+          const imageUrl = await extractImageUrlFromUrl(url);
+          return { ...recipe, imageUrl: recipe.imageUrl || imageUrl };
         } catch (error) {
           if (error instanceof Error && error.message === 'not_a_recipe') {
             return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
@@ -185,7 +190,9 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             const text = await fetchWebpageText(url);
 
             app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
-            return await extractRecipeFromText(text);
+            const recipe = await extractRecipeFromText(text);
+            const imageUrl = await extractImageUrlFromUrl(url, text);
+            return { ...recipe, imageUrl: recipe.imageUrl || imageUrl };
           } catch (fallbackError) {
             if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
               return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });
@@ -206,7 +213,9 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           const text = await fetchWebpageText(url);
 
           app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
-          return await extractRecipeFromText(text);
+          const recipe = await extractRecipeFromText(text);
+          const imageUrl = await extractImageUrlFromUrl(url, text);
+          return { ...recipe, imageUrl: recipe.imageUrl || imageUrl };
         } catch (error) {
           if (error instanceof Error && error.message === 'not_a_recipe') {
             return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });

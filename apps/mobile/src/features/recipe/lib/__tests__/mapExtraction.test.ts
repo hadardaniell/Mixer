@@ -7,6 +7,7 @@ describe('mapExtraction', () => {
     const rawResult: ExtractFromTextResult = {
       title: 'פנקייק אוורירי',
       description: 'מתכון מהיר לפנקייקים',
+      imageUrl: 'https://example.com/pancake.jpg',
       ingredients: [{ name: 'קמח', amount: 1, unit: 'כוס' }],
       steps: [{ order: 1, text: 'ערבב בקערה' }],
       servings: 4,
@@ -19,6 +20,7 @@ describe('mapExtraction', () => {
     const mapped = mapExtraction(rawResult, 'he', 'manual', 'מתכון ללא שם');
 
     expect(mapped.title).toBe('פנקייק אוורירי');
+    expect(mapped.coverImageUrl).toBe('https://example.com/pancake.jpg');
     expect(mapped.visibility).toBe('private');
     expect(mapped.status).toBe('draft');
     expect(mapped.language).toBe('he');

@@ -11,19 +11,21 @@ const execAsync = promisify(exec);
 export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90s), Shorts (3min), TikToks
 
 export const downloadService = {
-  async getVideoInfo(url: string): Promise<{ duration: number; title: string }> {
+  async getVideoInfo(url: string): Promise<{ duration: number; title: string; thumbnail?: string }> {
     const info = await ytDlp(url, {
       dumpSingleJson: true,
       skipDownload: true,
       noWarnings: true,
       noCheckCertificate: true,
       impersonate: 'chrome',
+      extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
     } as any);
 
     const parsed = typeof info === 'string' ? JSON.parse(info) : info as any;
     return {
       duration: parsed.duration ?? 0,
       title: parsed.title ?? '',
+      thumbnail: parsed.thumbnail || parsed.thumbnails?.[0]?.url,
     };
   },
 

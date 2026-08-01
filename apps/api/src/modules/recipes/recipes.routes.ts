@@ -622,9 +622,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req, reply) => {
       const { url } = req.body;
 
-      // Check global cache first — if any user already extracted this URL, reuse it
+      // Check global cache first — if any user already extracted this URL with imageUrl, reuse it
       const cached = await app.collections.urlExtractionCache.findOne({ url });
-      if (cached) {
+      if (cached && (cached.extraction as Record<string, unknown>)?.imageUrl) {
         app.log.info(`[import/url] Cache hit for ${url}`);
         return ExtractFromTextResultSchema.parse(cached.extraction);
       }
@@ -649,9 +649,13 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       const extraction = await response.json() as Record<string, unknown>;
 
-      // Save to cache so future requests skip the AI call
+      // Save/update cache so future requests skip the AI call
       await app.collections.urlExtractionCache
-        .insertOne({ _id: new ObjectId(), url, extraction, extractedAt: new Date() })
+        .updateOne(
+          { url },
+          { $set: { url, extraction, extractedAt: new Date() } },
+          { upsert: true }
+        )
         .catch(() => {}); // ignore duplicate-key race (two simultaneous requests for same URL)
 
       return ExtractFromTextResultSchema.parse(extraction);
