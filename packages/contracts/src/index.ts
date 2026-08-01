@@ -298,6 +298,7 @@ export type ExtractFromTextInput = z.infer<typeof ExtractFromTextInputSchema>;
 export const ExtractFromTextResultSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
+  imageUrl: z.string().url().optional(),
   ingredients: z.array(z.object({
     name: z.string(),
     amount: z.number().optional(),

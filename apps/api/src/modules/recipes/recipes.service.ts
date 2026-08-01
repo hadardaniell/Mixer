@@ -30,6 +30,12 @@ export async function generateAndStoreCoverImage(
   recipeId: ObjectId,
   recipe: { title: string; description?: string; cuisine?: string; ingredients?: Array<{ name: string }> }
 ): Promise<void> {
+  const pexelsKey = config.pexelsApiKey || process.env.PEXELS_API_KEY;
+  if (!pexelsKey) {
+    // Pexels API key is not configured — skip background stock cover fetching
+    return;
+  }
+
   try {
     const aiResponse = await fetch(`${config.aiBaseUrl}/suggest-keyword`, {
       method: 'POST',
@@ -68,6 +74,11 @@ export async function generateAndStoreCoverImage(
       );
     }
   } catch (err) {
-    console.error('[RecipeService] Failed to upload auto cover to Firebase:', err);
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('default credentials')) {
+      console.warn('[RecipeService] Firebase Storage credentials missing — skipped uploading auto cover');
+    } else {
+      console.error('[RecipeService] Failed to upload auto cover to Firebase:', message);
+    }
   }
 }
