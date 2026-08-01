@@ -106,8 +106,18 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         if (error instanceof Error && error.message === 'not_a_recipe') {
           return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
         }
-        app.log.error(error);
-        return reply.code(500).send({ error: 'Failed to process video' });
+        app.log.warn(`[extract/video] Video processing failed for ${url} — falling back to text scraping`);
+        try {
+          const text = await fetchWebpageText(url);
+          const recipe = await extractRecipeFromText(text);
+          return reply.send(recipe);
+        } catch (fallbackError) {
+          if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
+            return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
+          }
+          app.log.error(fallbackError);
+          return reply.code(500).send({ error: 'Failed to process video' });
+        }
       } finally {
         if (tempDirectory) {
           await fs.rm(tempDirectory, { recursive: true, force: true }).catch(err => {
@@ -167,8 +177,22 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           if (error instanceof Error && error.message === 'not_a_recipe') {
             return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
           }
-          app.log.error(error);
-          throw new Error('Failed to process video URL');
+          app.log.warn(
+            `[extract/url] Video processing failed for ${url} (${error instanceof Error ? error.message : error}) — falling back to text scraping`,
+          );
+          try {
+            app.log.info(`[extract/url] Scraping text from webpage URL (fallback): ${url}`);
+            const text = await fetchWebpageText(url);
+
+            app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
+            return await extractRecipeFromText(text);
+          } catch (fallbackError) {
+            if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
+              return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });
+            }
+            app.log.error(fallbackError);
+            throw new Error('Failed to process video URL');
+          }
         } finally {
           if (tempDirectory) {
             await fs.rm(tempDirectory, { recursive: true, force: true }).catch(err => {
