@@ -34,7 +34,7 @@ export function CreateFromTextScreen() {
     setError(null);
     try {
       const recipe = await create.mutateAsync({
-        extract: () => feedApi.importText(text.trim()),
+        extract: () => feedApi.importText(text.trim(), language),
         sourceType: 'text',
       });
       router.replace(`/recipes/${recipe.id}` as never);

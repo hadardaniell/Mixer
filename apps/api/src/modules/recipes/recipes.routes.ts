@@ -672,7 +672,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const response = await fetch(`${config.aiBaseUrl}/extract/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: req.body.text }),
+        body: JSON.stringify({ text: req.body.text, locale: req.body.locale }),
       });
 
       if (!response.ok) {
@@ -688,6 +688,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/recipes/import/image',
     {
+      bodyLimit: 10 * 1024 * 1024,
       onRequest: [app.authenticate],
       schema: {
         body: ExtractFromImageInputSchema,
@@ -699,7 +700,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const response = await fetch(`${config.aiBaseUrl}/extract/image`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: req.body.images }),
+        body: JSON.stringify({ images: req.body.images, locale: req.body.locale }),
       });
 
       if (!response.ok) {
