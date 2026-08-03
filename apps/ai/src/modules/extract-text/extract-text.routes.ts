@@ -52,11 +52,12 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (req, reply) => {
       try {
-        return await extractRecipeFromText(req.body.text);
+        return await extractRecipeFromText(req.body.text, req.body.locale);
       } catch (err) {
         if (err instanceof Error && err.message === 'not_a_recipe') {
           return reply.code(422).send({ error: 'The provided text does not appear to contain a recipe.' });
         }
+        console.error('[extract-text] unexpected error:', err instanceof Error ? err.message : err);
         throw err;
       }
     },

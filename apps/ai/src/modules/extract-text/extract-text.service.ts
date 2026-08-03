@@ -20,7 +20,7 @@ function getGroqClient(): Groq {
   return groqClient;
 }
 
-const SYSTEM_PROMPT = `You are a recipe extraction assistant.
+const BASE_PROMPT = `You are a recipe extraction assistant.
 The user will give you raw text that may or may not contain a recipe.
 First decide if the text contains a recipe. Then return a valid JSON object:
 
@@ -44,17 +44,23 @@ If it is NOT a recipe (e.g. a news article, social media post, lyrics, random te
 
 Return ONLY the JSON object, no explanation, no markdown, no code blocks.
 If a field cannot be determined from the text, omit it.
-Important: the input text may be in any language (including Hebrew). Keep title, description, ingredients, steps, tags and cuisine in the same language as the input — e.g. for a Hebrew recipe, the tags must be Hebrew words. However, the "difficulty" field must always be one of: "easy", "medium", "hard" — in English, regardless of input language.`;
+The "difficulty" field must always be one of: "easy", "medium", "hard" — in English.`;
+
+function buildPrompt(locale: string): string {
+  const lang = locale === 'he' ? 'Hebrew (עברית)' : 'English';
+  return `${BASE_PROMPT}\nIMPORTANT: Output ALL text fields (title, description, ingredients, steps, tags, cuisine) in ${lang}, regardless of the language of the input text.`;
+}
 
 export async function extractRecipeFromText(
   text: string,
+  locale = 'en',
 ): Promise<ExtractFromTextResult> {
   const groq = getGroqClient();
 
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: buildPrompt(locale) },
       { role: 'user', content: text },
     ],
     temperature: 0.2,
