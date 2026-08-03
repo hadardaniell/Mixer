@@ -112,5 +112,16 @@ export function getNotificationContent(n: Notification, t: TFunction): Notificat
         body: t('notifications.items.friendUnfriended.body', { name: n.payload.fromUserName }),
         avatar: { url: n.payload.fromUserAvatar, name: n.payload.fromUserName },
       };
+    case 'BOOK_INVITE':
+      return {
+        Icon: Bookmark,
+        color: 'info',
+        title: t('notifications.items.bookInvite.title'),
+        body: t('notifications.items.bookInvite.body', {
+          name: n.payload.fromUserName,
+          book: n.payload.bookName,
+        }),
+        route: `/books/${n.payload.bookId}`,
+      };
   }
 }

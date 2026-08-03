@@ -159,6 +159,16 @@ export type UrlExtractionCacheDoc = {
   extractedAt: Date;
 };
 
+export type PushTokenDoc = {
+  _id: ObjectId;
+  userId: ObjectId;
+  token: string;
+  deviceId: string;
+  platform: 'ios' | 'android';
+  createdAt: Date;
+  lastSeenAt: Date;
+};
+
 export type NotificationDoc = {
   _id: ObjectId;
   userId: ObjectId;

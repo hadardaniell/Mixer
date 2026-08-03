@@ -46,4 +46,5 @@ export const StorageKeys = {
   theme: 'settings.theme',
   recentlyViewedRecipes: 'home.recentlyViewedRecipes',
   shoppingList: 'shopping.list',
+  deviceId: 'device.id',
 } as const;

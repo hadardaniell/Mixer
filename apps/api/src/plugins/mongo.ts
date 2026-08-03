@@ -15,6 +15,7 @@ import type {
   NotificationDoc,
   UrlExtractionCacheDoc,
   RecipeTranslationDoc,
+  PushTokenDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -29,6 +30,7 @@ export type Collections = {
   notifications: Collection<NotificationDoc>;
   urlExtractionCache: Collection<UrlExtractionCacheDoc>;
   recipeTranslations: Collection<RecipeTranslationDoc>;
+  pushTokens: Collection<PushTokenDoc>;
 };
 
 declare module 'fastify' {
@@ -62,6 +64,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     notifications: db.collection<NotificationDoc>('notifications'),
     urlExtractionCache: db.collection<UrlExtractionCacheDoc>('url_extraction_cache'),
     recipeTranslations: db.collection<RecipeTranslationDoc>('recipe_translations'),
+    pushTokens: db.collection<PushTokenDoc>('push_tokens'),
   };
 
   await ensureValidators(app, db);
@@ -178,4 +181,9 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     { expireAfterSeconds: 0, sparse: true },
   );
   await collections.recipeTranslations.createIndex({ recipeId: 1, language: 1 }, { unique: true });
+
+  // Same device upserts its token; never creates a duplicate row per user+device.
+  await collections.pushTokens.createIndex({ userId: 1, deviceId: 1 }, { unique: true });
+  // Fast lookup when Expo reports an invalid token and we need to delete it.
+  await collections.pushTokens.createIndex({ token: 1 });
 }

@@ -37,6 +37,7 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-localization',
+    'expo-notifications',
     [
       '@react-native-google-signin/google-signin',
       { iosUrlScheme },
