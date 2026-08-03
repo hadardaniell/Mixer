@@ -8,6 +8,7 @@ import { categoriesValidator } from './categories.js';
 import { sharedItemsValidator } from './shared-items.js';
 import { notificationsValidator } from './notifications.js';
 import { urlExtractionCacheValidator } from './url-extraction-cache.js';
+import { pushTokensValidator } from './push-tokens.js';
 
 /**
  * Source of truth for the MongoDB collection `$jsonSchema` validators.
@@ -36,6 +37,7 @@ export const collectionValidators: Record<string, CollectionValidator> = {
   shared_items: sharedItemsValidator,
   notifications: notificationsValidator,
   url_extraction_cache: urlExtractionCacheValidator,
+  push_tokens: pushTokensValidator,
 };
 
 export type { CollectionValidator } from './types.js';

@@ -424,6 +424,7 @@ export const NotificationTypeSchema = z.enum([
   'FRIEND_REQUEST',
   'FRIEND_ACCEPTED',
   'FRIEND_UNFRIENDED',
+  'BOOK_INVITE',
 ]);
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 
@@ -463,6 +464,13 @@ export const FriendActivityPayloadSchema = z.object({
   fromUserName: z.string(),
   fromUserAvatar: z.string().nullable(),
 });
+export const BookInvitePayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  bookId: ObjectIdString,
+  bookName: z.string(),
+  role: z.enum(['editor', 'viewer']),
+});
 
 const notificationBase = {
   id: ObjectIdString,
@@ -479,6 +487,7 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   z.object({ ...notificationBase, type: z.literal('FRIEND_REQUEST'), payload: FriendRequestPayloadSchema }),
   z.object({ ...notificationBase, type: z.literal('FRIEND_ACCEPTED'), payload: FriendActivityPayloadSchema }),
   z.object({ ...notificationBase, type: z.literal('FRIEND_UNFRIENDED'), payload: FriendActivityPayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('BOOK_INVITE'), payload: BookInvitePayloadSchema }),
 ]);
 export type Notification = z.infer<typeof NotificationSchema>;
 

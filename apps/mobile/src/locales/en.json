@@ -82,6 +82,10 @@
       "friendUnfriended": {
         "title": "Removed from friends",
         "body": "{{name}} removed you from their friends"
+      },
+      "bookInvite": {
+        "title": "Book invitation",
+        "body": "{{name}} invited you to collaborate on \"{{book}}\""
       }
     }
   },
