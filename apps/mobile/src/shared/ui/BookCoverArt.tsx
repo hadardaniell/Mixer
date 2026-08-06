@@ -13,8 +13,10 @@ import {
   PizzaIcon,
   WineIcon,
 } from 'phosphor-react-native';
-import { Image } from 'react-native';
 import { View } from 'tamagui';
+
+import { useIsRtl } from '@/shared/lib/useIsRtl';
+import { BlobShape } from '@/shared/ui/BlobShape';
 
 /**
  * Book covers are composed, not uploaded: the user picks a color and an icon,
@@ -86,73 +88,67 @@ interface BookCoverArtProps {
    *  glyph. The View itself fills its parent, so the parent sets the box. */
   size: number;
   radius?: number;
-  /** Cover photos of the book's first recipes. With two or more, they become the
-   *  cover and the chosen color narrows to an edge stripe. */
-  images?: string[];
 }
 
-/** Width of the color stripe along the inner edge, as a share of the cover. */
-const EDGE_RATIO = 0.033;
-const MIN_MOSAIC_IMAGES = 2;
+/** Blob size and disc size, as shares of the cover box. */
+const BLOB_RATIO = 0.62;
+const DISC_RATIO = 0.33;
 
 /**
- * Renders a book cover. What a cover says depends on what the book has:
+ * Renders a book cover from its `coverKey`, in the same composition as
+ * `BlobActionCard`: a soft blob in the chosen color anchored past the top corner so
+ * the card crops it, and a solid ink disc carrying the chosen glyph in the middle.
  *
- * - **With photos** — a mosaic of up to four recipe images, and the chosen color
- *   as a stripe along the inner edge. The cover shows what's *in* the book, and
- *   the color stays as the thread back to the book's own page.
- * - **Without photos** — the composed cover: the chosen color as a field with the
- *   chosen glyph. New books and text-only imports live here, so it isn't a
- *   degraded state — for many books it's the only state.
+ * The contrast is the point — a pastel silhouette under a hard near-black circle.
+ * A flat color panel made book covers the one object in the app speaking their own
+ * language; this puts them back in the system's.
  *
- * The glyph is drawn `weight="fill"`: at these sizes a line glyph reads as a
- * faint scratch rather than as a mark.
+ * Two traps, both documented on `BlobActionCard` and both hit here:
+ * `left`/`right` rather than `start`/`end`, because Tamagui doesn't resolve logical
+ * inset props for absolute positioning; and the clipping stays on this view while the
+ * shadow lives on the card outside it.
  */
-export function BookCoverArt({ coverKey, size, radius = 0, images }: BookCoverArtProps) {
+export function BookCoverArt({ coverKey, size, radius = 0 }: BookCoverArtProps) {
+  const isRtl = useIsRtl();
   const { color, icon: Icon } = decodeCover(coverKey);
-  const glyph = size * 0.46;
-  const photos = (images ?? []).filter(Boolean).slice(0, 4);
 
-  if (photos.length >= MIN_MOSAIC_IMAGES) {
-    return (
-      <View width="100%" height="100%" borderRadius={radius} overflow="hidden">
-        <View flex={1} flexDirection="row" flexWrap="wrap">
-          {photos.map((uri, i) => (
-            <View
-              key={`${uri}-${i}`}
-              // Two across, two down. An odd third photo takes the full bottom row
-              // rather than leaving a hole.
-              width={photos.length === 3 && i === 2 ? '100%' : '50%'}
-              height={photos.length <= 2 ? '100%' : '50%'}
-            >
-              <Image source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-            </View>
-          ))}
-        </View>
-        {/* `end`: the stripe hugs the edge that meets the text, and flips with RTL. */}
-        <View
-          position="absolute"
-          top={0}
-          bottom={0}
-          end={0}
-          width={Math.max(3, size * EDGE_RATIO)}
-          backgroundColor={color.deep}
-        />
-      </View>
-    );
-  }
+  const blob = size * BLOB_RATIO;
+  const disc = size * DISC_RATIO;
+  // Hug the corner on the card's trailing side, the way the mood board frames it.
+  const cornerSide = isRtl ? { left: -blob * 0.18 } : { right: -blob * 0.18 };
 
   return (
     <View
       width="100%"
       height="100%"
       borderRadius={radius}
-      backgroundColor={color.tint}
+      backgroundColor="$surface"
       alignItems="center"
       justifyContent="center"
       overflow="hidden"
     >
-      <Icon size={glyph} color={color.deep} weight="fill" />
+      <View position="absolute" top={-blob * 0.16} {...cornerSide}>
+        <BlobShape size={blob} color={color.tint} variant={blobVariant(coverKey)} />
+      </View>
+
+      <View
+        width={disc}
+        height={disc}
+        borderRadius={999}
+        backgroundColor="$text"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Icon size={disc * 0.52} color="#FFFFFF" weight="regular" />
+      </View>
     </View>
   );
+}
+
+/** Spreads the four silhouettes across books so a shelf never looks stamped. */
+function blobVariant(coverKey?: string): number {
+  const key = coverKey ?? '';
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) hash = (hash + key.charCodeAt(i)) % 4;
+  return hash;
 }

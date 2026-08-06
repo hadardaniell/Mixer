@@ -117,11 +117,7 @@ export function BookCard({
         pressStyle={{ opacity: 0.92, scale: 0.98 }}
       >
         <YStack height={VERTICAL_COVER} width="100%">
-          <BookCoverArt
-            coverKey={book.coverKey}
-            size={VERTICAL_COVER}
-            images={book.coverImages}
-          />
+          <BookCoverArt coverKey={book.coverKey} size={VERTICAL_COVER} />
         </YStack>
         <YStack
           padding={12}
@@ -166,11 +162,7 @@ export function BookCard({
         style={{ direction: 'ltr' } as never}
       >
         <YStack width={HORIZONTAL_COVER} height="100%">
-          <BookCoverArt
-            coverKey={book.coverKey}
-            size={HORIZONTAL_COVER}
-            images={book.coverImages}
-          />
+          <BookCoverArt coverKey={book.coverKey} size={HORIZONTAL_COVER} />
         </YStack>
 
         <YStack

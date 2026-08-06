@@ -62,21 +62,20 @@ export function BookHero({
   const visible = members.slice(0, MAX_AVATARS);
   const extra = Math.max(0, members.length - visible.length);
 
-  // The header wears the book's own colour — the counterpart to the edge stripe on its
-  // cover in the feed, and the one place the user's choice gets room to mean something.
-  // Deliberately unlike the app's white chrome: a book is content, and its identity is
-  // the point.
+  // The book's colour appears three times and nowhere else: the glyph beside the title,
+  // a short rule under it, and the outline of the members pill. A full colour field made
+  // the header shout; the canvas stays white like every other screen, and the choice
+  // still reads at a glance.
   const { color, icon: CoverIcon } = decodeCover(book.coverKey);
-  const ON_COLOR = '#FFFFFF';
 
   return (
-    <YStack width="100%" backgroundColor={color.deep} paddingBottom={18}>
+    <YStack width="100%">
 
       <YStack paddingHorizontal={20} paddingTop={16} gap={12}>
         <XStack alignItems="center" gap="$3">
           <Text
             flex={1}
-            color={ON_COLOR}
+            color="$text"
             fontSize={26}
             fontWeight="700"
             letterSpacing={-0.5}
@@ -85,7 +84,7 @@ export function BookHero({
             {book.name}
           </Text>
 
-          <CoverIcon size={34} color={ON_COLOR} weight="fill" />
+          <CoverIcon size={30} color={color.deep} weight="regular" />
 
           {/* Pencil then star, so the star lands on the outer edge of the row.
               The edit pencil only shows for owners and editors. */}
@@ -101,7 +100,7 @@ export function BookHero({
                 justifyContent="center"
                 pressStyle={{ opacity: 0.7 }}
               >
-                <Pencil size={22} color={ON_COLOR} strokeWidth={2} />
+                <Pencil size={22} color={theme.textMuted?.val as string} strokeWidth={2} />
               </YStack>
             ) : null}
             <FavoriteButton
@@ -113,15 +112,17 @@ export function BookHero({
           </XStack>
         </XStack>
 
-        {/* Secondary text on a saturated ground: white at reduced opacity rather than a
-            grey token, which would muddy against the colour. */}
+        {/* The one piece of colour that isn't attached to a control: short enough to read
+            as a mark under the title rather than as a divider across the screen. */}
+        <YStack width={44} height={3} borderRadius={999} backgroundColor={color.deep} />
+
         {book.description ? (
-          <Text color={ON_COLOR} opacity={0.9} fontSize={15} lineHeight={21}>
+          <Text color="$textMuted" fontSize={15} lineHeight={21}>
             {book.description}
           </Text>
         ) : null}
 
-        <Text color={ON_COLOR} opacity={0.85} fontSize={13}>
+        <Text color="$textMuted" fontSize={13}>
           {t('book.counts', { recipes: recipeCount, members: members.length })}
         </Text>
 
@@ -168,16 +169,16 @@ export function BookHero({
               height={36}
               paddingHorizontal={14}
               borderRadius={999}
-              backgroundColor="transparent"
+              backgroundColor="$surface"
               borderWidth={1.5}
-              borderColor={ON_COLOR}
-              opacity={0.92}
-              pressStyle={{ opacity: 0.7 }}
+              borderColor={color.deep}
+              pressStyle={{ backgroundColor: '$bgSubtle' }}
             >
-              {/* Outlined in white on the book's colour. It used to be pinned to
-                  `$primary`, which made every book's header identical. */}
-              <Plus size={16} color={ON_COLOR} strokeWidth={2.5} />
-              <Text color={ON_COLOR} fontSize={14} fontWeight="700">
+              {/* Outlined in the book's colour — it used to be pinned to `$primary`, so
+                  every book's header looked identical. The label stays ink: the book
+                  colours are picked for fills, and several fail 4.5:1 as text. */}
+              <Plus size={16} color={color.deep} strokeWidth={2.5} />
+              <Text color="$text" fontSize={14} fontWeight="700">
                 {t('book.addMembers')}
               </Text>
             </XStack>
