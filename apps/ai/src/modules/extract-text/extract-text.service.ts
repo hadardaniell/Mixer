@@ -3,6 +3,7 @@ import {
   ExtractFromTextResultSchema,
   type ExtractFromTextResult,
 } from '@mixer/contracts';
+import { retryWithBackoff, sanitizeJsonResponse } from '../../utils/retry.utils.js';
 
 let groqClient: Groq | undefined;
 
@@ -57,25 +58,31 @@ export async function extractRecipeFromText(
 ): Promise<ExtractFromTextResult> {
   const groq = getGroqClient();
 
-  const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    messages: [
-      { role: 'system', content: buildPrompt(locale) },
-      { role: 'user', content: text },
-    ],
-    temperature: 0.2,
-  });
+  const raw = await retryWithBackoff(
+    async () => {
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: buildPrompt(locale) },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.1,
+      });
 
-  const raw = completion.choices[0]?.message?.content;
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('AI returned an empty response');
+      }
+      return content;
+    },
+    { retries: 3, initialDelayMs: 1000 },
+  );
 
-  if (!raw) {
-    throw new Error('AI returned an empty response');
-  }
-
+  const cleaned = sanitizeJsonResponse(raw);
   let parsed: unknown;
 
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(cleaned);
   } catch {
     throw new Error('AI returned invalid JSON');
   }

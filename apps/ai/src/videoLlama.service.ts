@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'node:fs';
+import { retryWithBackoff, sanitizeJsonResponse } from './utils/retry.utils.js';
 
 const recipeSchema: Schema = {
   type: SchemaType.OBJECT,
@@ -58,6 +59,7 @@ function getModel(apiKey: string) {
     generationConfig: {
       responseMimeType: 'application/json',
       responseSchema: recipeSchema,
+      temperature: 0.1,
     },
   });
 }
@@ -84,19 +86,30 @@ export const videoLlamaService = {
       );
     }
 
-    const uploadResults = await Promise.all(uploadPromises);
+    const uploadResults = await retryWithBackoff(
+      () => Promise.all(uploadPromises),
+      { retries: 3, initialDelayMs: 1000 },
+    );
+
     const parts = uploadResults.map((res) => ({
       fileData: { mimeType: res.file.mimeType, fileUri: res.file.uri },
     }));
 
-    const result = await model.generateContent([...parts, { text: RECIPE_PROMPT }]);
+    try {
+      const result = await retryWithBackoff(
+        () => model.generateContent([...parts, { text: RECIPE_PROMPT }]),
+        { retries: 3, initialDelayMs: 1500 },
+      );
 
-    if (result.response.usageMetadata) {
-      console.log(`📊 [Video AI] Tokens: ${result.response.usageMetadata.totalTokenCount} total`);
+      if (result.response.usageMetadata) {
+        console.log(`📊 [Video AI] Tokens: ${result.response.usageMetadata.totalTokenCount} total`);
+      }
+
+      const rawText = sanitizeJsonResponse(result.response.text());
+      return assertRecipe(JSON.parse(rawText));
+    } finally {
+      await Promise.all(uploadResults.map((res) => fileManager.deleteFile(res.file.name).catch(() => {})));
     }
-
-    await Promise.all(uploadResults.map((res) => fileManager.deleteFile(res.file.name).catch(() => {})));
-
-    return assertRecipe(JSON.parse(result.response.text()));
   },
 };
+

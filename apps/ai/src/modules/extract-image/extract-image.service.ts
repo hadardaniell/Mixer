@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { ExtractFromTextResultSchema, type ExtractFromTextResult } from '@mixer/contracts';
+import { retryWithBackoff, sanitizeJsonResponse } from '../../utils/retry.utils.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -81,17 +82,22 @@ export async function extractRecipeFromImages(
   images: Array<{ imageBase64: string; mimeType: string }>,
   locale = 'en',
 ): Promise<ExtractFromTextResult> {
-  const result = await model.generateContent([
-    buildPrompt(locale),
-    ...images.map((img) => ({
-      inlineData: { mimeType: img.mimeType, data: img.imageBase64 },
-    })),
-    images.length > 1
-      ? 'Extract the complete recipe from all these photos combined.'
-      : 'Extract the recipe from this photo.',
-  ]);
+  const result = await retryWithBackoff(
+    () =>
+      model.generateContent([
+        buildPrompt(locale),
+        ...images.map((img) => ({
+          inlineData: { mimeType: img.mimeType, data: img.imageBase64 },
+        })),
+        images.length > 1
+          ? 'Extract the complete recipe from all these photos combined.'
+          : 'Extract the recipe from this photo.',
+      ]),
+    { retries: 3, initialDelayMs: 1000 },
+  );
 
-  const parsed = JSON.parse(result.response.text()) as Record<string, unknown>;
+  const rawText = sanitizeJsonResponse(result.response.text());
+  const parsed = JSON.parse(rawText) as Record<string, unknown>;
 
   if (parsed.isRecipe === false) {
     throw new Error(parsed.reason === 'different_recipes' ? 'images_not_same_recipe' : 'not_a_recipe');
@@ -99,3 +105,4 @@ export async function extractRecipeFromImages(
 
   return ExtractFromTextResultSchema.parse(parsed);
 }
+
