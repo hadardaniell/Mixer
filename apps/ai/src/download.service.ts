@@ -73,28 +73,41 @@ export const downloadService = {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mixer-import-'));
     const outputPath = path.join(tempDir, 'video.mp4');
 
-    const strategies = [
-      {
-        output: outputPath,
-        format: 'b[height<=480]/b/best[height<=480]/best/worst',
-        noWarnings: true,
-        noCheckCertificate: true,
-        userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-      {
-        output: outputPath,
-        format: 'b/best',
-        noWarnings: true,
-        noCheckCertificate: true,
-      },
-      {
-        output: outputPath,
-        noWarnings: true,
-        noCheckCertificate: true,
-        extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
-      },
-    ];
+    const isTikTok = url.toLowerCase().includes('tiktok.com');
+
+    const strategies = isTikTok
+      ? [
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
+            extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+          },
+        ]
+      : [
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            userAgent:
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
+          },
+        ];
 
     let downloaded = false;
     let lastError: unknown;
@@ -121,11 +134,11 @@ export const downloadService = {
 
     const audioPath = path.join(tempDir, 'audio.mp3');
 
-    // 1. Extract lightweight mono audio track (16kHz, fast upload)
-    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vn -ar 16000 -ac 1 -ab 32k "${audioPath}" -y`).catch(() => {});
-    
-    // 2. Extract lightweight 480p frames every 4 seconds (fps=1/4, low quality q:v 5 for speed)
-    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vf "fps=1/4,scale=480:-1" -q:v 5 "${tempDir}/frame-%03d.jpg" -y`);
+    // 1 & 2. Extract lightweight audio + 480p frames concurrently in parallel for max CPU speed
+    await Promise.all([
+      execAsync(`"${ffmpeg}" -i "${outputPath}" -vn -ar 16000 -ac 1 -ab 32k "${audioPath}" -y`).catch(() => {}),
+      execAsync(`"${ffmpeg}" -i "${outputPath}" -vf "fps=1/4,scale=480:-1" -q:v 5 "${tempDir}/frame-%03d.jpg" -y`),
+    ]);
 
     const files = await fs.readdir(tempDir);
     let framePaths = files

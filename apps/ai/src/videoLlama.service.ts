@@ -77,23 +77,31 @@ export const videoLlamaService = {
     const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
     const model = getModel(process.env.GEMINI_API_KEY);
 
-    const uploadPromises = framePaths.map((framePath, i) =>
-      fileManager.uploadFile(framePath, { mimeType: 'image/jpeg', displayName: `Frame ${i + 1}` }),
-    );
+    let audioRes: any;
     if (fs.existsSync(audioPath)) {
-      uploadPromises.unshift(
-        fileManager.uploadFile(audioPath, { mimeType: 'audio/mp3', displayName: 'Recipe Audio' }),
-      );
+      audioRes = await retryWithBackoff(
+        () => fileManager.uploadFile(audioPath, { mimeType: 'audio/mp3', displayName: 'Recipe Audio' }),
+        { retries: 3, initialDelayMs: 1000 },
+      ).catch(() => undefined);
     }
 
-    const uploadResults = await retryWithBackoff(
-      () => Promise.all(uploadPromises),
-      { retries: 3, initialDelayMs: 1000 },
+    // Convert lightweight 480p frames to inline base64 data to eliminate 12 separate File API HTTP round-trips
+    const frameParts = await Promise.all(
+      framePaths.map(async (framePath) => {
+        const buffer = await fs.promises.readFile(framePath);
+        return {
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: buffer.toString('base64'),
+          },
+        };
+      }),
     );
 
-    const parts = uploadResults.map((res) => ({
-      fileData: { mimeType: res.file.mimeType, fileUri: res.file.uri },
-    }));
+    const parts: any[] = [...frameParts];
+    if (audioRes) {
+      parts.unshift({ fileData: { mimeType: audioRes.file.mimeType, fileUri: audioRes.file.uri } });
+    }
 
     try {
       const result = await retryWithBackoff(
@@ -108,7 +116,9 @@ export const videoLlamaService = {
       const rawText = sanitizeJsonResponse(result.response.text());
       return assertRecipe(JSON.parse(rawText));
     } finally {
-      await Promise.all(uploadResults.map((res) => fileManager.deleteFile(res.file.name).catch(() => {})));
+      if (audioRes) {
+        fileManager.deleteFile(audioRes.file.name).catch(() => {});
+      }
     }
   },
 };
