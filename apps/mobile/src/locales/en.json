@@ -87,6 +87,10 @@
       "friendUnfriended": {
         "title": "Removed from friends",
         "body": "{{name}} removed you from their friends"
+      },
+      "bookInvite": {
+        "title": "Book invitation",
+        "body": "{{name}} invited you to collaborate on \"{{book}}\""
       }
     }
   },
@@ -171,9 +175,9 @@
     },
     "image": {
       "title": "Recipe from a photo",
-      "subtitle": "Upload a photo and we'll extract the recipe",
-      "dropzone": "Drag or upload a photo",
-      "replace": "Replace photo",
+      "subtitle": "Upload up to 6 photos and we'll extract the recipe",
+      "dropzone": "Tap to add photos",
+      "addMore": "Add photo",
       "cta": "Continue"
     },
     "text": {

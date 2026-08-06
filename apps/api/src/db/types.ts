@@ -159,6 +159,16 @@ export type UrlExtractionCacheDoc = {
   extractedAt: Date;
 };
 
+export type PushTokenDoc = {
+  _id: ObjectId;
+  userId: ObjectId;
+  token: string;
+  deviceId: string;
+  platform: 'ios' | 'android';
+  createdAt: Date;
+  lastSeenAt: Date;
+};
+
 export type NotificationDoc = {
   _id: ObjectId;
   userId: ObjectId;
@@ -169,7 +179,8 @@ export type NotificationDoc = {
     | 'OWNER_DELETED_RESOURCE'
     | 'FRIEND_REQUEST'
     | 'FRIEND_ACCEPTED'
-    | 'FRIEND_UNFRIENDED';
+    | 'FRIEND_UNFRIENDED'
+    | 'BOOK_INVITE';
   payload: Record<string, unknown>;
   read: boolean;
   createdAt: Date;

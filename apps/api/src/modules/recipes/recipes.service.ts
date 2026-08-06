@@ -24,12 +24,13 @@ async function uploadBufferToBucket(
   return `https://storage.googleapis.com/${bucket.name}/${destinationPath}`;
 }
 
-export async function generateAndStoreCoverImage(
-  recipesCollection: Collection<RecipeDoc>,
-  firebaseBucket: Bucket,
-  recipeId: ObjectId,
-  recipe: { title: string; description?: string; cuisine?: string; ingredients?: Array<{ name: string }> }
-): Promise<void> {
+export async function getSuggestedCoverImageUrl(recipe: {
+  title: string;
+  description?: string;
+  cuisine?: string;
+  ingredients?: Array<{ name: string }>;
+}): Promise<string | null> {
+  if (!recipe.title) return null;
   try {
     const aiResponse = await fetch(`${config.aiBaseUrl}/suggest-keyword`, {
       method: 'POST',
@@ -42,32 +43,63 @@ export async function generateAndStoreCoverImage(
       }),
     });
 
-    if (!aiResponse.ok) return;
+    if (!aiResponse.ok) return null;
     const { keyword } = (await aiResponse.json()) as { keyword: string };
-    if (!keyword) return;
+    if (!keyword) return null;
 
-    const pexelsUrl = await fetchPexelsImage(keyword);
-    if (!pexelsUrl) return;
+    return await fetchPexelsImage(keyword);
+  } catch (err) {
+    console.error('[RecipeService] Failed to suggest keyword or fetch Pexels image:', err);
+    return null;
+  }
+}
 
-    const imageRes = await fetch(pexelsUrl);
-    if (!imageRes.ok) return;
-    const arrayBuffer = await imageRes.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+export async function generateAndStoreCoverImage(
+  recipesCollection: Collection<RecipeDoc>,
+  firebaseBucket: Bucket | null | undefined,
+  recipeId: ObjectId,
+  recipe: { title: string; description?: string; cuisine?: string; ingredients?: Array<{ name: string }> }
+): Promise<string | null> {
+  try {
+    const pexelsUrl = await getSuggestedCoverImageUrl(recipe);
+    if (!pexelsUrl) return null;
 
-    const firebaseImageUrl = await uploadBufferToBucket(
-      firebaseBucket,
-      buffer,
-      `recipes/${recipeId.toString()}/cover.jpg`,
-      'image/jpeg'
-    );
+    let finalImageUrl = pexelsUrl;
 
-    if (firebaseImageUrl) {
+    if (firebaseBucket) {
+      try {
+        const imageRes = await fetch(pexelsUrl);
+        if (imageRes.ok) {
+          const arrayBuffer = await imageRes.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+
+          const firebaseImageUrl = await uploadBufferToBucket(
+            firebaseBucket,
+            buffer,
+            `recipes/${recipeId.toString()}/cover.jpg`,
+            'image/jpeg'
+          );
+          if (firebaseImageUrl) {
+            finalImageUrl = firebaseImageUrl;
+          }
+        }
+      } catch (firebaseErr) {
+        console.warn(
+          '[RecipeService] Firebase upload failed, falling back to direct Pexels URL:',
+          (firebaseErr as Error).message
+        );
+      }
+    }
+
+    if (finalImageUrl) {
       await recipesCollection.updateOne(
         { _id: recipeId },
-        { $set: { coverImageUrl: firebaseImageUrl, updatedAt: new Date() } }
+        { $set: { coverImageUrl: finalImageUrl, updatedAt: new Date() } }
       );
     }
+    return finalImageUrl;
   } catch (err) {
-    console.error('[RecipeService] Failed to upload auto cover to Firebase:', err);
+    console.error('[RecipeService] Failed to generate auto cover:', err);
+    return null;
   }
 }

@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'node:fs';
+import { retryWithBackoff, sanitizeJsonResponse } from './utils/retry.utils.js';
 
 const recipeSchema: Schema = {
   type: SchemaType.OBJECT,
@@ -58,6 +59,7 @@ function getModel(apiKey: string) {
     generationConfig: {
       responseMimeType: 'application/json',
       responseSchema: recipeSchema,
+      temperature: 0.1,
     },
   });
 }
@@ -75,46 +77,49 @@ export const videoLlamaService = {
     const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
     const model = getModel(process.env.GEMINI_API_KEY);
 
-    const uploadPromises = framePaths.map((framePath, i) =>
-      fileManager.uploadFile(framePath, { mimeType: 'image/jpeg', displayName: `Frame ${i + 1}` }),
-    );
+    let audioRes: any;
     if (fs.existsSync(audioPath)) {
-      uploadPromises.unshift(
-        fileManager.uploadFile(audioPath, { mimeType: 'audio/mp3', displayName: 'Recipe Audio' }),
+      audioRes = await retryWithBackoff(
+        () => fileManager.uploadFile(audioPath, { mimeType: 'audio/mp3', displayName: 'Recipe Audio' }),
+        { retries: 3, initialDelayMs: 1000 },
+      ).catch(() => undefined);
+    }
+
+    // Convert lightweight 480p frames to inline base64 data to eliminate 12 separate File API HTTP round-trips
+    const frameParts = await Promise.all(
+      framePaths.map(async (framePath) => {
+        const buffer = await fs.promises.readFile(framePath);
+        return {
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: buffer.toString('base64'),
+          },
+        };
+      }),
+    );
+
+    const parts: any[] = [...frameParts];
+    if (audioRes) {
+      parts.unshift({ fileData: { mimeType: audioRes.file.mimeType, fileUri: audioRes.file.uri } });
+    }
+
+    try {
+      const result = await retryWithBackoff(
+        () => model.generateContent([...parts, { text: RECIPE_PROMPT }]),
+        { retries: 3, initialDelayMs: 1500 },
       );
+
+      if (result.response.usageMetadata) {
+        console.log(`📊 [Video AI] Tokens: ${result.response.usageMetadata.totalTokenCount} total`);
+      }
+
+      const rawText = sanitizeJsonResponse(result.response.text());
+      return assertRecipe(JSON.parse(rawText));
+    } finally {
+      if (audioRes) {
+        fileManager.deleteFile(audioRes.file.name).catch(() => {});
+      }
     }
-
-    const uploadResults = await Promise.all(uploadPromises);
-    const parts = uploadResults.map((res) => ({
-      fileData: { mimeType: res.file.mimeType, fileUri: res.file.uri },
-    }));
-
-    const result = await model.generateContent([...parts, { text: RECIPE_PROMPT }]);
-
-    if (result.response.usageMetadata) {
-      console.log(`📊 [Video AI] Tokens: ${result.response.usageMetadata.totalTokenCount} total`);
-    }
-
-    await Promise.all(uploadResults.map((res) => fileManager.deleteFile(res.file.name).catch(() => {})));
-
-    return assertRecipe(JSON.parse(result.response.text()));
-  },
-
-  // For YouTube — pass the URL directly to Gemini (no download needed)
-  async extractRecipeFromYouTube(url: string): Promise<any> {
-    if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
-
-    const model = getModel(process.env.GEMINI_API_KEY);
-
-    const result = await model.generateContent([
-      { fileData: { mimeType: 'video/mp4', fileUri: url } },
-      { text: RECIPE_PROMPT },
-    ]);
-
-    if (result.response.usageMetadata) {
-      console.log(`📊 [YouTube AI] Tokens: ${result.response.usageMetadata.totalTokenCount} total`);
-    }
-
-    return assertRecipe(JSON.parse(result.response.text()));
   },
 };
+

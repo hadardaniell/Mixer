@@ -7,6 +7,7 @@ export const extractImageRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/extract/image',
     {
+      bodyLimit: 10 * 1024 * 1024,
       schema: {
         body: ExtractFromImageInputSchema,
         response: {
@@ -18,7 +19,7 @@ export const extractImageRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (req, reply) => {
       try {
-        return await extractRecipeFromImages(req.body.images);
+        return await extractRecipeFromImages(req.body.images, req.body.locale);
       } catch (err) {
         if (err instanceof Error) {
           if (err.message === 'not_a_recipe') {
@@ -27,6 +28,7 @@ export const extractImageRoutes: FastifyPluginAsyncZod = async (app) => {
           if (err.message === 'images_not_same_recipe') {
             return reply.code(422).send({ error: 'The images do not all belong to the same recipe.' });
           }
+          console.error('[extract-image] unexpected error:', err.message, err.stack);
         }
         throw err;
       }

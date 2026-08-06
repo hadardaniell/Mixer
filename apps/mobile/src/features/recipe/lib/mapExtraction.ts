@@ -28,11 +28,18 @@ export function mapExtraction(
   return {
     title: result.title?.trim() || fallbackTitle,
     description: result.description,
-    ingredients: result.ingredients ?? [],
-    steps: result.steps ?? [],
-    servings: result.servings,
-    prepTimeMinutes: result.prepTimeMinutes,
-    cookTimeMinutes: result.cookTimeMinutes,
+    coverImageUrl: result.coverImageUrl,
+    ingredients: (result.ingredients ?? []).map((ing) => ({
+      ...ing,
+      amount: ing.amount || undefined,
+    })),
+    steps: (result.steps ?? []).map((step) => ({
+      ...step,
+      durationMinutes: step.durationMinutes || undefined,
+    })),
+    servings: result.servings || undefined,
+    prepTimeMinutes: result.prepTimeMinutes || undefined,
+    cookTimeMinutes: result.cookTimeMinutes || undefined,
     difficulty: result.difficulty,
     cuisine: result.cuisine,
     tags: result.tags ?? [],

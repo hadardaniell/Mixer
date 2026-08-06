@@ -292,12 +292,14 @@ export type UpdateBookMemberInput = z.infer<typeof UpdateBookMemberInputSchema>;
 // --- AI extraction ---
 export const ExtractFromTextInputSchema = z.object({
   text: z.string().min(1).max(10000),
+  locale: z.string().optional().default('en'),
 });
 export type ExtractFromTextInput = z.infer<typeof ExtractFromTextInputSchema>;
 
 export const ExtractFromTextResultSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
+  coverImageUrl: z.string().url().optional(),
   ingredients: z.array(z.object({
     name: z.string(),
     amount: z.number().optional(),
@@ -324,6 +326,7 @@ const ImageItemSchema = z.object({
 
 export const ExtractFromImageInputSchema = z.object({
   images: z.array(ImageItemSchema).min(1).max(10),
+  locale: z.string().optional().default('en'),
 });
 export type ExtractFromImageInput = z.infer<typeof ExtractFromImageInputSchema>;
 
@@ -424,6 +427,7 @@ export const NotificationTypeSchema = z.enum([
   'FRIEND_REQUEST',
   'FRIEND_ACCEPTED',
   'FRIEND_UNFRIENDED',
+  'BOOK_INVITE',
 ]);
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 
@@ -463,6 +467,13 @@ export const FriendActivityPayloadSchema = z.object({
   fromUserName: z.string(),
   fromUserAvatar: z.string().nullable(),
 });
+export const BookInvitePayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  bookId: ObjectIdString,
+  bookName: z.string(),
+  role: z.enum(['editor', 'viewer']),
+});
 
 const notificationBase = {
   id: ObjectIdString,
@@ -479,6 +490,7 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   z.object({ ...notificationBase, type: z.literal('FRIEND_REQUEST'), payload: FriendRequestPayloadSchema }),
   z.object({ ...notificationBase, type: z.literal('FRIEND_ACCEPTED'), payload: FriendActivityPayloadSchema }),
   z.object({ ...notificationBase, type: z.literal('FRIEND_UNFRIENDED'), payload: FriendActivityPayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('BOOK_INVITE'), payload: BookInvitePayloadSchema }),
 ]);
 export type Notification = z.infer<typeof NotificationSchema>;
 

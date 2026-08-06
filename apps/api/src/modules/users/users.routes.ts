@@ -218,4 +218,39 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
       return reply.code(204).send();
     },
   );
+
+  // Register or refresh a device push token for the current user.
+  // Called by the mobile app on startup after Expo push permission is granted.
+  // Upserts on { userId, deviceId } so reinstalling the app just refreshes the token.
+  app.put(
+    '/users/me/push-token',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: z.object({
+          token: z.string().min(1),
+          deviceId: z.string().min(1),
+          platform: z.enum(['ios', 'android']),
+        }),
+        response: { 200: z.object({ ok: z.literal(true) }) },
+        tags: ['users'],
+      },
+    },
+    async (req) => {
+      const userId = new ObjectId(req.user.id);
+      const { token, deviceId, platform } = req.body;
+      const now = new Date();
+
+      await app.collections.pushTokens.updateOne(
+        { userId, deviceId },
+        {
+          $set: { token, platform, lastSeenAt: now },
+          $setOnInsert: { _id: new ObjectId(), createdAt: now },
+        },
+        { upsert: true },
+      );
+
+      return { ok: true as const };
+    },
+  );
 };

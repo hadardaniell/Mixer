@@ -65,16 +65,16 @@ export const feedApi = {
     }),
 
   // --- recipe creation / AI import ---
-  importText: (text: string) =>
+  importText: (text: string, locale?: string) =>
     http<ExtractFromTextResult>('/recipes/import/text', {
       method: 'POST',
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, locale }),
     }),
 
-  importImage: (images: ExtractFromImageInput['images']) =>
+  importImage: (images: ExtractFromImageInput['images'], locale?: string) =>
     http<ExtractFromTextResult>('/recipes/import/image', {
       method: 'POST',
-      body: JSON.stringify({ images }),
+      body: JSON.stringify({ images, locale }),
     }),
 
   importUrl: (url: string) =>

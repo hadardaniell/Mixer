@@ -15,6 +15,7 @@ import type {
   NotificationDoc,
   UrlExtractionCacheDoc,
   RecipeTranslationDoc,
+  PushTokenDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -29,6 +30,7 @@ export type Collections = {
   notifications: Collection<NotificationDoc>;
   urlExtractionCache: Collection<UrlExtractionCacheDoc>;
   recipeTranslations: Collection<RecipeTranslationDoc>;
+  pushTokens: Collection<PushTokenDoc>;
 };
 
 declare module 'fastify' {
@@ -62,6 +64,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     notifications: db.collection<NotificationDoc>('notifications'),
     urlExtractionCache: db.collection<UrlExtractionCacheDoc>('url_extraction_cache'),
     recipeTranslations: db.collection<RecipeTranslationDoc>('recipe_translations'),
+    pushTokens: db.collection<PushTokenDoc>('push_tokens'),
   };
 
   await ensureValidators(app, db);
@@ -135,7 +138,16 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   try {
     await collections.recipes.createIndex(
       { title: 'text', description: 'text', tags: 'text' },
-      { name: 'recipe_text', weights: { title: 10, tags: 4, description: 1 } },
+      {
+        name: 'recipe_text',
+        weights: { title: 10, tags: 4, description: 1 },
+        // RecipeDoc has a `language` field ('he'|'en'). MongoDB would normally read
+        // that field to pick a stemmer, but 'he' is not a supported text-search
+        // language (code 17262). Point language_override at a non-existent field and
+        // disable stemming entirely so the index works for both Hebrew and English.
+        default_language: 'none',
+        language_override: 'searchLanguage',
+      },
     );
   } catch (e: any) {
     // 85 IndexOptionsConflict / 86 IndexKeySpecsConflict: an equivalent text
@@ -149,6 +161,14 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   // Friendship docs use `addresseeId` (not `recipientId`). The unique pair index
   // dedupes same-direction requests; the reverse direction is guarded in the
   // service before insert. `addresseeId + status` backs the incoming-requests query.
+  // Drop stale index from before the recipientId → addresseeId rename. Without
+  // this, new docs (which have no recipientId) all land on the same null key and
+  // only the first insert per requester succeeds.
+  try {
+    await collections.friendships.dropIndex('requesterId_1_recipientId_1');
+  } catch (e: any) {
+    if (e?.code !== 27) throw e; // 27 = IndexNotFound — already gone, fine
+  }
   await collections.friendships.createIndex({ requesterId: 1, addresseeId: 1 }, { unique: true });
   await collections.friendships.createIndex({ addresseeId: 1, status: 1 });
 
@@ -161,4 +181,9 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     { expireAfterSeconds: 0, sparse: true },
   );
   await collections.recipeTranslations.createIndex({ recipeId: 1, language: 1 }, { unique: true });
+
+  // Same device upserts its token; never creates a duplicate row per user+device.
+  await collections.pushTokens.createIndex({ userId: 1, deviceId: 1 }, { unique: true });
+  // Fast lookup when Expo reports an invalid token and we need to delete it.
+  await collections.pushTokens.createIndex({ token: 1 });
 }

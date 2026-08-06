@@ -1,101 +1,108 @@
-import Groq from 'groq-sdk';
+import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { ExtractFromTextResultSchema, type ExtractFromTextResult } from '@mixer/contracts';
-import { TesseractOcrProvider } from '../../ocr/tesseract.ocr.js';
-// To switch to Google Vision: replace the line above with:
-// import { GoogleVisionOcrProvider } from '../../ocr/google-vision.ocr.js';
+import { retryWithBackoff, sanitizeJsonResponse } from '../../utils/retry.utils.js';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const ocr = new TesseractOcrProvider();
-// To switch to Google Vision: const ocr = new GoogleVisionOcrProvider();
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-const RECIPE_EXTRACTION_PROMPT = `You are a recipe extraction assistant.
-The user will give you raw text extracted from an image — it may contain some OCR noise or extra content.
-First decide if the text contains a recipe. Then return a valid JSON object:
+const recipeSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    isRecipe: { type: SchemaType.BOOLEAN },
+    reason: {
+      type: SchemaType.STRING,
+      description: 'If isRecipe is false: "not_a_recipe" or "different_recipes"',
+    },
+    title: { type: SchemaType.STRING },
+    description: { type: SchemaType.STRING },
+    ingredients: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          name: { type: SchemaType.STRING },
+          amount: { type: SchemaType.NUMBER },
+          unit: { type: SchemaType.STRING },
+        },
+        required: ['name'],
+      },
+    },
+    steps: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          order: { type: SchemaType.INTEGER },
+          text: { type: SchemaType.STRING },
+          durationMinutes: { type: SchemaType.INTEGER },
+        },
+        required: ['order', 'text'],
+      },
+    },
+    servings: { type: SchemaType.INTEGER },
+    prepTimeMinutes: { type: SchemaType.INTEGER },
+    cookTimeMinutes: { type: SchemaType.INTEGER },
+    difficulty: { type: SchemaType.STRING, description: 'One of: "easy", "medium", "hard"' },
+    cuisine: { type: SchemaType.STRING },
+    tags: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+  },
+  required: ['isRecipe'],
+};
 
-If it IS a recipe:
-{
-  "isRecipe": true,
-  "title": string,
-  "description": string (optional),
-  "ingredients": [{ "name": string, "amount": number (optional), "unit": string (optional) }],
-  "steps": [{ "order": number, "text": string, "durationMinutes": number (optional) }],
-  "servings": number (optional),
-  "prepTimeMinutes": number (optional),
-  "cookTimeMinutes": number (optional),
-  "difficulty": "easy" | "medium" | "hard" (optional),
-  "cuisine": string (optional),
-  "tags": string[] (optional)
+const model = genAI.getGenerativeModel({
+  model: 'gemini-2.5-flash',
+  generationConfig: {
+    responseMimeType: 'application/json',
+    responseSchema: recipeSchema,
+    temperature: 0,
+  },
+});
+
+// Gemini Vision reads images directly — no separate OCR step needed.
+// Single API call replaces: Tesseract OCR × N images + same-recipe check + text extraction.
+// Gemini handles Hebrew (and mixed Hebrew/English) far better than Tesseract.
+const BASE_VISION_PROMPT = `You are a recipe extraction assistant.
+You will receive one or more photos of a recipe (cookbook page, screenshot, handwritten card, etc.).
+If multiple images are provided they should all show parts of the same recipe (different pages, angles, or sections).
+
+Set isRecipe to true and fill in all recipe fields if a recipe is found.
+Set isRecipe to false and set reason to "not_a_recipe" if the image has no recipe.
+Set isRecipe to false and set reason to "different_recipes" if multiple images clearly show different recipes.
+
+RULES:
+- "difficulty" must always be one of: "easy", "medium", "hard" — in English.
+- Ignore advertisements, blog links, social media elements, and unrelated text.
+- Combine all images when multiple are provided to build the most complete recipe possible.`;
+
+function buildPrompt(locale: string): string {
+  const lang = locale === 'he' ? 'Hebrew (עברית)' : 'English';
+  return `${BASE_VISION_PROMPT}\n- Output ALL text fields (title, description, ingredients, steps, tags, cuisine) in ${lang}, regardless of the language visible in the image.`;
 }
-
-If it is NOT a recipe (e.g. a meme, screenshot, product photo, random text):
-{ "isRecipe": false }
-
-IMPORTANT RULES:
-- Ignore ALL advertisements, sponsored content, social media links, blog links, or calls to action.
-- The recipe title must come ONLY from the main heading of the recipe.
-- Steps must be actual cooking instructions only.
-- Keep title, description, ingredients, steps, tags and cuisine in the same language as the input text — e.g. for a Hebrew recipe, the tags must be Hebrew words.
-- The "difficulty" field must always be one of: "easy", "medium", "hard" — in English.
-Return ONLY the JSON object, no explanation, no markdown, no code blocks.
-If a field cannot be determined from the text, omit it.`;
-
-const SAME_RECIPE_CHECK_PROMPT = `You are given multiple blocks of text, each extracted from a different image.
-Determine if all blocks belong to the same recipe by checking:
-- Ingredient consistency (ingredients mentioned in one block match others)
-- The content makes sense as one dish (not completely unrelated foods)
-- Same visual style hints in the text structure
-
-Reply with exactly one word: "yes" if they belong to the same recipe, "no" if they do not.`;
 
 export async function extractRecipeFromImages(
   images: Array<{ imageBase64: string; mimeType: string }>,
+  locale = 'en',
 ): Promise<ExtractFromTextResult> {
-  const extractedTexts = await Promise.all(
-    images.map((img) => ocr.extractText(img.imageBase64, img.mimeType)),
+  const result = await retryWithBackoff(
+    () =>
+      model.generateContent([
+        buildPrompt(locale),
+        ...images.map((img) => ({
+          inlineData: { mimeType: img.mimeType, data: img.imageBase64 },
+        })),
+        images.length > 1
+          ? 'Extract the complete recipe from all these photos combined.'
+          : 'Extract the recipe from this photo.',
+      ]),
+    { retries: 3, initialDelayMs: 1000 },
   );
 
-  if (images.length > 1) {
-    const checkCompletion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: SAME_RECIPE_CHECK_PROMPT },
-        {
-          role: 'user',
-          content: extractedTexts.map((t, i) => `[Image ${i + 1}]\n${t}`).join('\n\n'),
-        },
-      ],
-      temperature: 0,
-    });
-
-    const answer = checkCompletion.choices[0]?.message?.content?.trim().toLowerCase();
-    if (answer === 'no') {
-      throw new Error('images_not_same_recipe');
-    }
-  }
-
-  const combinedText = extractedTexts.join('\n\n');
-
-  const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    messages: [
-      { role: 'system', content: RECIPE_EXTRACTION_PROMPT },
-      { role: 'user', content: combinedText },
-    ],
-    temperature: 0.2,
-  });
-
-  const raw = completion.choices[0]?.message?.content ?? '{}';
-
-  let parsed: Record<string, unknown>;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new Error('AI returned invalid JSON');
-  }
+  const rawText = sanitizeJsonResponse(result.response.text());
+  const parsed = JSON.parse(rawText) as Record<string, unknown>;
 
   if (parsed.isRecipe === false) {
-    throw new Error('not_a_recipe');
+    throw new Error(parsed.reason === 'different_recipes' ? 'images_not_same_recipe' : 'not_a_recipe');
   }
 
   return ExtractFromTextResultSchema.parse(parsed);
 }
+

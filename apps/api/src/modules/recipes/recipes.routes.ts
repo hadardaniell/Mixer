@@ -16,7 +16,7 @@ import type { Collections } from '../../plugins/mongo.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
-import { generateAndStoreCoverImage } from './recipes.service.js';
+import { generateAndStoreCoverImage, getSuggestedCoverImageUrl } from './recipes.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -345,14 +345,50 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         cursor.toArray(),
         app.collections.recipes.countDocuments(filter),
       ]);
+
+      let targetLang: 'he' | 'en' = 'he';
+    if (req.user) {
+      const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
+      if (userDoc?.locale) {
+        targetLang = userDoc.locale as 'he' | 'en';
+      }
+    }
+ 
+    const recipeIds = items.map((r) => r._id);
+    const translations = await app.collections.recipeTranslations
+      ?.find({
+        recipeId: { $in: recipeIds },
+        language: targetLang,
+      })
+      .toArray() ?? [];
+
+    const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
+
+    const translatedItems = items.map((doc) => {
+      if (doc.language && doc.language !== targetLang) {
+        const cached = translationMap.get(doc._id.toString());
+        if (cached) {
+          return {
+            ...doc,
+            title: cached.title,
+            description: cached.description,
+            tags: cached.tags ?? doc.tags,
+            cuisine: cached.cuisine ?? doc.cuisine,
+            language: targetLang,
+          };
+        }
+      }
+      return doc;
+    });
+
       const favSet = req.user
         ? await favoritedIds(app.collections, req.user.id, 'recipe', items.map((r) => r._id))
         : null;
       return {
-        items: items.map((r) =>
-          favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
-        ),
-        total,
+        items: translatedItems.map((r) =>
+        favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
+      ),
+      total,
       };
     },
   );
@@ -615,7 +651,24 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const cached = await app.collections.urlExtractionCache.findOne({ url });
       if (cached) {
         app.log.info(`[import/url] Cache hit for ${url}`);
-        return ExtractFromTextResultSchema.parse(cached.extraction);
+        const result = cached.extraction as Record<string, unknown>;
+        if (!result.coverImageUrl && typeof result.title === 'string' && result.title) {
+          const coverImageUrl = await getSuggestedCoverImageUrl({
+            title: result.title,
+            description: typeof result.description === 'string' ? result.description : undefined,
+            cuisine: typeof result.cuisine === 'string' ? result.cuisine : undefined,
+            ingredients: Array.isArray(result.ingredients)
+              ? (result.ingredients as Array<{ name: string }>)
+              : undefined,
+          });
+          if (coverImageUrl) {
+            result.coverImageUrl = coverImageUrl;
+            await app.collections.urlExtractionCache
+              .updateOne({ _id: cached._id }, { $set: { 'extraction.coverImageUrl': coverImageUrl } })
+              .catch(() => {});
+          }
+        }
+        return ExtractFromTextResultSchema.parse(result);
       }
 
       // Cache miss — call the AI service. `/extract/url` branches internally:
@@ -630,13 +683,27 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       });
 
       if (!response.ok) {
-        const data = await response.json() as { error?: string };
+        const data = (await response.json()) as { error?: string };
         return reply.code(response.status === 422 ? 422 : 500).send({
           error: data?.error ?? 'AI service failed to extract recipe from URL',
         });
       }
 
-      const extraction = await response.json() as Record<string, unknown>;
+      const extraction = (await response.json()) as Record<string, unknown>;
+
+      if (!extraction.coverImageUrl && typeof extraction.title === 'string' && extraction.title) {
+        const coverImageUrl = await getSuggestedCoverImageUrl({
+          title: extraction.title,
+          description: typeof extraction.description === 'string' ? extraction.description : undefined,
+          cuisine: typeof extraction.cuisine === 'string' ? extraction.cuisine : undefined,
+          ingredients: Array.isArray(extraction.ingredients)
+            ? (extraction.ingredients as Array<{ name: string }>)
+            : undefined,
+        });
+        if (coverImageUrl) {
+          extraction.coverImageUrl = coverImageUrl;
+        }
+      }
 
       // Save to cache so future requests skip the AI call
       await app.collections.urlExtractionCache
@@ -661,14 +728,28 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const response = await fetch(`${config.aiBaseUrl}/extract/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: req.body.text }),
+        body: JSON.stringify({ text: req.body.text, locale: req.body.locale }),
       });
 
       if (!response.ok) {
         throw new Error('AI service failed to extract recipe');
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as Record<string, unknown>;
+      if (!data.coverImageUrl && typeof data.title === 'string' && data.title) {
+        const coverImageUrl = await getSuggestedCoverImageUrl({
+          title: data.title,
+          description: typeof data.description === 'string' ? data.description : undefined,
+          cuisine: typeof data.cuisine === 'string' ? data.cuisine : undefined,
+          ingredients: Array.isArray(data.ingredients)
+            ? (data.ingredients as Array<{ name: string }>)
+            : undefined,
+        });
+        if (coverImageUrl) {
+          data.coverImageUrl = coverImageUrl;
+        }
+      }
+
       const result = ExtractFromTextResultSchema.parse(data);
       return result;
     },
@@ -677,6 +758,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/recipes/import/image',
     {
+      bodyLimit: 10 * 1024 * 1024,
       onRequest: [app.authenticate],
       schema: {
         body: ExtractFromImageInputSchema,
@@ -688,18 +770,32 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const response = await fetch(`${config.aiBaseUrl}/extract/image`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images: req.body.images }),
+        body: JSON.stringify({ images: req.body.images, locale: req.body.locale }),
       });
 
       if (!response.ok) {
-        const data = await response.json() as { message?: string };
+        const data = (await response.json()) as { message?: string };
         if (data?.message === 'images_not_same_recipe') {
           throw new Error('images_not_same_recipe');
         }
         throw new Error('AI service failed to extract recipe from image');
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as Record<string, unknown>;
+      if (!data.coverImageUrl && typeof data.title === 'string' && data.title) {
+        const coverImageUrl = await getSuggestedCoverImageUrl({
+          title: data.title,
+          description: typeof data.description === 'string' ? data.description : undefined,
+          cuisine: typeof data.cuisine === 'string' ? data.cuisine : undefined,
+          ingredients: Array.isArray(data.ingredients)
+            ? (data.ingredients as Array<{ name: string }>)
+            : undefined,
+        });
+        if (coverImageUrl) {
+          data.coverImageUrl = coverImageUrl;
+        }
+      }
+
       const result = ExtractFromTextResultSchema.parse(data);
       return result;
     },
@@ -744,12 +840,48 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
 
+        let targetLang: 'he' | 'en' = 'he';
+      if (req.user) {
+        const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
+        if (userDoc?.locale) {
+          targetLang = userDoc.locale as 'he' | 'en';
+        }
+      }
+
+      const recipeIds = scored.map((s) => s.recipe._id);
+      const translations = await app.collections.recipeTranslations
+        ?.find({
+          recipeId: { $in: recipeIds },
+          language: targetLang,
+        })
+        .toArray() ?? [];
+
+      const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
+
+      const translatedScored = scored.map(({ recipe, score }) => {
+        let finalRecipe = recipe;
+        if (recipe.language && recipe.language !== targetLang) {
+          const cached = translationMap.get(recipe._id.toString());
+          if (cached) {
+            finalRecipe = {
+              ...recipe,
+              title: cached.title,
+              description: cached.description,
+              tags: cached.tags ?? recipe.tags,
+              cuisine: cached.cuisine ?? recipe.cuisine,
+              language: targetLang,
+            };
+          }
+        }
+        return { recipe: finalRecipe, score };
+      });
+
       const favSet = req.user
-        ? await favoritedIds(app.collections, req.user.id, 'recipe', scored.map((s) => s.recipe._id))
+        ? await favoritedIds(app.collections, req.user.id, 'recipe', translatedScored.map((s) => s.recipe._id))
         : null;
 
       return {
-        items: scored.map(({ recipe }) =>
+       items: translatedScored.map(({ recipe }) =>
           favSet ? toRecipe(recipe, { isFavorite: favSet.has(recipe._id.toString()) }) : toRecipe(recipe),
         ),
       };

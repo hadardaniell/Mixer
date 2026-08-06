@@ -10,6 +10,7 @@ import {
 import { extractRecipeFromText } from './extract-text.service.js';
 import { downloadService, MAX_VIDEO_DURATION_SECONDS } from '../../download.service.js';
 import { videoLlamaService } from '../../videoLlama.service.js';
+import { retryWithBackoff } from '../../utils/retry.utils.js';
 
 function isVideoUrl(url: string): boolean {
   const lowercaseUrl = url.toLowerCase();
@@ -24,18 +25,29 @@ function isVideoUrl(url: string): boolean {
 }
 
 async function fetchWebpageText(url: string): Promise<string> {
-  const headers: Record<string, string> = {};
-  if (process.env.JINA_API_KEY) {
-    headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
-  }
-  const response = await fetch(`https://r.jina.ai/${url}`, {
-    headers,
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch webpage content from Jina Reader: ${response.statusText}`);
-  }
-  return response.text();
+  return retryWithBackoff(
+    async () => {
+      const headers: Record<string, string> = {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      };
+      if (process.env.JINA_API_KEY) {
+        headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
+      }
+      const response = await fetch(`https://r.jina.ai/${url}`, { headers });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch webpage content from Jina Reader (${response.status} ${response.statusText})`);
+      }
+      const text = await response.text();
+      if (!text || text.trim().length === 0) {
+        throw new Error('Jina Reader returned empty webpage content');
+      }
+      return text;
+    },
+    { retries: 3, initialDelayMs: 1000 },
+  );
 }
+
 
 export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
@@ -52,11 +64,12 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (req, reply) => {
       try {
-        return await extractRecipeFromText(req.body.text);
+        return await extractRecipeFromText(req.body.text, req.body.locale);
       } catch (err) {
         if (err instanceof Error && err.message === 'not_a_recipe') {
           return reply.code(422).send({ error: 'The provided text does not appear to contain a recipe.' });
         }
+        console.error('[extract-text] unexpected error:', err instanceof Error ? err.message : err);
         throw err;
       }
     },
@@ -76,7 +89,6 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
 
       try {
         if (isYouTube) {
-          // YouTube: check duration first (no download), then send URL directly to Gemini
           app.log.info(`[extract/video] YouTube URL detected — checking duration for: ${url}`);
           try {
             const { duration } = await downloadService.getVideoInfo(url);
@@ -88,26 +100,31 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           } catch {
             app.log.warn(`[extract/video] Could not fetch YouTube metadata for ${url} — proceeding anyway`);
           }
-
-          app.log.info(`[extract/video] Sending YouTube URL directly to Gemini`);
-          const recipe = await videoLlamaService.extractRecipeFromYouTube(url);
-          return reply.send(recipe);
-        } else {
-          // TikTok / Instagram / other: download + extract frames, then send to Gemini
-          app.log.info(`[extract/video] Downloading and extracting frames for: ${url}`);
-          const { tempDir, audioPath, framePaths } = await downloadService.downloadAndExtractFrames(url);
-          tempDirectory = tempDir;
-
-          app.log.info(`[extract/video] Processing frames and audio with Video AI`);
-          const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths);
-          return reply.send(recipe);
         }
+
+        app.log.info(`[extract/video] Downloading and extracting frames for: ${url}`);
+        const { tempDir, audioPath, framePaths } = await downloadService.downloadAndExtractFrames(url);
+        tempDirectory = tempDir;
+
+        app.log.info(`[extract/video] Processing frames and audio with Video AI`);
+        const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths);
+        return reply.send(recipe);
       } catch (error) {
         if (error instanceof Error && error.message === 'not_a_recipe') {
           return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
         }
-        app.log.error(error);
-        return reply.code(500).send({ error: 'Failed to process video' });
+        app.log.warn(`[extract/video] Video processing failed for ${url} — falling back to text scraping`);
+        try {
+          const text = await fetchWebpageText(url);
+          const recipe = await extractRecipeFromText(text);
+          return reply.send(recipe);
+        } catch (fallbackError) {
+          if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
+            return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
+          }
+          app.log.error(fallbackError);
+          return reply.code(500).send({ error: 'Failed to process video' });
+        }
       } finally {
         if (tempDirectory) {
           await fs.rm(tempDirectory, { recursive: true, force: true }).catch(err => {
@@ -139,8 +156,6 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         let tempDirectory: string | undefined;
         try {
           if (isYouTube) {
-            // YouTube: check duration first (no download), then send the URL
-            // straight to Gemini — cheaper and faster than downloading frames.
             app.log.info(`[extract/url] YouTube URL detected — checking duration for: ${url}`);
             try {
               const { duration } = await downloadService.getVideoInfo(url);
@@ -152,9 +167,6 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             } catch {
               app.log.warn(`[extract/url] Could not fetch YouTube metadata for ${url} — proceeding anyway`);
             }
-
-            app.log.info(`[extract/url] Sending YouTube URL directly to Gemini`);
-            return await videoLlamaService.extractRecipeFromYouTube(url);
           }
 
           app.log.info(`[extract/url] Starting download and frame extraction for video URL: ${url}`);
@@ -167,8 +179,22 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           if (error instanceof Error && error.message === 'not_a_recipe') {
             return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
           }
-          app.log.error(error);
-          throw new Error('Failed to process video URL');
+          app.log.warn(
+            `[extract/url] Video processing failed for ${url} (${error instanceof Error ? error.message : error}) — falling back to text scraping`,
+          );
+          try {
+            app.log.info(`[extract/url] Scraping text from webpage URL (fallback): ${url}`);
+            const text = await fetchWebpageText(url);
+
+            app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
+            return await extractRecipeFromText(text);
+          } catch (fallbackError) {
+            if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
+              return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });
+            }
+            app.log.error(fallbackError);
+            throw new Error('Failed to process video URL');
+          }
         } finally {
           if (tempDirectory) {
             await fs.rm(tempDirectory, { recursive: true, force: true }).catch(err => {
