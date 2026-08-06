@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
 import { YStack } from 'tamagui';
 
+import { HomeEmptyState } from '@/features/home/components/HomeEmptyState';
 import { ImportRecipeCard } from '@/features/home/components/ImportRecipeCard';
 import {
   useToggleBookFavorite,
@@ -22,6 +23,15 @@ export function HomeFeedSections() {
   const toggleBook = useToggleBookFavorite();
 
   const openNewRecipe = () => router.navigate('/new-recipe');
+
+  // Every section hides itself when empty, so a new account sees only the CTA card on a
+  // white screen. Wait for loading to settle first, or the state flashes on every open.
+  const isFeedEmpty =
+    !feed.isLoading &&
+    feed.recentlyViewed.length === 0 &&
+    feed.booksWithFriends.length === 0 &&
+    feed.sharedWithMe.length === 0 &&
+    feed.favorites.length === 0;
   const openRecipe = (id: string) => router.push(`/recipes/${id}` as never);
   const openBook = (id: string) => router.push(`/books/${id}` as never);
 
@@ -32,6 +42,8 @@ export function HomeFeedSections() {
         <YStack paddingHorizontal="$4" paddingTop="$2">
           <ImportRecipeCard onCreatePress={openNewRecipe} />
         </YStack>
+
+        {isFeedEmpty ? <HomeEmptyState onCreatePress={openNewRecipe} /> : null}
 
         <FeedSection<RecipeCardData & { isFavorite: boolean }>
           title={t('home.recentlyViewed')}

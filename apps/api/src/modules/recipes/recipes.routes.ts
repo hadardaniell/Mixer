@@ -12,6 +12,7 @@ import {
 } from '@mixer/contracts';
 import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
+import type { Collections } from '../../plugins/mongo.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
@@ -58,6 +59,28 @@ async function generateAndStoreEmbedding(
 function canRead(req: { user?: { id: string; role: string } }, doc: RecipeDoc): boolean {
   if (doc.visibility !== 'private') return true;
   return req.user?.id === doc.ownerId.toString();
+}
+
+/**
+ * Being shared a recipe grants read access to it. Shares are created with the recipe
+ * left private, so without this the recipient can see the share in their inbox and gets
+ * 403 on the recipe itself — they could only ever fork it, never look first.
+ *
+ * Read-only: ownership checks on edit and delete stay untouched.
+ */
+async function canReadViaShare(
+  collections: Collections,
+  req: { user?: { id: string } },
+  doc: RecipeDoc,
+): Promise<boolean> {
+  if (!req.user) return false;
+  const share = await collections.sharedItems.findOne({
+    resourceType: 'recipe',
+    resourceId: doc._id,
+    friendId: new ObjectId(req.user.id),
+    status: { $in: ['pending', 'accepted'] },
+  });
+  return share !== null;
 }
 
 /**
@@ -343,7 +366,9 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
   async (req, reply) => {
     const doc = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
     if (!doc) return reply.code(404).send({ error: 'recipe not found' });
-    if (!canRead(req, doc)) return reply.code(403).send({ error: 'forbidden' });
+    if (!canRead(req, doc) && !(await canReadViaShare(app.collections, req, doc))) {
+      return reply.code(403).send({ error: 'forbidden' });
+    }
 
     let targetLang: 'he' | 'en' = 'he';
     if (req.user) {

@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Phone, User } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Platform, Pressable } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, YStack } from 'tamagui';
 
@@ -14,11 +14,10 @@ import { tokens } from '@/features/auth/services/tokens';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
+import { MixerBowl } from '@/shared/ui/MixerBowl';
 import { OutlinedInput } from '@/shared/ui/OutlinedInput';
 
 const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
-
-const HERO = require('../../../assets/images/register step 2.png');
 
 /**
  * After Google sign-in, if the user has no phoneNumber (and possibly a default
@@ -77,14 +76,11 @@ export function CompleteProfileScreen() {
       <YStack flex={1} width="100%" alignSelf="center" gap="$4">
         <AuthHeader onBack={() => router.back()} />
 
-        {/* Same hero treatment as Register step 2: 16px gap from header,
-            5px clipped off the top and bottom of the picture. */}
-        <YStack width="100%" height={165} marginTop={16} overflow="hidden">
-          <Image
-            source={HERO}
-            resizeMode="contain"
-            style={{ width: '100%', height: 190, marginTop: -15 }}
-          />
+        {/* The bowl is the product's single mark — the same one the Start hero and the
+            auth screens carry — so this screen reads as part of the app rather than as
+            a leftover from the previous design's illustration set. */}
+        <YStack width="100%" alignItems="center" marginTop={16}>
+          <MixerBowl size={150} animated />
         </YStack>
 
         <YStack gap="$2" paddingTop="$4">
@@ -135,7 +131,9 @@ export function CompleteProfileScreen() {
         />
 
         <Pressable hitSlop={8} onPress={() => router.back()} style={{ alignItems: 'center' }}>
-          <Text color="$primary" fontSize={15} fontWeight="600">
+          {/* $primary is a marks-only token — 3.0:1 behind text. $linkText is the
+              brand-colored text step. */}
+          <Text color="$linkText" fontSize={15} fontWeight="600">
             {t('auth.backToPrevious')}
           </Text>
         </Pressable>
