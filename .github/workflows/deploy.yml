@@ -3,6 +3,9 @@ name: Deploy
 on:
   push:
     branches: [main]
+  # Lets a deploy be re-run from the Actions tab when the push-triggered one never got a
+  # runner — without pushing an empty commit to main to force it.
+  workflow_dispatch:
 
 concurrency:
   group: deploy-main
@@ -73,7 +76,7 @@ jobs:
             --image "$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/ai:$GITHUB_SHA" \
             --region "$REGION" --platform managed --allow-unauthenticated \
             --port 8080 --memory 2Gi --cpu 1 --timeout 300 \
-            --set-env-vars "^##^GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}##GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+            --set-env-vars "^##^GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}##GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}##JINA_API_KEY=${{ secrets.JINA_API_KEY }}"
 
       # --- api ---
       - name: Deploy api
