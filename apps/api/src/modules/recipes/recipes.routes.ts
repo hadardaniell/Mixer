@@ -15,7 +15,7 @@ import type { RecipeDoc } from '../../db/types.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
-import { generateAndStoreCoverImage } from './recipes.service.js';
+import { generateAndStoreCoverImage, getSuggestedCoverImageUrl } from './recipes.service.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -626,7 +626,24 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const cached = await app.collections.urlExtractionCache.findOne({ url });
       if (cached) {
         app.log.info(`[import/url] Cache hit for ${url}`);
-        return ExtractFromTextResultSchema.parse(cached.extraction);
+        const result = cached.extraction as Record<string, unknown>;
+        if (!result.coverImageUrl && typeof result.title === 'string' && result.title) {
+          const coverImageUrl = await getSuggestedCoverImageUrl({
+            title: result.title,
+            description: typeof result.description === 'string' ? result.description : undefined,
+            cuisine: typeof result.cuisine === 'string' ? result.cuisine : undefined,
+            ingredients: Array.isArray(result.ingredients)
+              ? (result.ingredients as Array<{ name: string }>)
+              : undefined,
+          });
+          if (coverImageUrl) {
+            result.coverImageUrl = coverImageUrl;
+            await app.collections.urlExtractionCache
+              .updateOne({ _id: cached._id }, { $set: { 'extraction.coverImageUrl': coverImageUrl } })
+              .catch(() => {});
+          }
+        }
+        return ExtractFromTextResultSchema.parse(result);
       }
 
       // Cache miss — call the AI service. `/extract/url` branches internally:
@@ -641,13 +658,27 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       });
 
       if (!response.ok) {
-        const data = await response.json() as { error?: string };
+        const data = (await response.json()) as { error?: string };
         return reply.code(response.status === 422 ? 422 : 500).send({
           error: data?.error ?? 'AI service failed to extract recipe from URL',
         });
       }
 
-      const extraction = await response.json() as Record<string, unknown>;
+      const extraction = (await response.json()) as Record<string, unknown>;
+
+      if (!extraction.coverImageUrl && typeof extraction.title === 'string' && extraction.title) {
+        const coverImageUrl = await getSuggestedCoverImageUrl({
+          title: extraction.title,
+          description: typeof extraction.description === 'string' ? extraction.description : undefined,
+          cuisine: typeof extraction.cuisine === 'string' ? extraction.cuisine : undefined,
+          ingredients: Array.isArray(extraction.ingredients)
+            ? (extraction.ingredients as Array<{ name: string }>)
+            : undefined,
+        });
+        if (coverImageUrl) {
+          extraction.coverImageUrl = coverImageUrl;
+        }
+      }
 
       // Save to cache so future requests skip the AI call
       await app.collections.urlExtractionCache
@@ -679,7 +710,21 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         throw new Error('AI service failed to extract recipe');
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as Record<string, unknown>;
+      if (!data.coverImageUrl && typeof data.title === 'string' && data.title) {
+        const coverImageUrl = await getSuggestedCoverImageUrl({
+          title: data.title,
+          description: typeof data.description === 'string' ? data.description : undefined,
+          cuisine: typeof data.cuisine === 'string' ? data.cuisine : undefined,
+          ingredients: Array.isArray(data.ingredients)
+            ? (data.ingredients as Array<{ name: string }>)
+            : undefined,
+        });
+        if (coverImageUrl) {
+          data.coverImageUrl = coverImageUrl;
+        }
+      }
+
       const result = ExtractFromTextResultSchema.parse(data);
       return result;
     },
@@ -704,14 +749,28 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       });
 
       if (!response.ok) {
-        const data = await response.json() as { message?: string };
+        const data = (await response.json()) as { message?: string };
         if (data?.message === 'images_not_same_recipe') {
           throw new Error('images_not_same_recipe');
         }
         throw new Error('AI service failed to extract recipe from image');
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as Record<string, unknown>;
+      if (!data.coverImageUrl && typeof data.title === 'string' && data.title) {
+        const coverImageUrl = await getSuggestedCoverImageUrl({
+          title: data.title,
+          description: typeof data.description === 'string' ? data.description : undefined,
+          cuisine: typeof data.cuisine === 'string' ? data.cuisine : undefined,
+          ingredients: Array.isArray(data.ingredients)
+            ? (data.ingredients as Array<{ name: string }>)
+            : undefined,
+        });
+        if (coverImageUrl) {
+          data.coverImageUrl = coverImageUrl;
+        }
+      }
+
       const result = ExtractFromTextResultSchema.parse(data);
       return result;
     },

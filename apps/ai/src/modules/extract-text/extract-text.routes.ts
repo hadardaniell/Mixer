@@ -77,7 +77,6 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
 
       try {
         if (isYouTube) {
-          // YouTube: check duration first (no download), then send URL directly to Gemini
           app.log.info(`[extract/video] YouTube URL detected — checking duration for: ${url}`);
           try {
             const { duration } = await downloadService.getVideoInfo(url);
@@ -89,20 +88,15 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           } catch {
             app.log.warn(`[extract/video] Could not fetch YouTube metadata for ${url} — proceeding anyway`);
           }
-
-          app.log.info(`[extract/video] Sending YouTube URL directly to Gemini`);
-          const recipe = await videoLlamaService.extractRecipeFromYouTube(url);
-          return reply.send(recipe);
-        } else {
-          // TikTok / Instagram / other: download + extract frames, then send to Gemini
-          app.log.info(`[extract/video] Downloading and extracting frames for: ${url}`);
-          const { tempDir, audioPath, framePaths } = await downloadService.downloadAndExtractFrames(url);
-          tempDirectory = tempDir;
-
-          app.log.info(`[extract/video] Processing frames and audio with Video AI`);
-          const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths);
-          return reply.send(recipe);
         }
+
+        app.log.info(`[extract/video] Downloading and extracting frames for: ${url}`);
+        const { tempDir, audioPath, framePaths } = await downloadService.downloadAndExtractFrames(url);
+        tempDirectory = tempDir;
+
+        app.log.info(`[extract/video] Processing frames and audio with Video AI`);
+        const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths);
+        return reply.send(recipe);
       } catch (error) {
         if (error instanceof Error && error.message === 'not_a_recipe') {
           return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
@@ -150,8 +144,6 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         let tempDirectory: string | undefined;
         try {
           if (isYouTube) {
-            // YouTube: check duration first (no download), then send the URL
-            // straight to Gemini — cheaper and faster than downloading frames.
             app.log.info(`[extract/url] YouTube URL detected — checking duration for: ${url}`);
             try {
               const { duration } = await downloadService.getVideoInfo(url);
@@ -163,9 +155,6 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             } catch {
               app.log.warn(`[extract/url] Could not fetch YouTube metadata for ${url} — proceeding anyway`);
             }
-
-            app.log.info(`[extract/url] Sending YouTube URL directly to Gemini`);
-            return await videoLlamaService.extractRecipeFromYouTube(url);
           }
 
           app.log.info(`[extract/url] Starting download and frame extraction for video URL: ${url}`);
