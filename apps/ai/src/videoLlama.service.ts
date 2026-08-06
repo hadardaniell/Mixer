@@ -99,22 +99,4 @@ export const videoLlamaService = {
 
     return assertRecipe(JSON.parse(result.response.text()));
   },
-
-  // For YouTube — pass the URL directly to Gemini (no download needed)
-  async extractRecipeFromYouTube(url: string): Promise<any> {
-    if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
-
-    const model = getModel(process.env.GEMINI_API_KEY);
-
-    const result = await model.generateContent([
-      { fileData: { mimeType: 'video/mp4', fileUri: url } },
-      { text: RECIPE_PROMPT },
-    ]);
-
-    if (result.response.usageMetadata) {
-      console.log(`📊 [YouTube AI] Tokens: ${result.response.usageMetadata.totalTokenCount} total`);
-    }
-
-    return assertRecipe(JSON.parse(result.response.text()));
-  },
 };

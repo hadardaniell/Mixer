@@ -28,6 +28,7 @@ export function mapExtraction(
   return {
     title: result.title?.trim() || fallbackTitle,
     description: result.description,
+    coverImageUrl: result.coverImageUrl,
     ingredients: (result.ingredients ?? []).map((ing) => ({
       ...ing,
       amount: ing.amount || undefined,

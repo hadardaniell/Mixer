@@ -14,11 +14,13 @@ describe('mapExtraction', () => {
       cookTimeMinutes: 15,
       difficulty: 'easy',
       tags: ['מתוק', 'ארוחת בוקר'],
+      coverImageUrl: 'https://images.pexels.com/photos/123/pexels-photo-123.jpeg',
     };
 
     const mapped = mapExtraction(rawResult, 'he', 'manual', 'מתכון ללא שם');
 
     expect(mapped.title).toBe('פנקייק אוורירי');
+    expect(mapped.coverImageUrl).toBe('https://images.pexels.com/photos/123/pexels-photo-123.jpeg');
     expect(mapped.visibility).toBe('private');
     expect(mapped.status).toBe('draft');
     expect(mapped.language).toBe('he');
