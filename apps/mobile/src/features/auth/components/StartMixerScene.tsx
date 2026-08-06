@@ -285,24 +285,24 @@ function RecipeCardArt() {
 
 type SocialKind = 'instagram' | 'tiktok' | 'youtube' | 'facebook';
 
+/**
+ * Solid brand marks. These are the networks' own logos — recognisable as filled
+ * silhouettes the way people actually see them — so they stay saturated rather than
+ * following the app's line-glyph chrome. They read at this size in a way outlines
+ * didn't: at ~28px a 1.9 stroke leaves the shape mostly empty canvas.
+ */
 function SocialGlyph({ kind }: { kind: SocialKind }) {
   const theme = useTheme();
   const ink = theme.text?.val as string;
-  const stroke = {
-    strokeWidth: 1.9,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    fill: 'none' as const,
-  };
+  // The mark's own counter-shapes — white against every brand fill here.
+  const cut = '#FFFFFF';
 
   if (kind === 'instagram') {
     return (
       <Svg width={ICON} height={ICON} viewBox="0 0 24 24">
-        <G stroke="#E1306C" {...stroke}>
-          <Rect x={3.5} y={3.5} width={17} height={17} rx={5} />
-          <Circle cx={12} cy={12} r={4} />
-        </G>
-        <Circle cx={17} cy={7} r={1.2} fill="#E1306C" />
+        <Rect x={2.5} y={2.5} width={19} height={19} rx={5.5} fill="#E1306C" />
+        <Circle cx={12} cy={12} r={4.2} stroke={cut} strokeWidth={2} fill="none" />
+        <Circle cx={17.2} cy={6.8} r={1.3} fill={cut} />
       </Svg>
     );
   }
@@ -310,29 +310,28 @@ function SocialGlyph({ kind }: { kind: SocialKind }) {
     // Black in the brand — resolve to theme ink so it survives dark mode.
     return (
       <Svg width={ICON} height={ICON} viewBox="0 0 24 24">
-        <G stroke={ink} {...stroke}>
-          <Path d="M13 4v10.6a3.6 3.6 0 1 1-3.6-3.6" />
-          <Path d="M13 4.2c.4 2.3 2 3.8 4.3 4" />
-        </G>
+        <Path
+          d="M14.6 3h2.7c.3 2 1.5 3.4 3.5 3.6v2.7c-1.3 0-2.5-.4-3.5-1.1v5.7a5.4 5.4 0 1 1-5.4-5.4c.3 0 .6 0 .9.1v2.8a2.6 2.6 0 1 0 1.8 2.5V3Z"
+          fill={ink}
+        />
       </Svg>
     );
   }
   if (kind === 'youtube') {
     return (
       <Svg width={ICON} height={ICON} viewBox="0 0 24 24">
-        <G stroke="#FF0000" {...stroke}>
-          <Rect x={2.5} y={6} width={19} height={12} rx={4} />
-          <Path d="M10.4 9.4v5.2l4.4-2.6-4.4-2.6Z" />
-        </G>
+        <Rect x={2} y={5.5} width={20} height={13} rx={4} fill="#FF0000" />
+        <Path d="M10.2 9.1 16 12l-5.8 2.9V9.1Z" fill={cut} />
       </Svg>
     );
   }
   return (
     <Svg width={ICON} height={ICON} viewBox="0 0 24 24">
-      <G stroke="#1877F2" {...stroke}>
-        <Path d="M15 4.5h-1.7C11.8 4.5 11 5.6 11 7.3V20" />
-        <Path d="M8.4 11h5.6" />
-      </G>
+      <Circle cx={12} cy={12} r={9.6} fill="#1877F2" />
+      <Path
+        d="M13.3 21v-7.3h2.4l.4-2.8h-2.8V9.1c0-.8.2-1.4 1.4-1.4h1.5V5.2c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2H7.9v2.8h2.4V21h3Z"
+        fill={cut}
+      />
     </Svg>
   );
 }
