@@ -73,6 +73,9 @@ export function BookHero({
 
       <YStack paddingHorizontal={20} paddingTop={16} gap={12}>
         <XStack alignItems="center" gap="$3">
+          {/* Leads the row, so it sits at the start edge and flips with the direction. */}
+          <CoverIcon size={30} color={color.deep} weight="regular" />
+
           <Text
             flex={1}
             color="$text"
@@ -83,8 +86,6 @@ export function BookHero({
           >
             {book.name}
           </Text>
-
-          <CoverIcon size={30} color={color.deep} weight="regular" />
 
           {/* Pencil then star, so the star lands on the outer edge of the row.
               The edit pencil only shows for owners and editors. */}
