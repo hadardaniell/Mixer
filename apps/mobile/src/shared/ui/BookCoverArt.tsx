@@ -13,6 +13,7 @@ import {
   PizzaIcon,
   WineIcon,
 } from 'phosphor-react-native';
+import { Image } from 'react-native';
 import { View } from 'tamagui';
 
 /**
@@ -85,17 +86,61 @@ interface BookCoverArtProps {
    *  glyph. The View itself fills its parent, so the parent sets the box. */
   size: number;
   radius?: number;
+  /** Cover photos of the book's first recipes. With two or more, they become the
+   *  cover and the chosen color narrows to an edge stripe. */
+  images?: string[];
 }
 
+/** Width of the color stripe along the inner edge, as a share of the cover. */
+const EDGE_RATIO = 0.033;
+const MIN_MOSAIC_IMAGES = 2;
+
 /**
- * Renders a book cover from its `coverKey`: a solid tint field filling the
- * parent with the line icon centered in the color's deeper tone. No blob, no
- * white — one flat color panel, which is what reads cleanest both as the feed
- * card's top and as the list row's leading panel.
+ * Renders a book cover. What a cover says depends on what the book has:
+ *
+ * - **With photos** — a mosaic of up to four recipe images, and the chosen color
+ *   as a stripe along the inner edge. The cover shows what's *in* the book, and
+ *   the color stays as the thread back to the book's own page.
+ * - **Without photos** — the composed cover: the chosen color as a field with the
+ *   chosen glyph. New books and text-only imports live here, so it isn't a
+ *   degraded state — for many books it's the only state.
+ *
+ * The glyph is drawn `weight="fill"`: at these sizes a line glyph reads as a
+ * faint scratch rather than as a mark.
  */
-export function BookCoverArt({ coverKey, size, radius = 0 }: BookCoverArtProps) {
+export function BookCoverArt({ coverKey, size, radius = 0, images }: BookCoverArtProps) {
   const { color, icon: Icon } = decodeCover(coverKey);
   const glyph = size * 0.46;
+  const photos = (images ?? []).filter(Boolean).slice(0, 4);
+
+  if (photos.length >= MIN_MOSAIC_IMAGES) {
+    return (
+      <View width="100%" height="100%" borderRadius={radius} overflow="hidden">
+        <View flex={1} flexDirection="row" flexWrap="wrap">
+          {photos.map((uri, i) => (
+            <View
+              key={`${uri}-${i}`}
+              // Two across, two down. An odd third photo takes the full bottom row
+              // rather than leaving a hole.
+              width={photos.length === 3 && i === 2 ? '100%' : '50%'}
+              height={photos.length <= 2 ? '100%' : '50%'}
+            >
+              <Image source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            </View>
+          ))}
+        </View>
+        {/* `end`: the stripe hugs the edge that meets the text, and flips with RTL. */}
+        <View
+          position="absolute"
+          top={0}
+          bottom={0}
+          end={0}
+          width={Math.max(3, size * EDGE_RATIO)}
+          backgroundColor={color.deep}
+        />
+      </View>
+    );
+  }
 
   return (
     <View
@@ -107,7 +152,7 @@ export function BookCoverArt({ coverKey, size, radius = 0 }: BookCoverArtProps) 
       justifyContent="center"
       overflow="hidden"
     >
-      <Icon size={glyph} color={color.deep} weight="regular" />
+      <Icon size={glyph} color={color.deep} weight="fill" />
     </View>
   );
 }

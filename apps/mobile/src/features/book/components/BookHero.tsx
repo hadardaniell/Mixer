@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { resolveBookCover } from '@/shared/lib/coverImages';
+import { decodeCover } from '@/shared/ui/BookCoverArt';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 import { FavoriteButton } from '@/shared/ui/FavoriteButton';
 
@@ -61,14 +62,21 @@ export function BookHero({
   const visible = members.slice(0, MAX_AVATARS);
   const extra = Math.max(0, members.length - visible.length);
 
+  // The header wears the book's own colour — the counterpart to the edge stripe on its
+  // cover in the feed, and the one place the user's choice gets room to mean something.
+  // Deliberately unlike the app's white chrome: a book is content, and its identity is
+  // the point.
+  const { color, icon: CoverIcon } = decodeCover(book.coverKey);
+  const ON_COLOR = '#FFFFFF';
+
   return (
-    <YStack width="100%">
+    <YStack width="100%" backgroundColor={color.deep} paddingBottom={18}>
 
       <YStack paddingHorizontal={20} paddingTop={16} gap={12}>
         <XStack alignItems="center" gap="$3">
           <Text
             flex={1}
-            color="$text"
+            color={ON_COLOR}
             fontSize={26}
             fontWeight="700"
             letterSpacing={-0.5}
@@ -76,6 +84,8 @@ export function BookHero({
           >
             {book.name}
           </Text>
+
+          <CoverIcon size={34} color={ON_COLOR} weight="fill" />
 
           {/* Pencil then star, so the star lands on the outer edge of the row.
               The edit pencil only shows for owners and editors. */}
@@ -91,7 +101,7 @@ export function BookHero({
                 justifyContent="center"
                 pressStyle={{ opacity: 0.7 }}
               >
-                <Pencil size={22} color={theme.textMuted?.val as string} strokeWidth={2} />
+                <Pencil size={22} color={ON_COLOR} strokeWidth={2} />
               </YStack>
             ) : null}
             <FavoriteButton
@@ -103,13 +113,15 @@ export function BookHero({
           </XStack>
         </XStack>
 
+        {/* Secondary text on a saturated ground: white at reduced opacity rather than a
+            grey token, which would muddy against the colour. */}
         {book.description ? (
-          <Text color="$textMuted" fontSize={15} lineHeight={21}>
+          <Text color={ON_COLOR} opacity={0.9} fontSize={15} lineHeight={21}>
             {book.description}
           </Text>
         ) : null}
 
-        <Text color="$textMuted" fontSize={13}>
+        <Text color={ON_COLOR} opacity={0.85} fontSize={13}>
           {t('book.counts', { recipes: recipeCount, members: members.length })}
         </Text>
 
@@ -156,16 +168,16 @@ export function BookHero({
               height={36}
               paddingHorizontal={14}
               borderRadius={999}
-              backgroundColor="$surface"
+              backgroundColor="transparent"
               borderWidth={1.5}
-              borderColor="$primary"
-              pressStyle={{ backgroundColor: '$bgSubtle' }}
+              borderColor={ON_COLOR}
+              opacity={0.92}
+              pressStyle={{ opacity: 0.7 }}
             >
-              {/* The label takes step 11, not `$primary`. Step 9 is 3.0:1 on
-                  white and fails as text; it's fine on the outline, which is a
-                  graphic and only needs 3:1. */}
-              <Plus size={16} color={theme.textOnPrimary?.val as string} strokeWidth={2.5} />
-              <Text color="$textOnPrimary" fontSize={14} fontWeight="700">
+              {/* Outlined in white on the book's colour. It used to be pinned to
+                  `$primary`, which made every book's header identical. */}
+              <Plus size={16} color={ON_COLOR} strokeWidth={2.5} />
+              <Text color={ON_COLOR} fontSize={14} fontWeight="700">
                 {t('book.addMembers')}
               </Text>
             </XStack>
