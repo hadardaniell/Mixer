@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Adds a "Run workflow" button, so a run can be started without inventing a commit —
+  # useful when a run was lost to a runner outage rather than to a real failure.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -28,10 +31,10 @@ jobs:
 
   docker-build:
     name: Docker build (${{ matrix.service }})
-    # PRs only: on a push to main, deploy.yml builds these same two images. Every change
-    # reaches main through a PR, so the images are already smoke-tested by the time they
-    # get there — building them twice just makes the deploy wait.
-    if: github.event_name == 'pull_request'
+    # Not on a push to main: deploy.yml builds these same two images there, and every
+    # change reaches main through a PR, so they're already smoke-tested by then —
+    # building twice just makes the deploy wait. A manual run still builds them.
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

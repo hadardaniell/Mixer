@@ -3,6 +3,9 @@ name: Deploy
 on:
   push:
     branches: [main]
+  # Lets a deploy be re-run from the Actions tab when the push-triggered one never got a
+  # runner — without pushing an empty commit to main to force it.
+  workflow_dispatch:
 
 concurrency:
   group: deploy-main
