@@ -10,6 +10,7 @@ import {
 import { extractRecipeFromText } from './extract-text.service.js';
 import { downloadService, MAX_VIDEO_DURATION_SECONDS } from '../../download.service.js';
 import { videoLlamaService } from '../../videoLlama.service.js';
+import { retryWithBackoff } from '../../utils/retry.utils.js';
 
 function isVideoUrl(url: string): boolean {
   const lowercaseUrl = url.toLowerCase();
@@ -24,18 +25,29 @@ function isVideoUrl(url: string): boolean {
 }
 
 async function fetchWebpageText(url: string): Promise<string> {
-  const headers: Record<string, string> = {};
-  if (process.env.JINA_API_KEY) {
-    headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
-  }
-  const response = await fetch(`https://r.jina.ai/${url}`, {
-    headers,
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch webpage content from Jina Reader: ${response.statusText}`);
-  }
-  return response.text();
+  return retryWithBackoff(
+    async () => {
+      const headers: Record<string, string> = {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      };
+      if (process.env.JINA_API_KEY) {
+        headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
+      }
+      const response = await fetch(`https://r.jina.ai/${url}`, { headers });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch webpage content from Jina Reader (${response.status} ${response.statusText})`);
+      }
+      const text = await response.text();
+      if (!text || text.trim().length === 0) {
+        throw new Error('Jina Reader returned empty webpage content');
+      }
+      return text;
+    },
+    { retries: 3, initialDelayMs: 1000 },
+  );
 }
+
 
 export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(

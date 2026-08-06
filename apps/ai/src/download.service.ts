@@ -70,7 +70,7 @@ export const downloadService = {
 
     const baseOptions: any = {
       output: outputPath,
-      format: 'worstvideo[height>=360][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+      format: 'worstvideo[height>=240]+bestaudio/worst[ext=mp4]/worst',
       noWarnings: true,
       noCheckCertificate: true,
       impersonate: 'chrome',
@@ -86,14 +86,29 @@ export const downloadService = {
 
     const audioPath = path.join(tempDir, 'audio.mp3');
 
-    // 1. Extract audio track
-    await execAsync(`"${ffmpeg}" -i "${outputPath}" -q:a 0 -map a "${audioPath}" -y`).catch(() => {});
+    // 1. Extract lightweight mono audio track (16kHz, fast upload)
+    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vn -ar 16000 -ac 1 -ab 32k "${audioPath}" -y`).catch(() => {});
     
-    // 2. Extract 1 frame every 2 seconds (fps=1/2)
-    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vf fps=1/2 "${tempDir}/frame-%03d.jpg" -y`);
+    // 2. Extract lightweight 480p frames every 4 seconds (fps=1/4, low quality q:v 5 for speed)
+    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vf "fps=1/4,scale=480:-1" -q:v 5 "${tempDir}/frame-%03d.jpg" -y`);
 
     const files = await fs.readdir(tempDir);
-    const framePaths = files.filter(f => f.startsWith('frame-') && f.endsWith('.jpg')).map(f => path.join(tempDir, f));
+    let framePaths = files
+      .filter((f) => f.startsWith('frame-') && f.endsWith('.jpg'))
+      .map((f) => path.join(tempDir, f))
+      .sort();
+
+    // 3. Cap at max 12 evenly-spaced frames to keep Gemini upload & processing fast
+    const MAX_FRAMES = 12;
+    if (framePaths.length > MAX_FRAMES) {
+      const step = framePaths.length / MAX_FRAMES;
+      const sampled: string[] = [];
+      for (let i = 0; i < MAX_FRAMES; i++) {
+        const frame = framePaths[Math.floor(i * step)];
+        if (frame) sampled.push(frame);
+      }
+      framePaths = sampled;
+    }
 
     return { tempDir, audioPath, framePaths };
   },
