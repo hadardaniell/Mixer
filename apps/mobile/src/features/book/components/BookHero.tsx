@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { resolveBookCover } from '@/shared/lib/coverImages';
+import { decodeCover } from '@/shared/ui/BookCoverArt';
 import { useIsRtl } from '@/shared/lib/useIsRtl';
 import { FavoriteButton } from '@/shared/ui/FavoriteButton';
 
@@ -61,11 +62,20 @@ export function BookHero({
   const visible = members.slice(0, MAX_AVATARS);
   const extra = Math.max(0, members.length - visible.length);
 
+  // The book's colour appears three times and nowhere else: the glyph beside the title,
+  // a short rule under it, and the outline of the members pill. A full colour field made
+  // the header shout; the canvas stays white like every other screen, and the choice
+  // still reads at a glance.
+  const { color, icon: CoverIcon } = decodeCover(book.coverKey);
+
   return (
     <YStack width="100%">
 
       <YStack paddingHorizontal={20} paddingTop={16} gap={12}>
         <XStack alignItems="center" gap="$3">
+          {/* Leads the row, so it sits at the start edge and flips with the direction. */}
+          <CoverIcon size={30} color={color.deep} weight="regular" />
+
           <Text
             flex={1}
             color="$text"
@@ -102,6 +112,10 @@ export function BookHero({
             />
           </XStack>
         </XStack>
+
+        {/* The one piece of colour that isn't attached to a control: short enough to read
+            as a mark under the title rather than as a divider across the screen. */}
+        <YStack width={44} height={3} borderRadius={999} backgroundColor={color.deep} />
 
         {book.description ? (
           <Text color="$textMuted" fontSize={15} lineHeight={21}>
@@ -158,14 +172,14 @@ export function BookHero({
               borderRadius={999}
               backgroundColor="$surface"
               borderWidth={1.5}
-              borderColor="$primary"
+              borderColor={color.deep}
               pressStyle={{ backgroundColor: '$bgSubtle' }}
             >
-              {/* The label takes step 11, not `$primary`. Step 9 is 3.0:1 on
-                  white and fails as text; it's fine on the outline, which is a
-                  graphic and only needs 3:1. */}
-              <Plus size={16} color={theme.textOnPrimary?.val as string} strokeWidth={2.5} />
-              <Text color="$textOnPrimary" fontSize={14} fontWeight="700">
+              {/* Outlined in the book's colour — it used to be pinned to `$primary`, so
+                  every book's header looked identical. The label stays ink: the book
+                  colours are picked for fills, and several fail 4.5:1 as text. */}
+              <Plus size={16} color={color.deep} strokeWidth={2.5} />
+              <Text color="$text" fontSize={14} fontWeight="700">
                 {t('book.addMembers')}
               </Text>
             </XStack>

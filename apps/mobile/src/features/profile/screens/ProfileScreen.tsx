@@ -10,7 +10,6 @@ import {
   useToggleBookFavorite,
   useToggleRecipeFavorite,
 } from '@/features/home/hooks/useFavoriteMutations';
-import { ProfileBanner } from '@/features/profile/components/ProfileBanner';
 import { ProfileContentSkeleton } from '@/features/profile/components/ProfileContentSkeleton';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { ProfileTabs, type ProfileTab } from '@/features/profile/components/ProfileTabs';
@@ -44,10 +43,6 @@ export function ProfileScreen({ userId }: ProfileScreenProps) {
 
   return (
     <YStack flex={1} backgroundColor="$bg">
-      {/* Full-bleed gradient band — starts at the very top edge (under the status
-          bar) and spans edge to edge, behind the scrolling content. */}
-      <ProfileBanner height={insets.top + 140} />
-
       <ScrollView
         style={{ backgroundColor: 'transparent' }}
         contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 120 }}

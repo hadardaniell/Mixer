@@ -6,6 +6,7 @@ import type {
   PublicUser,
   Recipe,
   RecipeBook,
+  SharedItem,
 } from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';
@@ -38,6 +39,10 @@ export const feedApi = {
   favoriteBooks: () => http<ListResponse<RecipeBook>>('/favorites?kind=book'),
 
   recipeById: (id: string) => http<Recipe>(`/recipes/${id}`),
+
+  /** Inbox of things friends shared directly with me (as opposed to via a shared book). */
+  receivedShares: (limit = 50) =>
+    http<ListResponse<SharedItem>>(`/shares/received?status=accepted&limit=${limit}`),
 
   recipesByCategory: (categoryId: string, limit = 100) =>
     http<ListResponse<Recipe>>(`/recipes?categoryId=${categoryId}&limit=${limit}`),

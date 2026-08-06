@@ -38,7 +38,12 @@
     "sharedWithMe": "Shared with me",
     "favorites": "Favorites",
     "seeMore": "See more",
-    "emptySection": "Nothing here yet"
+    "emptySection": "Nothing here yet",
+    "empty": {
+      "title": "Your kitchen is still empty",
+      "subtitle": "Import a recipe from a link, a photo or your own notes — and it'll show up right here.",
+      "button": "Add my first recipe"
+    }
   },
   "notifications": {
     "title": "Notifications",

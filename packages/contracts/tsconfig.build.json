@@ -1,0 +1,7 @@
+{
+  // Emit-only config: tests are excluded so `build` doesn't depend on vitest's types
+  // (a test-only devDependency) and doesn't ship dist/__tests__ to consumers.
+  // Type checking still covers the tests — `typecheck` uses tsconfig.json.
+  "extends": "./tsconfig.json",
+  "exclude": ["src/**/__tests__/**"]
+}

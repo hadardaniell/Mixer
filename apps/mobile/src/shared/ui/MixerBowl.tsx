@@ -26,6 +26,8 @@ import { useTheme, View } from 'tamagui';
 
 const VB_W = 172;
 const VB_H = 150;
+/** Degrees the whisk leans at rest. Negative tips the head toward the bowl's start side. */
+const WHISK_TILT = -13;
 
 const AnimatedG = Animated.createAnimatedComponent(G);
 
@@ -70,7 +72,10 @@ export function MixerBowl({ size = 120, animated = false }: MixerBowlProps) {
   }, [animated, reduceMotion, stir, wob, spin]);
 
   const bowlStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${wob.value}deg` }] }));
-  const whiskProps = useAnimatedProps(() => ({ rotation: stir.value * 14 }));
+  // Resting lean. Standing perfectly vertical read as a diagram rather than a whisk
+  // someone is holding; the tilt is what makes it look set down in the bowl. The stir
+  // sweeps around this angle, so the still mark and the animated one agree.
+  const whiskProps = useAnimatedProps(() => ({ rotation: WHISK_TILT + stir.value * 14 }));
   const swirlProps = useAnimatedProps(() => ({ rotation: spin.value * 360 }));
 
   return (

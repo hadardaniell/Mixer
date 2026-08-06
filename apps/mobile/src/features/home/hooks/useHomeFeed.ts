@@ -78,6 +78,37 @@ export function useHomeFeed(): HomeFeed {
     enabled: sharedRecipeIds.length > 0,
   });
 
+  // Recipes a friend shared with me directly. Distinct from the ids above, which only
+  // cover recipes reachable through a shared book — a direct share belongs to no book
+  // of mine, so it would otherwise never appear on the feed.
+  const receivedSharesQ = useQuery({
+    queryKey: ['feed', 'received-shares'],
+    queryFn: () => feedApi.receivedShares(),
+    enabled: !!myId,
+  });
+
+  const directSharedIds = useMemo(
+    () =>
+      (receivedSharesQ.data?.items ?? [])
+        .filter((s) => s.resourceType === 'recipe')
+        .map((s) => s.resourceId),
+    [receivedSharesQ.data],
+  );
+
+  const directSharedRecipesQ = useQuery({
+    queryKey: ['feed', 'direct-shared-recipes', [...directSharedIds].sort().join(',')],
+    // allSettled: a share whose recipe was since deleted must not empty the whole row.
+    queryFn: async () => {
+      const settled = await Promise.allSettled(
+        directSharedIds.map((id) => feedApi.recipeById(id)),
+      );
+      return settled
+        .filter((r): r is PromiseFulfilledResult<Recipe> => r.status === 'fulfilled')
+        .map((r) => r.value);
+    },
+    enabled: directSharedIds.length > 0,
+  });
+
   // Collect member user ids across all books
   const memberUserIds = useMemo(() => {
     const set = new Set<string>();
@@ -140,13 +171,15 @@ export function useHomeFeed(): HomeFeed {
     [books, recipeById, userById, myId],
   );
 
-  const sharedWithMe = useMemo(
-    () =>
-      (sharedRecipesQ.data ?? [])
-        .filter((r) => r.ownerId !== myId) // only recipes others shared, not my own
-        .map(toRecipeCard),
-    [sharedRecipesQ.data, myId, tagOf],
-  );
+  // Both routes to "someone shared this with me" — a book I'm a member of, and a direct
+  // share — collapsed into one row. Deduped by id: the same recipe can arrive both ways.
+  const sharedWithMe = useMemo(() => {
+    const byId = new Map<string, Recipe>();
+    for (const r of [...(sharedRecipesQ.data ?? []), ...(directSharedRecipesQ.data ?? [])]) {
+      if (r.ownerId !== myId) byId.set(r.id, r); // only what others shared, not my own
+    }
+    return Array.from(byId.values()).map(toRecipeCard);
+  }, [sharedRecipesQ.data, directSharedRecipesQ.data, myId, tagOf]);
 
   const favorites = useMemo(
     () => (favRecipesQ.data?.items ?? []).map(toRecipeCard),
@@ -160,7 +193,9 @@ export function useHomeFeed(): HomeFeed {
       favRecipesQ.isLoading ||
       coverRecipesQ.isLoading ||
       usersQ.isLoading ||
-      sharedRecipesQ.isLoading,
+      sharedRecipesQ.isLoading ||
+      receivedSharesQ.isLoading ||
+      directSharedRecipesQ.isLoading,
     recentlyViewed: recentlyViewedQ.items,
     booksWithFriends,
     sharedWithMe,
