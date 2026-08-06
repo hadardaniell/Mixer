@@ -12,19 +12,24 @@ export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90
 
 export const downloadService = {
   async getVideoInfo(url: string): Promise<{ duration: number; title: string }> {
-    const info = await ytDlp(url, {
-      dumpSingleJson: true,
-      skipDownload: true,
-      noWarnings: true,
-      noCheckCertificate: true,
-      impersonate: 'chrome',
-    } as any);
+    try {
+      const info = await ytDlp(url, {
+        dumpSingleJson: true,
+        skipDownload: true,
+        noWarnings: true,
+        noCheckCertificate: true,
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      } as any);
 
-    const parsed = typeof info === 'string' ? JSON.parse(info) : info as any;
-    return {
-      duration: parsed.duration ?? 0,
-      title: parsed.title ?? '',
-    };
+      const parsed = typeof info === 'string' ? JSON.parse(info) : (info as any);
+      return {
+        duration: parsed.duration ?? 0,
+        title: parsed.title ?? '',
+      };
+    } catch {
+      return { duration: 0, title: '' };
+    }
   },
 
   async getTopComments(url: string): Promise<string> {
@@ -68,20 +73,50 @@ export const downloadService = {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mixer-import-'));
     const outputPath = path.join(tempDir, 'video.mp4');
 
-    const baseOptions: any = {
-      output: outputPath,
-      format: 'worstvideo[height>=240]+bestaudio/worst[ext=mp4]/worst',
-      noWarnings: true,
-      noCheckCertificate: true,
-      impersonate: 'chrome',
-      extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
-    };
+    const strategies = [
+      {
+        output: outputPath,
+        format: 'b[height<=480]/b/best[height<=480]/best/worst',
+        noWarnings: true,
+        noCheckCertificate: true,
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      {
+        output: outputPath,
+        format: 'b/best',
+        noWarnings: true,
+        noCheckCertificate: true,
+      },
+      {
+        output: outputPath,
+        noWarnings: true,
+        noCheckCertificate: true,
+        extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+      },
+    ];
 
-    try {
-      await ytDlp(url, baseOptions);
-    } catch (finalErr) {
-      console.error(`[download.service] Final download attempt failed.`);
-      throw new Error(`Failed to download video. Platform might be blocking the request (403 Forbidden). URL: ${url}`);
+    let downloaded = false;
+    let lastError: unknown;
+
+    for (const options of strategies) {
+      try {
+        await ytDlp(url, options as any);
+        downloaded = true;
+        break;
+      } catch (err) {
+        lastError = err;
+        console.warn(
+          `[download.service] ytDlp strategy failed for ${url}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
+    if (!downloaded) {
+      console.error(`[download.service] All download strategies failed for ${url}`);
+      throw new Error(
+        `Failed to download video. Platform might be blocking the request (403 Forbidden). URL: ${url}`,
+      );
     }
 
     const audioPath = path.join(tempDir, 'audio.mp3');
