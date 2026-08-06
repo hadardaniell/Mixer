@@ -50,6 +50,11 @@ jobs:
           file: apps/${{ matrix.service }}/Dockerfile
           push: false
           load: true # keep the image in the local daemon for the smoke test below
+          # buildx attaches a provenance attestation by default, and the docker exporter
+          # that `load` uses can't carry one — the build fails at export. The deploy job
+          # pushes to a registry, which does support it, so this only bites here.
+          provenance: false
+          sbom: false
           tags: mixer-${{ matrix.service }}:ci
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
