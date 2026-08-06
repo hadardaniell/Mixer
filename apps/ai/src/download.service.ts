@@ -12,19 +12,24 @@ export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90
 
 export const downloadService = {
   async getVideoInfo(url: string): Promise<{ duration: number; title: string }> {
-    const info = await ytDlp(url, {
-      dumpSingleJson: true,
-      skipDownload: true,
-      noWarnings: true,
-      noCheckCertificate: true,
-      impersonate: 'chrome',
-    } as any);
+    try {
+      const info = await ytDlp(url, {
+        dumpSingleJson: true,
+        skipDownload: true,
+        noWarnings: true,
+        noCheckCertificate: true,
+        userAgent:
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      } as any);
 
-    const parsed = typeof info === 'string' ? JSON.parse(info) : info as any;
-    return {
-      duration: parsed.duration ?? 0,
-      title: parsed.title ?? '',
-    };
+      const parsed = typeof info === 'string' ? JSON.parse(info) : (info as any);
+      return {
+        duration: parsed.duration ?? 0,
+        title: parsed.title ?? '',
+      };
+    } catch {
+      return { duration: 0, title: '' };
+    }
   },
 
   async getTopComments(url: string): Promise<string> {
@@ -68,29 +73,72 @@ export const downloadService = {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mixer-import-'));
     const outputPath = path.join(tempDir, 'video.mp4');
 
-    const baseOptions: any = {
-      output: outputPath,
-      format: 'worstvideo[height>=240]+bestaudio/worst[ext=mp4]/worst',
-      noWarnings: true,
-      noCheckCertificate: true,
-      impersonate: 'chrome',
-      extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
-    };
+    const isTikTok = url.toLowerCase().includes('tiktok.com');
 
-    try {
-      await ytDlp(url, baseOptions);
-    } catch (finalErr) {
-      console.error(`[download.service] Final download attempt failed.`);
-      throw new Error(`Failed to download video. Platform might be blocking the request (403 Forbidden). URL: ${url}`);
+    const strategies = isTikTok
+      ? [
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
+            extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+          },
+        ]
+      : [
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            userAgent:
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
+          },
+        ];
+
+    let downloaded = false;
+    let lastError: unknown;
+
+    for (const options of strategies) {
+      try {
+        await ytDlp(url, options as any);
+        downloaded = true;
+        break;
+      } catch (err) {
+        lastError = err;
+        console.warn(
+          `[download.service] ytDlp strategy failed for ${url}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
+    if (!downloaded) {
+      console.error(`[download.service] All download strategies failed for ${url}`);
+      throw new Error(
+        `Failed to download video. Platform might be blocking the request (403 Forbidden). URL: ${url}`,
+      );
     }
 
     const audioPath = path.join(tempDir, 'audio.mp3');
 
-    // 1. Extract lightweight mono audio track (16kHz, fast upload)
-    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vn -ar 16000 -ac 1 -ab 32k "${audioPath}" -y`).catch(() => {});
-    
-    // 2. Extract lightweight 480p frames every 4 seconds (fps=1/4, low quality q:v 5 for speed)
-    await execAsync(`"${ffmpeg}" -i "${outputPath}" -vf "fps=1/4,scale=480:-1" -q:v 5 "${tempDir}/frame-%03d.jpg" -y`);
+    // 1 & 2. Extract lightweight audio + 480p frames concurrently in parallel for max CPU speed
+    await Promise.all([
+      execAsync(`"${ffmpeg}" -i "${outputPath}" -vn -ar 16000 -ac 1 -ab 32k "${audioPath}" -y`).catch(() => {}),
+      execAsync(`"${ffmpeg}" -i "${outputPath}" -vf "fps=1/4,scale=480:-1" -q:v 5 "${tempDir}/frame-%03d.jpg" -y`),
+    ]);
 
     const files = await fs.readdir(tempDir);
     let framePaths = files
