@@ -2,9 +2,7 @@ name: Unit Tests & CI
 
 on:
   push:
-    branches: [main, unit-testing]
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
