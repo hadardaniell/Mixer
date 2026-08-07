@@ -762,11 +762,15 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       onRequest: [app.authenticate],
       schema: {
         body: ExtractFromImageInputSchema,
-        response: { 200: ExtractFromTextResultSchema },
+        response: {
+          200: ExtractFromTextResultSchema,
+          422: z.object({ error: z.string(), message: z.string().optional() }),
+          500: z.object({ error: z.string(), message: z.string().optional() }),
+        },
         tags: ['recipes'],
       },
     },
-    async (req) => {
+    async (req, reply) => {
       const response = await fetch(`${config.aiBaseUrl}/extract/image`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -774,11 +778,15 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       });
 
       if (!response.ok) {
-        const data = (await response.json()) as { message?: string };
-        if (data?.message === 'images_not_same_recipe') {
-          throw new Error('images_not_same_recipe');
+        const data = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+        const errorMsg = data?.error ?? data?.message ?? 'AI service failed to extract recipe from image';
+        if (errorMsg === 'The images do not all belong to the same recipe.' || data?.message === 'images_not_same_recipe') {
+          return reply.code(422).send({ message: 'images_not_same_recipe', error: errorMsg });
         }
-        throw new Error('AI service failed to extract recipe from image');
+        return reply.code(response.status === 422 ? 422 : 500).send({
+          error: errorMsg,
+          message: errorMsg,
+        });
       }
 
       const data = (await response.json()) as Record<string, unknown>;
