@@ -317,6 +317,7 @@ export const ExtractFromTextResultSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   cuisine: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  coverImageUrl: z.string().url().optional(),
 });
 export type ExtractFromTextResult = z.infer<typeof ExtractFromTextResultSchema>;
 
