@@ -69,7 +69,10 @@ export function CreateManualScreen({ recipeId }: { recipeId?: string } = {}) {
       if (step === TOTAL_STEPS) {
         // Step 5 is review-only; the draft already holds every field, so just publish.
         const recipe = await publish();
-        router.replace(`/recipes/${recipe.id}` as never);
+      router.navigate('/home');
+      setTimeout(() => {
+        router.push(`/recipes/${recipe.id}` as never);
+      }, 0);
         return;
       }
       await saveStep(stepPatch(step, form));

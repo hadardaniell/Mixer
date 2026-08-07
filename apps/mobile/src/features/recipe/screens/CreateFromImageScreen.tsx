@@ -154,7 +154,10 @@ export function CreateFromImageScreen() {
           ),
         sourceType: 'image',
       });
-      router.replace(`/recipes/${recipe.id}` as never);
+      router.navigate('/home');
+      setTimeout(() => {
+        router.push(`/recipes/${recipe.id}` as never);
+      }, 0);
     } catch (e) {
       const notSame =
         e instanceof HttpError &&

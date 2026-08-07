@@ -40,7 +40,13 @@ export function CreateFromLinkScreen() {
         sourceType: 'url',
         sourceUrl: url,
       });
-      router.replace(`/recipes/${recipe.id}` as never);
+      // Route back to home first, then push the recipe on top.
+      // This ensures the back button from the recipe takes you straight to the Feed
+      // instead of deleting the history stack or taking you back to the link input.
+      router.navigate('/home');
+      setTimeout(() => {
+        router.push(`/recipes/${recipe.id}` as never);
+      }, 0);
     } catch (e) {
       setError(t('newRecipe.errors.extractFailed'));
     }
