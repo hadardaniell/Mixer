@@ -84,7 +84,6 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
     },
   );
 
-  // --- list my favorites, branched by ?kind=recipe|book ---
   app.get(
     '/favorites',
     {
@@ -103,6 +102,12 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
       const ids = favs.map((f) => f.targetId);
       if (ids.length === 0) return { items: [] };
 
+      let targetLang: 'he' | 'en' = 'en';
+      const userDoc = await app.collections.users.findOne({ _id: userId });
+      if (userDoc?.locale) {
+        targetLang = userDoc.locale as 'he' | 'en';
+      }
+
       if (kind === 'recipe') {
         const recipes = await app.collections.recipes
           .find({
@@ -110,7 +115,35 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
             $or: [{ ownerId: userId }, { visibility: { $ne: 'private' } }],
           })
           .toArray();
-        const byId = new Map(recipes.map((r) => [r._id.toString(), r]));
+
+        const recipeIds = recipes.map((r) => r._id);
+        const translations = await app.collections.recipeTranslations
+          ?.find({
+            recipeId: { $in: recipeIds },
+            language: targetLang,
+          })
+          .toArray() ?? [];
+
+        const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
+
+        const translatedRecipes = recipes.map((doc) => {
+          if (doc.language && doc.language !== targetLang) {
+            const cached = translationMap.get(doc._id.toString());
+            if (cached) {
+              return {
+                ...doc,
+                title: cached.title,
+                description: cached.description,
+                tags: cached.tags ?? doc.tags,
+                cuisine: cached.cuisine ?? doc.cuisine,
+                language: targetLang,
+              };
+            }
+          }
+          return doc;
+        });
+
+        const byId = new Map(translatedRecipes.map((r) => [r._id.toString(), r]));
         const items = ids
           .map((id) => byId.get(id.toString()))
           .filter((r): r is NonNullable<typeof r> => r !== undefined)
@@ -119,13 +152,39 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
       }
 
       // book
-      const books = await app.collections.recipeBooks
+     const books = await app.collections.recipeBooks
         .find({
           _id: { $in: ids },
           $or: [{ ownerId: userId }, { 'members.userId': userId }],
         })
         .toArray();
-      const byId = new Map(books.map((b) => [b._id.toString(), b]));
+
+      const bookIds = books.map((b) => b._id);
+      const bookTranslations = await app.collections.bookTranslations
+        ?.find({
+          bookId: { $in: bookIds },
+          language: targetLang,
+        })
+        .toArray() ?? [];
+
+      const bookTranslationMap = new Map(bookTranslations.map((t) => [t.bookId.toString(), t]));
+
+      const translatedBooks = books.map((doc) => {
+        if (doc.language && doc.language !== targetLang) {
+          const cached = bookTranslationMap.get(doc._id.toString());
+          if (cached) {
+            return {
+              ...doc,
+              name: cached.name, 
+              description: cached.description ?? doc.description,
+              language: targetLang,
+            };
+          }
+        }
+        return doc;
+      });
+
+      const byId = new Map(translatedBooks.map((b) => [b._id.toString(), b]));
       const items = ids
         .map((id) => byId.get(id.toString()))
         .filter((b): b is NonNullable<typeof b> => b !== undefined)

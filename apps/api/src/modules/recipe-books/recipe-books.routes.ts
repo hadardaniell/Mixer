@@ -1,3 +1,4 @@
+// apps/api/src/modules/recipe-books/recipe-books.routes.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
@@ -13,6 +14,7 @@ import type { RecipeBookDoc } from '../../db/types.js';
 import { toRecipeBook } from './recipe-books.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
+import { translateBookIfNeeded } from './recipe-books.translation.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 const IdAndUserParam = z.object({
@@ -40,6 +42,11 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req, reply) => {
       const ownerId = new ObjectId(req.user.id);
       const now = new Date();
+      const owner = await app.collections.users.findOne(
+        { _id: ownerId },
+        { projection: { locale: 1 } },
+      );
+      const language = req.body.language ?? owner?.locale ?? 'en';
       const doc: RecipeBookDoc = {
         _id: new ObjectId(),
         ownerId,
@@ -48,6 +55,7 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         coverImageUrl: req.body.coverImageUrl,
         coverKey: req.body.coverKey,
         type: req.body.type,
+        language,
         members: [{ userId: ownerId, role: 'owner', addedAt: now }],
         recipeIds: req.body.recipeIds.map((id) => new ObjectId(id)),
         tags: req.body.tags,
@@ -77,9 +85,31 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         .find(filter)
         .sort({ createdAt: -1 })
         .toArray();
-      const favSet = await favoritedIds(app.collections, req.user.id, 'book', items.map((b) => b._id));
+      const favSet = await favoritedIds(
+        app.collections,
+        req.user.id,
+        'book',
+        items.map((b) => b._id)
+      );
+      let targetLang: 'he' | 'en' = 'en';
+      const user = await app.collections.users.findOne(
+        { _id: userId },
+        { projection: { locale: 1 } },
+      );
+      if (user?.locale) {
+        targetLang = user.locale;
+      }
+      const translatedItems = await Promise.all(
+        items.map((book) =>
+          translateBookIfNeeded(app, book, targetLang)
+        ),
+      );
       return {
-        items: items.map((b) => toRecipeBook(b, { isFavorite: favSet.has(b._id.toString()) })),
+        items: translatedItems.map((b) =>
+          toRecipeBook(b, {
+            isFavorite: favSet.has(b._id.toString()),
+          }),
+        ),
       };
     },
   );
@@ -104,9 +134,28 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         });
         if (!liveShare) return reply.code(403).send({ error: 'not a member' });
       }
-
-      const favSet = await favoritedIds(app.collections, req.user.id, 'book', [book._id]);
-      return toRecipeBook(book, { isFavorite: favSet.has(book._id.toString()) });
+      const favSet = await favoritedIds(
+        app.collections,
+        req.user.id,
+        'book',
+        [book._id],
+      );
+      let targetLang: 'he' | 'en' = 'en';
+      const user = await app.collections.users.findOne(
+        { _id: new ObjectId(req.user.id) },
+        { projection: { locale: 1 } },
+      );
+      if (user?.locale) {
+        targetLang = user.locale;
+      }
+      const translatedBook = await translateBookIfNeeded(
+        app,
+        book,
+        targetLang,
+      );
+      return toRecipeBook(translatedBook, {
+        isFavorite: favSet.has(book._id.toString()),
+      });
     },
   );
 
@@ -132,6 +181,11 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         { $set: { ...patch, updatedAt: new Date() } },
         { returnDocument: 'after' },
       );
+      await app.collections.bookTranslations
+        ?.deleteMany({ bookId: _id })
+        .catch((err) =>
+          app.log.error(err, 'Failed to clear translation cache on book update')
+        );
       return toRecipeBook(updated!);
     },
   );
@@ -208,6 +262,11 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       );
 
       await app.collections.recipeBooks.deleteOne({ _id });
+      await app.collections.bookTranslations
+        ?.deleteMany({ bookId: _id })
+        .catch((err) =>
+          app.log.error(err, 'Failed to clear translation cache on book delete')
+        );
       return reply.code(204).send();
     },
   );

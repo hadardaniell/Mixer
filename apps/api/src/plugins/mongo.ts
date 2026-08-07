@@ -16,6 +16,7 @@ import type {
   UrlExtractionCacheDoc,
   RecipeTranslationDoc,
   PushTokenDoc,
+  BookTranslationDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -31,6 +32,7 @@ export type Collections = {
   urlExtractionCache: Collection<UrlExtractionCacheDoc>;
   recipeTranslations: Collection<RecipeTranslationDoc>;
   pushTokens: Collection<PushTokenDoc>;
+  bookTranslations: Collection<BookTranslationDoc>;
 };
 
 declare module 'fastify' {
@@ -65,6 +67,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     urlExtractionCache: db.collection<UrlExtractionCacheDoc>('url_extraction_cache'),
     recipeTranslations: db.collection<RecipeTranslationDoc>('recipe_translations'),
     pushTokens: db.collection<PushTokenDoc>('push_tokens'),
+    bookTranslations: db.collection<BookTranslationDoc>('book_translations'),
   };
 
   await ensureValidators(app, db);
@@ -181,6 +184,7 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     { expireAfterSeconds: 0, sparse: true },
   );
   await collections.recipeTranslations.createIndex({ recipeId: 1, language: 1 }, { unique: true });
+  await collections.bookTranslations.createIndex({ bookId: 1, language: 1 }, { unique: true });
 
   // Same device upserts its token; never creates a duplicate row per user+device.
   await collections.pushTokens.createIndex({ userId: 1, deviceId: 1 }, { unique: true });

@@ -1,7 +1,7 @@
 // apps/ai/src/modules/translate/translate.routes.ts
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { translateRecipeWithGemini } from './translate.service.js';
+import { translateRecipeWithGemini, translateBookWithGemini } from './translate.service.js';
 
 const TranslateRecipeSchema = z.object({
   recipe: z.object({
@@ -28,6 +28,14 @@ const TranslateRecipeSchema = z.object({
   targetLanguage: z.enum(['he', 'en']),
 });
 
+const TranslateBookSchema = z.object({
+  book: z.object({
+    name: z.string(),
+    description: z.string().optional(),
+  }),
+  targetLanguage: z.enum(['he', 'en']),
+});
+
 export const translateRoutes: FastifyPluginAsync = async (app) => {
   app.post('/translate/recipe', async (req, reply) => {
     try {
@@ -37,6 +45,17 @@ export const translateRoutes: FastifyPluginAsync = async (app) => {
     } catch (error) {
       app.log.error(error, '[Translate] Error translating recipe');
       return reply.code(500).send({ error: 'Failed to translate recipe' });
+    }
+  });
+
+  app.post('/translate/book', async (req, reply) => {
+    try {
+      const { book, targetLanguage } = TranslateBookSchema.parse(req.body);
+      const translated = await translateBookWithGemini(book, targetLanguage);
+      return reply.code(200).send(translated);
+    } catch (error) {
+      app.log.error(error, '[Translate] Error translating book');
+      return reply.code(500).send({ error: 'Failed to translate book' });
     }
   });
 };

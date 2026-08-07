@@ -1,3 +1,4 @@
+//apps/api/src/db/validators/recipes.ts
 import type { Document } from 'mongodb';
 import type { CollectionValidator } from './types.js';
 

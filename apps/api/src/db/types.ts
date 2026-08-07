@@ -122,6 +122,7 @@ export type RecipeBookDoc = {
   coverImageUrl?: string;
   coverKey?: string;
   type: 'personal' | 'shared' | 'meal';
+  language: 'he' | 'en';
   members: RecipeBookMember[];
   recipeIds: ObjectId[];
   tags: string[];
@@ -199,4 +200,13 @@ export type RecipeTranslationDoc = {
   steps: RecipeStep[];
   createdAt: Date;
 
+};
+
+export type BookTranslationDoc = {
+  _id: ObjectId;
+  bookId: ObjectId;
+  language: 'he' | 'en';
+  name: string;
+  description?: string;
+  createdAt: Date;
 };
