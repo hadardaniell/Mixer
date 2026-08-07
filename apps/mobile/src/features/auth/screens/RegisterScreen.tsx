@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
@@ -17,9 +17,11 @@ import { MixerBowl } from '@/shared/ui/MixerBowl';
 
 export function RegisterScreen() {
   const { t } = useTranslation();
-  const { signIn } = useAuth();
+  const { signIn, isAuthenticated } = useAuth();
   const { language } = useLanguage();
   const insets = useSafeAreaInsets();
+
+  if (isAuthenticated) return <Redirect href="/home" />;
 
   const [step, setStep] = useState<1 | 2>(1);
   const [displayName, setDisplayName] = useState('');
