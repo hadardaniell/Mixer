@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { ExtractFromTextResultSchema, type ExtractFromTextResult } from '@mixer/contracts';
 import { cleanNullValues, retryWithBackoff, sanitizeJsonResponse } from '../../utils/retry.utils.js';
+import { fetchExternalRecipeImage } from '../../services/image-search.service.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -139,7 +140,15 @@ export async function extractRecipeFromImages(
     throw new Error(parsed.reason === 'different_recipes' ? 'images_not_same_recipe' : 'not_a_recipe');
   }
 
-  const cleaned = cleanNullValues(parsed);
+  const cleaned = cleanNullValues(parsed) as Record<string, unknown>;
+  if (!cleaned.coverImageUrl) {
+    const title = typeof cleaned.title === 'string' ? cleaned.title : undefined;
+    const cuisine = typeof cleaned.cuisine === 'string' ? cleaned.cuisine : undefined;
+    const tags = Array.isArray(cleaned.tags) ? (cleaned.tags as string[]) : undefined;
+    const ingredients = Array.isArray(cleaned.ingredients) ? (cleaned.ingredients as any[]) : undefined;
+    cleaned.coverImageUrl = await fetchExternalRecipeImage(title, cuisine, tags, ingredients);
+  }
+
   return ExtractFromTextResultSchema.parse(cleaned);
 }
 
