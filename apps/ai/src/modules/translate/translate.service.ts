@@ -1,7 +1,25 @@
 // apps/ai/src/modules/translate/translate.service.ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
+import { sanitizeJsonResponse } from '../../utils/retry.utils.js';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
+function parseJsonFromAiText<T>(rawText: string): T {
+  const cleaned = sanitizeJsonResponse(rawText);
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  const jsonStr = match ? match[0] : cleaned;
+  return JSON.parse(jsonStr) as T;
+}
+
+async function translateWithGroq<T>(prompt: string): Promise<T> {
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  const completion = await groq.chat.completions.create({
+    messages: [{ role: 'user', content: prompt }],
+    model: 'llama-3.3-70b-versatile',
+    response_format: { type: 'json_object' },
+  });
+  const content = completion.choices[0]?.message?.content ?? '{}';
+  return parseJsonFromAiText<T>(content);
+}
 
 export interface RecipeToTranslate {
   title: string;
@@ -30,18 +48,6 @@ export async function translateRecipeWithGemini(
   recipe: RecipeToTranslate,
   targetLanguage: 'he' | 'en'
 ): Promise<RecipeToTranslate> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is missing in environment variables');
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json' },
-  });
-
   const languageName = targetLanguage === 'he' ? 'Hebrew' : 'English';
 
   const prompt = `
@@ -85,25 +91,29 @@ export async function translateRecipeWithGemini(
     ${JSON.stringify(recipe)}
   `;
 
-  const response = await model.generateContent(prompt);
-  const responseText = response.response.text();
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: { responseMimeType: 'application/json' },
+      });
+      const response = await model.generateContent(prompt);
+      const responseText = response.response.text();
+      return parseJsonFromAiText<RecipeToTranslate>(responseText);
+    }
+  } catch (err) {
+    console.warn('[Translate] Gemini translation failed — falling back to Groq:', err instanceof Error ? err.message : err);
+  }
 
-  return JSON.parse(responseText) as RecipeToTranslate;
+  return translateWithGroq<RecipeToTranslate>(prompt);
 }
 
 export async function translateBookWithGemini(
   book: TranslateBookInput,
   targetLanguage: 'he' | 'en'
 ): Promise<TranslateBookInput> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY is missing');
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
-    generationConfig: { responseMimeType: 'application/json' },
-  });
-
   const languageName = targetLanguage === 'he' ? 'Hebrew' : 'English';
 
   const prompt = `Translate the following recipe book title and description into ${languageName}.
@@ -116,7 +126,21 @@ Maintain the exact structure and return JSON matching this schema:
 Original Book Data:
 ${JSON.stringify(book, null, 2)}`;
 
-  const response = await model.generateContent(prompt);
-  const text = response.response.text();
-  return JSON.parse(text) as TranslateBookInput;
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        generationConfig: { responseMimeType: 'application/json' },
+      });
+      const response = await model.generateContent(prompt);
+      const text = response.response.text();
+      return parseJsonFromAiText<TranslateBookInput>(text);
+    }
+  } catch (err) {
+    console.warn('[Translate] Gemini book translation failed — falling back to Groq:', err instanceof Error ? err.message : err);
+  }
+
+  return translateWithGroq<TranslateBookInput>(prompt);
 }

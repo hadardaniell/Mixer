@@ -60,7 +60,7 @@ async function extractWithGeminiFallback(text: string, locale: string): Promise<
   }
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-2.5-flash',
     generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
   });
   const response = await model.generateContent([buildPrompt(locale), text]);

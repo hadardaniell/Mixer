@@ -48,6 +48,58 @@ async function fetchWebpageText(url: string): Promise<string> {
   );
 }
 
+/**
+ * For TikTok URLs, use the public oEmbed API to retrieve the video caption/title.
+ * This avoids scraping the TikTok HTML page which contains no useful recipe text.
+ */
+async function fetchTikTokCaption(url: string): Promise<string> {
+  const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
+  const response = await fetch(oembedUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  });
+  if (!response.ok) {
+    throw new Error(`TikTok oEmbed failed: ${response.status} ${response.statusText}`);
+  }
+  const data = await response.json() as { title?: string; author_name?: string };
+  const caption = data.title ?? '';
+  return `TikTok video caption by ${data.author_name ?? 'unknown'}:\n${caption}`;
+}
+
+/**
+ * Combines TikTok oEmbed caption + Jina page text to give as much context as possible
+ * to Groq when Gemini video analysis is unavailable (quota exceeded).
+ */
+async function fetchTikTokFallbackText(url: string, log: (msg: string) => void): Promise<string> {
+  const parts: string[] = [];
+
+  // 1. oEmbed caption (fast, usually works)
+  try {
+    const caption = await fetchTikTokCaption(url);
+    if (caption.trim()) {
+      log(`[extract/url] oEmbed caption fetched: ${caption.slice(0, 120)}...`);
+      parts.push(caption);
+    }
+  } catch (err) {
+    log(`[extract/url] oEmbed failed: ${err instanceof Error ? err.message : err}`);
+  }
+
+  // 2. Jina page scrape (slower, but may contain pinned comments with full recipe)
+  try {
+    const pageText = await fetchWebpageText(url);
+    if (pageText.trim()) {
+      parts.push(`\n--- Page text ---\n${pageText.slice(0, 6000)}`);
+    }
+  } catch (err) {
+    log(`[extract/url] Jina page scrape failed: ${err instanceof Error ? err.message : err}`);
+  }
+
+  if (parts.length === 0) {
+    throw new Error('All TikTok text extraction strategies failed');
+  }
+
+  return parts.join('\n');
+}
+
 
 export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
@@ -180,13 +232,20 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
           }
           app.log.warn(
-            `[extract/url] Video processing failed for ${url} (${error instanceof Error ? error.message : error}) — falling back to text scraping`,
+            `[extract/url] Video processing failed for ${url} (${error instanceof Error ? error.message : error}) — falling back to caption/text scraping`,
           );
           try {
-            app.log.info(`[extract/url] Scraping text from webpage URL (fallback): ${url}`);
-            const text = await fetchWebpageText(url);
+            const isTikTok = url.includes('tiktok.com');
+            let text: string;
+            if (isTikTok) {
+              app.log.info(`[extract/url] TikTok detected — fetching caption + page text via oEmbed + Jina: ${url}`);
+              text = await fetchTikTokFallbackText(url, (msg) => app.log.info(msg));
+            } else {
+              app.log.info(`[extract/url] Scraping text from webpage URL (fallback): ${url}`);
+              text = await fetchWebpageText(url);
+            }
 
-            app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
+            app.log.info(`[extract/url] Extracting recipe from caption/scraped text`);
             return await extractRecipeFromText(text);
           } catch (fallbackError) {
             if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
