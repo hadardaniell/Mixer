@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react-native';
+import { Check, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'react-native';
 import { Text, useTheme, View, XStack, YStack } from 'tamagui';
@@ -47,8 +47,8 @@ interface RecipeCardProps {
   isFavorited: boolean;
   onToggleFavorite: () => void;
   onPress: () => void;
-  /** Optional long-press action (e.g. "remove from book" on the book screen). */
-  onLongPress?: () => void;
+  /** Optional remove action (e.g. "remove from book" on the book screen). Shows a trash icon. */
+  onRemove?: () => void;
   /** When present, shows an attribution row at the top of the card. */
   attribution?: RecipeAttribution;
   /** Override the default fixed feed width — e.g. "100%" to fill a grid cell. */
@@ -72,7 +72,7 @@ export function RecipeCard({
   isFavorited,
   onToggleFavorite,
   onPress,
-  onLongPress,
+  onRemove,
   attribution,
   width = FEED_CARD_WIDTH,
   selectable = false,
@@ -83,7 +83,6 @@ export function RecipeCard({
   return (
     <YStack
       onPress={onPress}
-      onLongPress={onLongPress}
       width={width}
       height={RECIPE_CARD_HEIGHT}
       borderRadius={RADIUS}
@@ -123,6 +122,26 @@ export function RecipeCard({
           {!selectable ? (
             <View position="absolute" left={10} bottom={-16}>
               <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} size={22} />
+            </View>
+          ) : null}
+
+          {onRemove ? (
+            <View position="absolute" top={8} right={8}>
+              <YStack
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onRemove();
+                }}
+                width={28}
+                height={28}
+                borderRadius={14}
+                backgroundColor="rgba(255, 255, 255, 0.9)"
+                alignItems="center"
+                justifyContent="center"
+                pressStyle={{ opacity: 0.7 }}
+              >
+                <Trash2 size={14} color="$danger" />
+              </YStack>
             </View>
           ) : null}
         </YStack>

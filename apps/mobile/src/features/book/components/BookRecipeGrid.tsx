@@ -94,7 +94,7 @@ export function BookRecipeGrid({
                 isFavorited={r.isFavorite}
                 onToggleFavorite={() => onToggleFavorite(r)}
                 onPress={() => onOpenRecipe(r.id)}
-                onLongPress={canEdit ? () => confirmRemove(r) : undefined}
+                onRemove={canEdit ? () => confirmRemove(r) : undefined}
               />
             </YStack>
           ))}
