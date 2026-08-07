@@ -37,7 +37,10 @@ export function CreateFromTextScreen() {
         extract: () => feedApi.importText(text.trim(), language),
         sourceType: 'text',
       });
-      router.replace(`/recipes/${recipe.id}` as never);
+      router.navigate('/home');
+      setTimeout(() => {
+        router.push(`/recipes/${recipe.id}` as never);
+      }, 0);
     } catch {
       setError(t('newRecipe.errors.extractFailed'));
     }
