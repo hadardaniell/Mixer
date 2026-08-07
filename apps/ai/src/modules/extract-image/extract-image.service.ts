@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { ExtractFromTextResultSchema, type ExtractFromTextResult } from '@mixer/contracts';
-import { retryWithBackoff, sanitizeJsonResponse } from '../../utils/retry.utils.js';
+import { cleanNullValues, retryWithBackoff, sanitizeJsonResponse } from '../../utils/retry.utils.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -12,7 +12,7 @@ const recipeSchema: Schema = {
       type: SchemaType.STRING,
       description: 'If isRecipe is false: "not_a_recipe" or "different_recipes"',
     },
-    title: { type: SchemaType.STRING },
+    title: { type: SchemaType.STRING, description: 'Concise recipe title (max 10 words). No hashtags or SEO tag lists.' },
     description: { type: SchemaType.STRING },
     ingredients: {
       type: SchemaType.ARRAY,
@@ -48,29 +48,46 @@ const recipeSchema: Schema = {
   required: ['isRecipe'],
 };
 
-const model = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash',
-  generationConfig: {
-    responseMimeType: 'application/json',
-    responseSchema: recipeSchema,
-    temperature: 0,
-  },
-});
+function getModel(modelName: string) {
+  return genAI.getGenerativeModel({
+    model: modelName,
+    generationConfig: {
+      responseMimeType: 'application/json',
+      temperature: 0.1,
+    },
+  });
+}
 
 // Gemini Vision reads images directly — no separate OCR step needed.
 // Single API call replaces: Tesseract OCR × N images + same-recipe check + text extraction.
 // Gemini handles Hebrew (and mixed Hebrew/English) far better than Tesseract.
 const BASE_VISION_PROMPT = `You are a recipe extraction assistant.
-You will receive one or more photos of a recipe (cookbook page, screenshot, handwritten card, etc.).
-If multiple images are provided they should all show parts of the same recipe (different pages, angles, or sections).
+Analyze the image(s) provided and return ONLY a valid JSON object:
 
-Set isRecipe to true and fill in all recipe fields if a recipe is found.
-Set isRecipe to false and set reason to "not_a_recipe" if the image has no recipe.
-Set isRecipe to false and set reason to "different_recipes" if multiple images clearly show different recipes.
+If it IS a recipe:
+{
+  "isRecipe": true,
+  "title": "Short Clean Title (max 10 words, no hashtags or SEO keyword lists)",
+  "description": "Optional description",
+  "ingredients": [{ "name": "Ingredient name", "amount": 1.5, "unit": "cup" }],
+  "steps": [{ "order": 1, "text": "Step instruction" }],
+  "servings": 4,
+  "prepTimeMinutes": 15,
+  "cookTimeMinutes": 30,
+  "difficulty": "easy",
+  "cuisine": "Italian",
+  "tags": ["pasta", "dinner"]
+}
+
+If it is NOT a recipe (e.g. random photo, landscape, non-food image):
+{ "isRecipe": false, "reason": "not_a_recipe" }
+
+If multiple images show completely different recipes:
+{ "isRecipe": false, "reason": "different_recipes" }
 
 RULES:
 - "difficulty" must always be one of: "easy", "medium", "hard" — in English.
-- Ignore advertisements, blog links, social media elements, and unrelated text.
+- "title" MUST be concise and clean (under 10 words). DO NOT include hashtags or repeated SEO tag lists like "מתכונים ביחד מתכונים לשבת".
 - Combine all images when multiple are provided to build the most complete recipe possible.`;
 
 function buildPrompt(locale: string): string {
@@ -82,9 +99,13 @@ export async function extractRecipeFromImages(
   images: Array<{ imageBase64: string; mimeType: string }>,
   locale = 'en',
 ): Promise<ExtractFromTextResult> {
-  const result = await retryWithBackoff(
-    () =>
-      model.generateContent([
+  const modelsToTry = ['gemini-2.5-flash-lite', 'gemini-1.5-flash'];
+
+  const parsed = await retryWithBackoff(
+    async (attempt) => {
+      const modelName = modelsToTry[(attempt - 1) % modelsToTry.length] ?? 'gemini-2.5-flash-lite';
+      const model = getModel(modelName);
+      const response = await model.generateContent([
         buildPrompt(locale),
         ...images.map((img) => ({
           inlineData: { mimeType: img.mimeType, data: img.imageBase64 },
@@ -92,17 +113,33 @@ export async function extractRecipeFromImages(
         images.length > 1
           ? 'Extract the complete recipe from all these photos combined.'
           : 'Extract the recipe from this photo.',
-      ]),
-    { retries: 3, initialDelayMs: 1000 },
-  );
+      ]);
 
-  const rawText = sanitizeJsonResponse(result.response.text());
-  const parsed = JSON.parse(rawText) as Record<string, unknown>;
+      let rawText = sanitizeJsonResponse(response.response.text());
+      try {
+        let jsonStr = rawText;
+        const match = rawText.match(/\{[\s\S]*\}/);
+        if (match) {
+          jsonStr = match[0];
+        }
+        const obj = JSON.parse(jsonStr) as Record<string, unknown>;
+        if (typeof obj.title === 'string' && obj.title.length > 150) {
+          obj.title = obj.title.split('-')[0]?.trim().slice(0, 100) || obj.title.slice(0, 100);
+        }
+        return obj;
+      } catch (err) {
+        console.warn(`[extract-image] JSON parse error on attempt ${attempt} (raw length ${rawText.length}):`, rawText.slice(0, 200));
+        throw new Error('AI returned invalid JSON');
+      }
+    },
+    { retries: 3, initialDelayMs: 1500 },
+  );
 
   if (parsed.isRecipe === false) {
     throw new Error(parsed.reason === 'different_recipes' ? 'images_not_same_recipe' : 'not_a_recipe');
   }
 
-  return ExtractFromTextResultSchema.parse(parsed);
+  const cleaned = cleanNullValues(parsed);
+  return ExtractFromTextResultSchema.parse(cleaned);
 }
 

@@ -53,3 +53,23 @@ export function sanitizeJsonResponse(text: string): string {
   }
   return cleaned;
 }
+
+/**
+ * Recursively strips null values from an object or array so optional Zod properties
+ * (which expect `number | undefined` rather than `null`) parse cleanly.
+ */
+export function cleanNullValues<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map(cleanNullValues) as T;
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== null) {
+        cleaned[key] = cleanNullValues(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return obj;
+}

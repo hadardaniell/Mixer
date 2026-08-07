@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'node:fs';
-import { retryWithBackoff, sanitizeJsonResponse } from './utils/retry.utils.js';
+import { cleanNullValues, retryWithBackoff, sanitizeJsonResponse } from './utils/retry.utils.js';
 
 const recipeSchema: Schema = {
   type: SchemaType.OBJECT,
@@ -114,7 +114,7 @@ export const videoLlamaService = {
       }
 
       const rawText = sanitizeJsonResponse(result.response.text());
-      return assertRecipe(JSON.parse(rawText));
+      return assertRecipe(cleanNullValues(JSON.parse(rawText)));
     } finally {
       if (audioRes) {
         fileManager.deleteFile(audioRes.file.name).catch(() => {});

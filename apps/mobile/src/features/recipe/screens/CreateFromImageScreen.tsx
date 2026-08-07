@@ -105,7 +105,7 @@ export function CreateFromImageScreen() {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: 'images',
       base64: Platform.OS !== 'web',
-      quality: 0.7,
+      quality: 0.5,
       allowsMultipleSelection: Platform.OS !== 'web',
       selectionLimit: Platform.OS !== 'web' ? MAX_IMAGES - images.length : 1,
     });
