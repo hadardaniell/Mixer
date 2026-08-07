@@ -56,7 +56,7 @@ If it is NOT a recipe: set isRecipe to false and leave all other fields empty.`;
 
 function getModel(apiKey: string) {
   return new GoogleGenerativeAI(apiKey).getGenerativeModel({
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-2.5-flash',
     generationConfig: {
       responseMimeType: 'application/json',
       responseSchema: recipeSchema,

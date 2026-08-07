@@ -100,11 +100,11 @@ export async function extractRecipeFromImages(
   images: Array<{ imageBase64: string; mimeType: string }>,
   locale = 'en',
 ): Promise<ExtractFromTextResult> {
-  const modelsToTry = ['gemini-2.5-flash-lite', 'gemini-1.5-flash'];
+  const modelsToTry = ['gemini-2.5-flash'];
 
   const parsed = await retryWithBackoff(
     async (attempt) => {
-      const modelName = modelsToTry[(attempt - 1) % modelsToTry.length] ?? 'gemini-2.5-flash-lite';
+      const modelName = modelsToTry[(attempt - 1) % modelsToTry.length] ?? 'gemini-2.5-flash';
       const model = getModel(modelName);
       const response = await model.generateContent([
         buildPrompt(locale),
