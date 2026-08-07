@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,9 +23,11 @@ const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' }
 export function LoginScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { signIn } = useAuth();
+  const { signIn, isAuthenticated } = useAuth();
   const { language } = useLanguage();
   const insets = useSafeAreaInsets();
+
+  if (isAuthenticated) return <Redirect href="/home" />;
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');

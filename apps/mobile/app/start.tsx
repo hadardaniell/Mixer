@@ -1,15 +1,19 @@
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, YStack } from 'tamagui';
 
 import { StartMixerScene } from '@/features/auth/components/StartMixerScene';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 
 export default function StartScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) return <Redirect href="/home" />;
 
   return (
     <YStack
