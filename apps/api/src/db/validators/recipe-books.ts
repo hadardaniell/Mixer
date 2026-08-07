@@ -1,3 +1,4 @@
+//apps/api/src/db/validators/recipe-books.ts
 import type { CollectionValidator } from './types.js';
 
 // Keep in sync with RecipeBookDoc in db/types.ts.
@@ -14,6 +15,7 @@ export const recipeBooksValidator: CollectionValidator = {
         'members',
         'recipeIds',
         'tags',
+        'language',
         'createdAt',
         'updatedAt',
       ],
@@ -39,6 +41,7 @@ export const recipeBooksValidator: CollectionValidator = {
         },
         recipeIds: { bsonType: 'array', items: { bsonType: 'objectId' } },
         tags: { bsonType: 'array', items: { bsonType: 'string' } },
+        language: {enum: ['he', 'en'],},
         createdAt: { bsonType: 'date' },
         updatedAt: { bsonType: 'date' },
       },

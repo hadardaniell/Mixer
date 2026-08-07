@@ -1,3 +1,4 @@
+//mixer/packages/contracts/src/index.ts
 import { z } from 'zod';
 
 /**
@@ -271,6 +272,7 @@ export const CreateRecipeBookInputSchema = z.object({
   coverKey: z.string().optional(),
   type: RecipeBookTypeSchema.default('personal'),
   tags: z.array(z.string()).default([]),
+  language: LocaleSchema.optional(),
   recipeIds: z.array(ObjectIdString).default([]),
 });
 export type CreateRecipeBookInput = z.infer<typeof CreateRecipeBookInputSchema>;
@@ -299,7 +301,6 @@ export type ExtractFromTextInput = z.infer<typeof ExtractFromTextInputSchema>;
 export const ExtractFromTextResultSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
-  coverImageUrl: z.string().url().optional(),
   ingredients: z.array(z.object({
     name: z.string(),
     amount: z.number().optional(),

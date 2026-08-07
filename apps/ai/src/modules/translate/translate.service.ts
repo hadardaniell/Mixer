@@ -21,6 +21,11 @@ export interface RecipeToTranslate {
   }>;
 }
 
+export interface TranslateBookInput {
+  name: string;
+  description?: string;
+}
+
 export async function translateRecipeWithGemini(
   recipe: RecipeToTranslate,
   targetLanguage: 'he' | 'en'
@@ -84,4 +89,34 @@ export async function translateRecipeWithGemini(
   const responseText = response.response.text();
 
   return JSON.parse(responseText) as RecipeToTranslate;
+}
+
+export async function translateBookWithGemini(
+  book: TranslateBookInput,
+  targetLanguage: 'he' | 'en'
+): Promise<TranslateBookInput> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY is missing');
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+
+  const languageName = targetLanguage === 'he' ? 'Hebrew' : 'English';
+
+  const prompt = `Translate the following recipe book title and description into ${languageName}.
+Maintain the exact structure and return JSON matching this schema:
+{
+  "name": "translated name",
+  "description": "translated description or null if original was empty"
+}
+
+Original Book Data:
+${JSON.stringify(book, null, 2)}`;
+
+  const response = await model.generateContent(prompt);
+  const text = response.response.text();
+  return JSON.parse(text) as TranslateBookInput;
 }
