@@ -84,7 +84,6 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
     },
   );
 
-  // --- list my favorites, branched by ?kind=recipe|book ---
   app.get(
     '/favorites',
     {
@@ -103,7 +102,6 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
       const ids = favs.map((f) => f.targetId);
       if (ids.length === 0) return { items: [] };
 
-      // מציאת שפת היעד של המשתמש (בברירת מחדל 'he')
       let targetLang: 'he' | 'en' = 'en';
       const userDoc = await app.collections.users.findOne({ _id: userId });
       if (userDoc?.locale) {
@@ -118,7 +116,6 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
           })
           .toArray();
 
-        // שליפת התרגומים עבור המתכונים שנמצאו
         const recipeIds = recipes.map((r) => r._id);
         const translations = await app.collections.recipeTranslations
           ?.find({
@@ -129,7 +126,6 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
 
         const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
 
-        // החלפת הנתונים במידה וקיים תרגום שמור
         const translatedRecipes = recipes.map((doc) => {
           if (doc.language && doc.language !== targetLang) {
             const cached = translationMap.get(doc._id.toString());
@@ -163,7 +159,6 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
         })
         .toArray();
 
-      // שליפת התרגומים עבור ספרי המתכונים (בשימוש ב-bookTranslations ו-name)
       const bookIds = books.map((b) => b._id);
       const bookTranslations = await app.collections.bookTranslations
         ?.find({
@@ -180,7 +175,7 @@ export const favoritesRoutes: FastifyPluginAsyncZod = async (app) => {
           if (cached) {
             return {
               ...doc,
-              name: cached.name, // שימוש ב-name במקום title
+              name: cached.name, 
               description: cached.description ?? doc.description,
               language: targetLang,
             };

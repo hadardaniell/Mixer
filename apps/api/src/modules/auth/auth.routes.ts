@@ -68,7 +68,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
         await app.collections.recipeBooks.insertOne({
           _id: new ObjectId(),
           ownerId: doc._id,
-          name: 'My Recipes',
+          name: locale === 'he' ? 'המתכונים שלי' : 'My Recipes',
           type: 'personal',
           members: [
             {
@@ -79,6 +79,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
           ],
           recipeIds: [],
           tags: [],
+          language: locale ?? 'en',
           createdAt: now,
           updatedAt: now,
         });
