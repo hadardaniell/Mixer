@@ -70,6 +70,23 @@ export function BookHero({
 
   return (
     <YStack width="100%">
+      {/* Floating Header Bar containing Back and Overflow buttons */}
+      <XStack
+        paddingHorizontal={20}
+        paddingTop={insets.top + 8}
+        paddingBottom={8}
+        justifyContent="space-between"
+        alignItems="center"
+        style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
+      >
+        <CircleButton onPress={onBack}>
+          <BackIcon size={22} color={ink} strokeWidth={2.2} />
+        </CircleButton>
+
+        <CircleButton onPress={onOverflow}>
+          <MoreVertical size={22} color={ink} strokeWidth={2.2} />
+        </CircleButton>
+      </XStack>
 
       <YStack paddingHorizontal={20} paddingTop={16} gap={12}>
         <XStack alignItems="center" gap="$3">

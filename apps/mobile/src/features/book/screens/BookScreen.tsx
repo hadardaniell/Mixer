@@ -60,7 +60,9 @@ export function BookScreen({ bookId }: BookScreenProps) {
     return q ? recipes.filter((r) => r.name.toLowerCase().includes(q)) : recipes;
   }, [recipes, query]);
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/home'));
+  const goBack = () => {
+    router.back();
+  };
 
   if (isLoading) {
     return (
