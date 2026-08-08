@@ -12,9 +12,9 @@ function resolveHost(url: string): string {
 }
 
 export const env = {
-  apiUrl: resolveHost(extra.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000'),
-  aiUrl: resolveHost(extra.aiBaseUrl || process.env.EXPO_PUBLIC_AI_BASE_URL || 'http://localhost:3001'),
-  googleIosClientId: extra.googleIosClientId || process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '',
-  googleAndroidClientId: extra.googleAndroidClientId || process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '',
-  googleWebClientId: extra.googleWebClientId || process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
+  apiUrl: resolveHost(extra.apiBaseUrl ?? 'http://localhost:3000'),
+  aiUrl: resolveHost(extra.aiBaseUrl ?? 'http://localhost:3001'),
+  googleIosClientId: extra.googleIosClientId ?? '',
+  googleAndroidClientId: extra.googleAndroidClientId ?? '',
+  googleWebClientId: extra.googleWebClientId ?? '',
 } as const;

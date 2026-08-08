@@ -104,41 +104,18 @@ async function fetchInstagramFallbackText(url: string, log: (msg: string) => voi
 }
 
 /**
- * For TikTok URLs, use the public oEmbed API to retrieve the video caption/title
- * AND the thumbnail URL (an actual frame from the video, highly relevant).
- */
-async function fetchTikTokOEmbed(url: string): Promise<{ caption: string; thumbnailUrl?: string }> {
-  const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`;
-  const response = await fetch(oembedUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-  });
-  if (!response.ok) {
-    throw new Error(`TikTok oEmbed failed: ${response.status} ${response.statusText}`);
-  }
-  const data = await response.json() as { title?: string; author_name?: string; thumbnail_url?: string };
-  const caption = `TikTok video caption by ${data.author_name ?? 'unknown'}:\n${data.title ?? ''}`;
-  return { caption, thumbnailUrl: data.thumbnail_url };
-}
-
-/**
  * Combines TikTok oEmbed caption + Jina page text to give as much context as possible
  * to Groq when Gemini video analysis is unavailable (quota exceeded).
- * Also returns the thumbnail URL from oEmbed for use as the recipe cover image.
  */
-async function fetchTikTokFallbackText(url: string, log: (msg: string) => void): Promise<{ text: string; thumbnailUrl?: string }> {
+async function fetchTikTokFallbackText(url: string, log: (msg: string) => void): Promise<string> {
   const parts: string[] = [];
-  let thumbnailUrl: string | undefined;
 
-  // 1. oEmbed caption (fast, usually works) — also grabs the video thumbnail
+  // 1. oEmbed caption (fast, usually works)
   try {
-    const oembed = await fetchTikTokOEmbed(url);
-    if (oembed.caption.trim()) {
-      log(`[extract/url] oEmbed caption fetched: ${oembed.caption.slice(0, 120)}...`);
-      parts.push(oembed.caption);
-    }
-    if (oembed.thumbnailUrl) {
-      thumbnailUrl = oembed.thumbnailUrl;
-      log(`[extract/url] oEmbed thumbnail URL captured: ${thumbnailUrl}`);
+    const caption = await fetchTikTokCaption(url);
+    if (caption.trim()) {
+      log(`[extract/url] oEmbed caption fetched: ${caption.slice(0, 120)}...`);
+      parts.push(caption);
     }
   } catch (err) {
     log(`[extract/url] oEmbed failed: ${err instanceof Error ? err.message : err}`);
@@ -158,7 +135,7 @@ async function fetchTikTokFallbackText(url: string, log: (msg: string) => void):
     throw new Error('All TikTok text extraction strategies failed');
   }
 
-  return { text: parts.join('\n'), thumbnailUrl };
+  return parts.join('\n');
 }
 
 
@@ -287,23 +264,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           tempDirectory = tempDir;
 
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
-          const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
-
-          // For TikTok, override the Unsplash cover image with the actual video thumbnail
-          // from oEmbed — it's always directly relevant to the dish being cooked.
-          if (url.includes('tiktok.com')) {
-            try {
-              const { thumbnailUrl } = await fetchTikTokOEmbed(url);
-              if (thumbnailUrl) {
-                recipe.coverImageUrl = thumbnailUrl;
-                app.log.info(`[extract/url] Applied TikTok oEmbed thumbnail as cover image`);
-              }
-            } catch {
-              // Best-effort; keep whatever the video AI returned
-            }
-          }
-
-          return recipe;
+          return await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
         } catch (error) {
           if (error instanceof Error && error.message === 'not_a_recipe') {
             return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
@@ -315,12 +276,9 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             const isTikTok = url.includes('tiktok.com');
             const isInstagram = url.includes('instagram.com');
             let text: string;
-            let tiktokThumbnailUrl: string | undefined;
             if (isTikTok) {
               app.log.info(`[extract/url] TikTok detected — fetching caption + page text via oEmbed + Jina: ${url}`);
-              const result = await fetchTikTokFallbackText(url, (msg) => app.log.info(msg));
-              text = result.text;
-              tiktokThumbnailUrl = result.thumbnailUrl;
+              text = await fetchTikTokFallbackText(url, (msg) => app.log.info(msg));
             } else if (isInstagram) {
               app.log.info(`[extract/url] Instagram detected — scraping page text via Jina: ${url}`);
               text = await fetchInstagramFallbackText(url, (msg) => app.log.info(msg));
@@ -330,17 +288,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             }
 
             app.log.info(`[extract/url] Extracting recipe from caption/scraped text`);
-            const recipe = await extractRecipeFromText(text, locale);
-            // Use the actual TikTok video thumbnail as the cover image — it's
-            // always relevant to the dish being cooked in that specific video.
-            if (tiktokThumbnailUrl && !recipe.coverImageUrl) {
-              return { ...recipe, coverImageUrl: tiktokThumbnailUrl };
-            }
-            if (tiktokThumbnailUrl) {
-              recipe.coverImageUrl = tiktokThumbnailUrl;
-            }
-            return recipe;
-
+            return await extractRecipeFromText(text, locale);
           } catch (fallbackError) {
             if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
               return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });
