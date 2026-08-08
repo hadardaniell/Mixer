@@ -266,7 +266,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
 
       if (isVideo) {
         let tempDirectory: string | undefined;
-        let instagramThumbnailUrl: string | undefined;
+        let extractedThumbnailUrl: string | undefined;
 
         try {
           if (isYouTube || isInstagram) {
@@ -274,9 +274,9 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             try {
               const info = await downloadService.getVideoInfo(url);
               
-              if (info.thumbnailUrl && isInstagram) {
-                instagramThumbnailUrl = info.thumbnailUrl;
-                app.log.info(`[extract/url] Captured Instagram thumbnail URL: ${instagramThumbnailUrl}`);
+              if (info.thumbnailUrl) {
+                extractedThumbnailUrl = info.thumbnailUrl;
+                app.log.info(`[extract/url] Captured video thumbnail URL: ${extractedThumbnailUrl}`);
               }
 
               if (isYouTube && info.duration > MAX_VIDEO_DURATION_SECONDS) {
@@ -296,9 +296,9 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
           const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
 
-          // For TikTok and Instagram, override the Unsplash cover image with the actual video thumbnail
+          // For TikTok, Instagram, and YouTube, override the Unsplash cover image with the actual video thumbnail
           // because it's directly relevant to the dish being cooked.
-          let videoThumbnailUrl: string | undefined = instagramThumbnailUrl;
+          let videoThumbnailUrl: string | undefined = extractedThumbnailUrl;
           
           if (url.includes('tiktok.com')) {
             try {
