@@ -265,6 +265,8 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
       const isVideo = isVideoUrl(url);
 
       if (isVideo) {
+        const isYouTube = /youtube\.com|youtu\.be/.test(url);
+        const isInstagram = url.includes('instagram.com');
         let tempDirectory: string | undefined;
         let extractedThumbnailUrl: string | undefined;
 
