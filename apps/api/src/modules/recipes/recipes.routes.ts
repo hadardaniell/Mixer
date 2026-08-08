@@ -635,7 +635,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     {
       onRequest: [app.authenticate],
       schema: {
-        body: z.object({ url: z.string().url() }),
+        body: z.object({ url: z.string().url(), locale: z.string().optional() }),
         response: {
           200: ExtractFromTextResultSchema,
           422: z.object({ error: z.string() }),
@@ -646,11 +646,19 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (req, reply) => {
       const { url } = req.body;
+      let effectiveLocale = req.body.locale;
+      if (!effectiveLocale) {
+        const user = await app.collections.users.findOne(
+          { _id: new ObjectId(req.user.id) },
+          { projection: { locale: 1 } },
+        );
+        effectiveLocale = user?.locale ?? 'he';
+      }
 
       // Check global cache first — if any user already extracted this URL, reuse it
-      const cached = await app.collections.urlExtractionCache.findOne({ url });
+      const cached = await app.collections.urlExtractionCache.findOne({ url, locale: effectiveLocale });
       if (cached) {
-        app.log.info(`[import/url] Cache hit for ${url}`);
+        app.log.info(`[import/url] Cache hit for ${url} (locale: ${effectiveLocale})`);
         const result = cached.extraction as Record<string, unknown>;
         if (!result.coverImageUrl && typeof result.title === 'string' && result.title) {
           const coverImageUrl = await getSuggestedCoverImageUrl({
@@ -675,11 +683,11 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       // web pages are scraped (Jina) and video links (YouTube/TikTok/Instagram/…)
       // are transcribed, so this single endpoint covers every source the mobile
       // "create from link" screen advertises (web + video + social).
-      app.log.info(`[import/url] Cache miss — calling AI for ${url}`);
+      app.log.info(`[import/url] Cache miss — calling AI for ${url} (locale: ${effectiveLocale})`);
       const response = await fetch(`${config.aiBaseUrl}/extract/url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, locale: effectiveLocale }),
       });
 
       if (!response.ok) {
@@ -707,7 +715,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
       // Save to cache so future requests skip the AI call
       await app.collections.urlExtractionCache
-        .insertOne({ _id: new ObjectId(), url, extraction, extractedAt: new Date() })
+        .insertOne({ _id: new ObjectId(), url, locale: effectiveLocale, extraction, extractedAt: new Date() })
         .catch(() => {}); // ignore duplicate-key race (two simultaneous requests for same URL)
 
       return ExtractFromTextResultSchema.parse(extraction);

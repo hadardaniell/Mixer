@@ -66,6 +66,44 @@ async function fetchTikTokCaption(url: string): Promise<string> {
 }
 
 /**
+ * For Instagram Reels, try to scrape the page text via Jina with special headers.
+ * Instagram doesn't have a useful oEmbed API for captions, so Jina is our best bet.
+ * The description field in Open Graph meta tags often contains the reel caption.
+ */
+async function fetchInstagramFallbackText(url: string, log: (msg: string) => void): Promise<string> {
+  const parts: string[] = [];
+
+  // 1. Jina page scrape with Accept-Language header to get English content
+  try {
+    log(`[extract/url] Instagram — scraping page text via Jina: ${url}`);
+    const headers: Record<string, string> = {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
+    if (process.env.JINA_API_KEY) {
+      headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
+    }
+    const response = await fetch(`https://r.jina.ai/${url}`, { headers });
+    if (response.ok) {
+      const text = await response.text();
+      if (text && text.trim().length > 50) {
+        log(`[extract/url] Instagram Jina scrape succeeded (${text.length} chars)`);
+        parts.push(text.slice(0, 8000));
+      }
+    }
+  } catch (err) {
+    log(`[extract/url] Instagram Jina scrape failed: ${err instanceof Error ? err.message : err}`);
+  }
+
+  if (parts.length === 0) {
+    throw new Error('All Instagram text extraction strategies failed');
+  }
+
+  return parts.join('\n');
+}
+
+/**
  * Combines TikTok oEmbed caption + Jina page text to give as much context as possible
  * to Groq when Gemini video analysis is unavailable (quota exceeded).
  */
@@ -131,11 +169,11 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
     '/extract/video',
     {
       schema: {
-        body: z.object({ url: z.string().url() }),
+        body: z.object({ url: z.string().url(), locale: z.string().optional() }),
       },
     },
     async (req, reply) => {
-      const { url } = req.body;
+      const { url, locale } = req.body;
       const isYouTube = /youtube\.com|youtu\.be/.test(url);
       let tempDirectory: string | undefined;
 
@@ -159,7 +197,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         tempDirectory = tempDir;
 
         app.log.info(`[extract/video] Processing frames and audio with Video AI`);
-        const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths);
+        const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
         return reply.send(recipe);
       } catch (error) {
         if (error instanceof Error && error.message === 'not_a_recipe') {
@@ -168,7 +206,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         app.log.warn(`[extract/video] Video processing failed for ${url} — falling back to text scraping`);
         try {
           const text = await fetchWebpageText(url);
-          const recipe = await extractRecipeFromText(text);
+          const recipe = await extractRecipeFromText(text, locale);
           return reply.send(recipe);
         } catch (fallbackError) {
           if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
@@ -200,7 +238,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (req, reply) => {
-      const { url } = req.body as ExtractFromUrlInput;
+      const { url, locale } = req.body as ExtractFromUrlInput;
       const isVideo = isVideoUrl(url);
 
       if (isVideo) {
@@ -226,7 +264,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           tempDirectory = tempDir;
 
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
-          return await videoLlamaService.extractRecipe(audioPath, framePaths);
+          return await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
         } catch (error) {
           if (error instanceof Error && error.message === 'not_a_recipe') {
             return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
@@ -236,17 +274,21 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           );
           try {
             const isTikTok = url.includes('tiktok.com');
+            const isInstagram = url.includes('instagram.com');
             let text: string;
             if (isTikTok) {
               app.log.info(`[extract/url] TikTok detected — fetching caption + page text via oEmbed + Jina: ${url}`);
               text = await fetchTikTokFallbackText(url, (msg) => app.log.info(msg));
+            } else if (isInstagram) {
+              app.log.info(`[extract/url] Instagram detected — scraping page text via Jina: ${url}`);
+              text = await fetchInstagramFallbackText(url, (msg) => app.log.info(msg));
             } else {
               app.log.info(`[extract/url] Scraping text from webpage URL (fallback): ${url}`);
               text = await fetchWebpageText(url);
             }
 
             app.log.info(`[extract/url] Extracting recipe from caption/scraped text`);
-            return await extractRecipeFromText(text);
+            return await extractRecipeFromText(text, locale);
           } catch (fallbackError) {
             if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
               return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });

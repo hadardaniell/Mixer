@@ -176,6 +176,9 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       // recipeIds are managed via the dedicated add/remove-recipe endpoints, not this
       // generic update (and the input carries them as strings, not ObjectIds).
       const { recipeIds: _ignored, ...patch } = req.body;
+      if (!book.language) {
+        (patch as Record<string, unknown>).language = 'he';
+      }
       const updated = await app.collections.recipeBooks.findOneAndUpdate(
         { _id },
         { $set: { ...patch, updatedAt: new Date() } },
@@ -286,9 +289,16 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       if (role !== 'owner' && role !== 'editor') {
         return reply.code(403).send({ error: 'editor or owner only' });
       }
+      // Backfill `language` for books created before the field was required by
+      // the MongoDB schema validator — without it `findOneAndUpdate` fails with
+      // DocumentValidationFailure.
+      const setFields: Record<string, unknown> = { updatedAt: new Date() };
+      if (!book.language) {
+        setFields.language = 'he';
+      }
       const updated = await app.collections.recipeBooks.findOneAndUpdate(
         { _id },
-        { $addToSet: { recipeIds: recipeOid }, $set: { updatedAt: new Date() } },
+        { $addToSet: { recipeIds: recipeOid }, $set: setFields },
         { returnDocument: 'after' },
       );
       return toRecipeBook(updated!);
@@ -310,9 +320,13 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       if (role !== 'owner' && role !== 'editor') {
         return reply.code(403).send({ error: 'editor or owner only' });
       }
+      const setFields: Record<string, unknown> = { updatedAt: new Date() };
+      if (!book.language) {
+        setFields.language = 'he';
+      }
       const updated = await app.collections.recipeBooks.findOneAndUpdate(
         { _id },
-        { $pull: { recipeIds: recipeOid }, $set: { updatedAt: new Date() } },
+        { $pull: { recipeIds: recipeOid }, $set: setFields },
         { returnDocument: 'after' },
       );
       return toRecipeBook(updated!);
@@ -381,9 +395,11 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       if (book.ownerId.toString() !== req.user.id) {
         return reply.code(403).send({ error: 'owner only' });
       }
+      const setFields: Record<string, unknown> = { 'members.$.role': req.body.role, updatedAt: new Date() };
+      if (!book.language) setFields.language = 'he';
       const res = await app.collections.recipeBooks.findOneAndUpdate(
         { _id, 'members.userId': userOid },
-        { $set: { 'members.$.role': req.body.role, updatedAt: new Date() } },
+        { $set: setFields },
         { returnDocument: 'after' },
       );
       if (!res) return reply.code(404).send({ error: 'member not found' });
@@ -414,9 +430,11 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       if (book.ownerId.toString() === req.params.userId) {
         return reply.code(400).send({ error: 'owner cannot leave their own book' });
       }
+      const setFields: Record<string, unknown> = { updatedAt: new Date() };
+      if (!book.language) setFields.language = 'he';
       const updated = await app.collections.recipeBooks.findOneAndUpdate(
         { _id },
-        { $pull: { members: { userId: userOid } }, $set: { updatedAt: new Date() } },
+        { $pull: { members: { userId: userOid } }, $set: setFields },
         { returnDocument: 'after' },
       );
       return toRecipeBook(updated!);

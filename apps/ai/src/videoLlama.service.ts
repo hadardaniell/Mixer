@@ -72,7 +72,7 @@ function assertRecipe(parsed: any): any {
 
 export const videoLlamaService = {
   // For TikTok / Instagram / other platforms — download frames first, then send to Gemini
-  async extractRecipe(audioPath: string, framePaths: string[]): Promise<any> {
+  async extractRecipe(audioPath: string, framePaths: string[], locale?: string): Promise<any> {
     if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
 
     const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
@@ -105,8 +105,12 @@ export const videoLlamaService = {
     }
 
     try {
+      const prompt = locale
+        ? `${RECIPE_PROMPT}\n\nIMPORTANT: All extracted text (title, description, ingredients, steps, etc.) MUST BE written in the language locale: "${locale}". Translate from the video's language if necessary. DO NOT translate the "difficulty" field; it MUST remain "easy", "medium", or "hard".`
+        : RECIPE_PROMPT;
+
       const result = await retryWithBackoff(
-        () => model.generateContent([...parts, { text: RECIPE_PROMPT }]),
+        () => model.generateContent([...parts, { text: prompt }]),
         { retries: 3, initialDelayMs: 1500 },
       );
 
@@ -127,7 +131,7 @@ export const videoLlamaService = {
       return parsedRecipe;
     } finally {
       if (audioRes) {
-        fileManager.deleteFile(audioRes.file.name).catch(() => {});
+        fileManager.deleteFile(audioRes.file.name).catch(() => { });
       }
     }
   },
