@@ -18,14 +18,18 @@ export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90
 export const downloadService = {
   async getVideoInfo(url: string): Promise<{ duration: number; title: string }> {
     try {
-      const info = await ytDlp(url, {
+      const options: any = {
         dumpSingleJson: true,
         skipDownload: true,
         noWarnings: true,
         noCheckCertificate: true,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      } as any);
+      };
+      if (process.env.RESIDENTIAL_PROXY_URL) {
+        options.proxy = process.env.RESIDENTIAL_PROXY_URL;
+      }
+      const info = await ytDlp(url, options);
 
       const parsed = typeof info === 'string' ? JSON.parse(info) : (info as any);
       return {
@@ -51,6 +55,10 @@ export const downloadService = {
         impersonate: 'chrome',
         extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
       };
+
+      if (process.env.RESIDENTIAL_PROXY_URL) {
+        baseOptions.proxy = process.env.RESIDENTIAL_PROXY_URL;
+      }
 
       const info = await ytDlp(url, baseOptions);
 
@@ -162,12 +170,15 @@ export const downloadService = {
           },
         ];
 
-    // Inject cookies into all strategies if a cookie file was found
-    if (cookiePath) {
-      strategies.forEach(strategy => {
+    // Inject cookies and/or proxy into all strategies
+    strategies.forEach(strategy => {
+      if (cookiePath) {
         (strategy as any).cookies = cookiePath;
-      });
-    }
+      }
+      if (process.env.RESIDENTIAL_PROXY_URL) {
+        (strategy as any).proxy = process.env.RESIDENTIAL_PROXY_URL;
+      }
+    });
 
     let downloaded = false;
     let lastError: unknown;
