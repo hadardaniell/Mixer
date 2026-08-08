@@ -162,15 +162,7 @@ function Grid({
   count: number;
   emptyText: string;
 }) {
-  if (count === 0) {
-    return (
-      <YStack paddingHorizontal="$4" paddingVertical="$3">
-        <Text color="$textMuted" fontSize={13}>
-          {emptyText}
-        </Text>
-      </YStack>
-    );
-  }
+  if (count === 0) return <EmptyText text={emptyText} />;
   return (
     <YStack
       paddingHorizontal="$4"
@@ -188,10 +180,22 @@ function Cell({ children }: { children: React.ReactNode }) {
   return <YStack width="48%">{children}</YStack>;
 }
 
+/**
+ * Sits in the middle of the space the content would have filled, not tucked into its
+ * top corner — a lone line of grey text at the start edge reads as a loading glitch,
+ * while the same line centred in the empty area reads as a deliberate state. The
+ * minHeight is what gives it something to be centred in; the tabs above stay put.
+ */
 function EmptyText({ text }: { text: string }) {
   return (
-    <YStack paddingHorizontal="$4" paddingVertical="$3">
-      <Text color="$textMuted" fontSize={13}>
+    <YStack
+      paddingHorizontal="$4"
+      paddingVertical="$5"
+      minHeight={220}
+      alignItems="center"
+      justifyContent="center"
+    >
+      <Text color="$textMuted" fontSize={13} textAlign="center">
         {text}
       </Text>
     </YStack>

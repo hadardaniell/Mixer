@@ -262,6 +262,20 @@
       "saveError": "We couldn't save the recipe. Please try again."
     }
   },
+  "cooking": {
+    "title": "Cooking up your recipe",
+    "subtitle": "Pulling out the ingredients and the steps. This usually takes under a minute.",
+    "leave": "You can leave — we'll tell you when it's ready",
+    "ready": {
+      "title": "Your recipe is ready",
+      "body": "{{title}} — waiting in your kitchen",
+      "open": "Open"
+    },
+    "failed": {
+      "title": "That one burned",
+      "back": "Back"
+    }
+  },
   "createBook": {
     "title": "Create recipe book",
     "next": "Next",

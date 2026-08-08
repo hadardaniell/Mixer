@@ -67,8 +67,11 @@ async function forkBook(
   const source = await collections.recipeBooks.findOne({ _id: sourceId });
   if (!source) throw new Error('source not found');
   const now = new Date();
+  // A copy is a book the recipient owns and browses, so it never inherits the
+  // hidden-plumbing flag even if the source somehow carried it.
+  const { system: _system, ...sourceFields } = source;
   const fork: RecipeBookDoc = {
-    ...source,
+    ...sourceFields,
     _id: new ObjectId(),
     ownerId: newOwnerId,
     members: [],

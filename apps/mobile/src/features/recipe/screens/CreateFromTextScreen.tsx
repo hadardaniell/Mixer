@@ -8,7 +8,7 @@ import { Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { feedApi } from '@/features/home/api/feedApi';
 import { CreateFlowHeader } from '@/features/recipe/components/CreateFlowHeader';
-import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromExtraction';
+import { useExtractionJob } from '@/features/recipe/context/ExtractionJobContext';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { isRTL } from '@/shared/lib/i18n';
 import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
@@ -24,26 +24,18 @@ export function CreateFromTextScreen() {
   const isRtl = isRTL(language);
 
   const [text, setText] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
-  const create = useCreateFromExtraction();
-  const busy = create.isPending;
+  const { start } = useExtractionJob();
 
-  const submit = async () => {
-    if (!text.trim() || busy) return;
-    setError(null);
-    try {
-      const recipe = await create.mutateAsync({
-        extract: () => feedApi.importText(text.trim(), language),
-        sourceType: 'text',
-      });
-      router.navigate('/home');
-      setTimeout(() => {
-        router.push(`/recipes/${recipe.id}` as never);
-      }, 0);
-    } catch {
-      setError(t('newRecipe.errors.extractFailed'));
-    }
+  // Hand the work to the job provider and move to the cooking screen; see
+  // `ExtractionJobContext` for why nothing is awaited here.
+  const submit = () => {
+    if (!text.trim()) return;
+    start({
+      extract: () => feedApi.importText(text.trim(), language),
+      sourceType: 'text',
+    });
+    router.replace('/cooking');
   };
 
   const appendHint = (label: string) => setText((prev) => `${prev}${prev ? '\n' : ''}${label}:\n`);
@@ -86,7 +78,6 @@ export function CreateFromTextScreen() {
             placeholder={t('newRecipe.text.placeholder')}
             placeholderTextColor={theme.textMuted?.val as string}
             multiline
-            editable={!busy}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             textAlignVertical="top"
@@ -105,13 +96,7 @@ export function CreateFromTextScreen() {
           />
         </YStack>
 
-        {error ? (
-          <Text color="$danger" fontSize={13} textAlign="center">
-            {error}
-          </Text>
-        ) : null}
-
-        <Pressable onPress={submit} disabled={!text.trim() || busy} style={{ width: '100%' }}>
+        <Pressable onPress={submit} disabled={!text.trim()} style={{ width: '100%' }}>
           <YStack
             width="100%"
             height={54}
@@ -119,7 +104,7 @@ export function CreateFromTextScreen() {
             alignItems="center"
             justifyContent="center"
             backgroundColor="$buttonPrimaryBg"
-            opacity={!text.trim() || busy ? 0.5 : 1}
+            opacity={!text.trim() ? 0.5 : 1}
             shadowColor="black"
             shadowOpacity={0.28}
             shadowOffset={{ width: 0, height: 6 }}
@@ -128,7 +113,7 @@ export function CreateFromTextScreen() {
             pressStyle={{ backgroundColor: '$buttonPrimaryBgHover' }}
           >
             <Text color="$buttonPrimaryText" fontSize={18} fontWeight="700">
-              {busy ? t('newRecipe.creating') : t('newRecipe.text.cta')}
+              {t('newRecipe.text.cta')}
             </Text>
           </YStack>
         </Pressable>

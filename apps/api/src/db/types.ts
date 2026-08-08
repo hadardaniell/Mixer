@@ -122,6 +122,13 @@ export type RecipeBookDoc = {
   coverImageUrl?: string;
   coverKey?: string;
   type: 'personal' | 'shared' | 'meal';
+  /**
+   * The catch-all book created for every account at registration ("המתכונים שלי"),
+   * which recipes are filed into automatically. It's plumbing, not something the
+   * user curates, so `GET /recipe-books` leaves it out of the lists they browse.
+   * Books a user creates never carry this, even when their type is 'personal'.
+   */
+  system?: boolean;
   language: 'he' | 'en';
   members: RecipeBookMember[];
   recipeIds: ObjectId[];

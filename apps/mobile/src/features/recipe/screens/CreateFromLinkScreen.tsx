@@ -9,7 +9,7 @@ import { Text, useTheme, XStack, YStack } from 'tamagui';
 import { AuthPrimaryButton } from '@/features/auth/components/AuthPrimaryButton';
 import { feedApi } from '@/features/home/api/feedApi';
 import { CreateFlowHeader } from '@/features/recipe/components/CreateFlowHeader';
-import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromExtraction';
+import { useExtractionJob } from '@/features/recipe/context/ExtractionJobContext';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { isRTL } from '@/shared/lib/i18n';
 import { ConceptualIcon } from '@/shared/ui/ConceptualIcon';
@@ -27,29 +27,19 @@ export function CreateFromLinkScreen() {
   const ink = theme.text?.val as string;
 
   const [url, setUrl] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const create = useCreateFromExtraction();
-  const busy = create.isPending;
+  const { start } = useExtractionJob();
 
-  const submit = async () => {
-    if (!url || busy) return;
-    setError(null);
-    try {
-      const recipe = await create.mutateAsync({
-        extract: () => feedApi.importUrl(url, language),
-        sourceType: 'url',
-        sourceUrl: url,
-      });
-      // Route back to home first, then push the recipe on top.
-      // This ensures the back button from the recipe takes you straight to the Feed
-      // instead of deleting the history stack or taking you back to the link input.
-      router.navigate('/home');
-      setTimeout(() => {
-        router.push(`/recipes/${recipe.id}` as never);
-      }, 0);
-    } catch (e) {
-      setError(t('newRecipe.errors.extractFailed'));
-    }
+  // The extraction is handed to the job provider and this screen is replaced by the
+  // cooking screen straight away. Nothing is awaited here — that's what lets the user
+  // walk away mid-import and be told when it lands.
+  const submit = () => {
+    if (!url) return;
+    start({
+      extract: () => feedApi.importUrl(url, language),
+      sourceType: 'url',
+      sourceUrl: url,
+    });
+    router.replace('/cooking');
   };
 
   return (
@@ -147,16 +137,12 @@ export function CreateFromLinkScreen() {
         {/* Spacer pushes the CTA to the bottom on tall screens */}
         <YStack flex={1} minHeight="$2" />
 
-        {error ? (
-          <Text color="$danger" fontSize={13} textAlign="center">
-            {error}
-          </Text>
-        ) : null}
-
+        {/* Extraction errors surface on the cooking screen now, not here — this screen
+            is gone by the time the import can fail. */}
         <AuthPrimaryButton
-          label={busy ? t('newRecipe.creating') : t('newRecipe.link.cta')}
+          label={t('newRecipe.link.cta')}
           onPress={submit}
-          disabled={!url || busy}
+          disabled={!url}
         />
       </YStack>
     </KeyboardAvoidingView>

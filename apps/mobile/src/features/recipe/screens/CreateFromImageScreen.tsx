@@ -10,7 +10,7 @@ import { Text, useTheme, XStack, YStack } from 'tamagui';
 import { AuthPrimaryButton } from '@/features/auth/components/AuthPrimaryButton';
 import { feedApi } from '@/features/home/api/feedApi';
 import { CreateFlowHeader } from '@/features/recipe/components/CreateFlowHeader';
-import { useCreateFromExtraction } from '@/features/recipe/hooks/useCreateFromExtraction';
+import { useExtractionJob } from '@/features/recipe/context/ExtractionJobContext';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { HttpError } from '@/shared/lib/httpClient';
 import { isRTL } from '@/shared/lib/i18n';
@@ -88,8 +88,7 @@ export function CreateFromImageScreen() {
 
   const [images, setImages] = useState<PickedImage[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const create = useCreateFromExtraction();
-  const busy = create.isPending;
+  const { start } = useExtractionJob();
 
   const pick = async () => {
     setError(null);
@@ -142,28 +141,25 @@ export function CreateFromImageScreen() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const submit = async () => {
-    if (images.length === 0 || busy) return;
+  // Handed to the job provider so the import survives leaving this screen; the cooking
+  // screen shows whichever failure message `mapError` picks.
+  const submit = () => {
+    if (images.length === 0) return;
     setError(null);
-    try {
-      const recipe = await create.mutateAsync({
-        extract: () =>
-          feedApi.importImage(
-            images.map((img) => ({ imageBase64: img.base64, mimeType: img.mimeType })),
-            language,
-          ),
-        sourceType: 'image',
-      });
-      router.navigate('/home');
-      setTimeout(() => {
-        router.push(`/recipes/${recipe.id}` as never);
-      }, 0);
-    } catch (e) {
-      const notSame =
+    start({
+      extract: () =>
+        feedApi.importImage(
+          images.map((img) => ({ imageBase64: img.base64, mimeType: img.mimeType })),
+          language,
+        ),
+      sourceType: 'image',
+      mapError: (e) =>
         e instanceof HttpError &&
-        (e.body as { message?: string } | undefined)?.message === 'images_not_same_recipe';
-      setError(t(notSame ? 'newRecipe.errors.notSameRecipe' : 'newRecipe.errors.extractFailed'));
-    }
+        (e.body as { message?: string } | undefined)?.message === 'images_not_same_recipe'
+          ? 'newRecipe.errors.notSameRecipe'
+          : 'newRecipe.errors.extractFailed',
+    });
+    router.replace('/cooking');
   };
 
   return (
@@ -272,10 +268,12 @@ export function CreateFromImageScreen() {
         </Text>
       ) : null}
 
+      {/* `error` here is only about picking the images — an extraction failure now
+          lands on the cooking screen, which is where the user will be. */}
       <AuthPrimaryButton
-        label={busy ? t('newRecipe.creating') : t('newRecipe.image.cta')}
+        label={t('newRecipe.image.cta')}
         onPress={submit}
-        disabled={images.length === 0 || busy}
+        disabled={images.length === 0}
       />
     </YStack>
   );
