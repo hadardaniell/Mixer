@@ -14,7 +14,6 @@ import type { RecipeBookDoc } from '../../db/types.js';
 import { toRecipeBook } from './recipe-books.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
-import { translateBookIfNeeded } from './recipe-books.translation.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 const IdAndUserParam = z.object({
@@ -91,21 +90,9 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         'book',
         items.map((b) => b._id)
       );
-      let targetLang: 'he' | 'en' = 'en';
-      const user = await app.collections.users.findOne(
-        { _id: userId },
-        { projection: { locale: 1 } },
-      );
-      if (user?.locale) {
-        targetLang = user.locale;
-      }
-      const translatedItems = await Promise.all(
-        items.map((book) =>
-          translateBookIfNeeded(app, book, targetLang)
-        ),
-      );
-      return {
-        items: translatedItems.map((b) =>
+      
+        return {
+        items: items.map((b) =>
           toRecipeBook(b, {
             isFavorite: favSet.has(b._id.toString()),
           }),
@@ -140,21 +127,9 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         'book',
         [book._id],
       );
-      let targetLang: 'he' | 'en' = 'en';
-      const user = await app.collections.users.findOne(
-        { _id: new ObjectId(req.user.id) },
-        { projection: { locale: 1 } },
-      );
-      if (user?.locale) {
-        targetLang = user.locale;
-      }
-      const translatedBook = await translateBookIfNeeded(
-        app,
-        book,
-        targetLang,
-      );
-      return toRecipeBook(translatedBook, {
-        isFavorite: favSet.has(book._id.toString()),
+      
+      return toRecipeBook(book, {
+      isFavorite: favSet.has(book._id.toString()),
       });
     },
   );
@@ -184,11 +159,7 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         { $set: { ...patch, updatedAt: new Date() } },
         { returnDocument: 'after' },
       );
-      await app.collections.bookTranslations
-        ?.deleteMany({ bookId: _id })
-        .catch((err) =>
-          app.log.error(err, 'Failed to clear translation cache on book update')
-        );
+      
       return toRecipeBook(updated!);
     },
   );
@@ -265,11 +236,6 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       );
 
       await app.collections.recipeBooks.deleteOne({ _id });
-      await app.collections.bookTranslations
-        ?.deleteMany({ bookId: _id })
-        .catch((err) =>
-          app.log.error(err, 'Failed to clear translation cache on book delete')
-        );
       return reply.code(204).send();
     },
   );

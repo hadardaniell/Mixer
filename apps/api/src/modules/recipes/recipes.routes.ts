@@ -346,46 +346,11 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         app.collections.recipes.countDocuments(filter),
       ]);
 
-      let targetLang: 'he' | 'en' = 'he';
-    if (req.user) {
-      const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
-      if (userDoc?.locale) {
-        targetLang = userDoc.locale as 'he' | 'en';
-      }
-    }
- 
-    const recipeIds = items.map((r) => r._id);
-    const translations = await app.collections.recipeTranslations
-      ?.find({
-        recipeId: { $in: recipeIds },
-        language: targetLang,
-      })
-      .toArray() ?? [];
-
-    const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
-
-    const translatedItems = items.map((doc) => {
-      if (doc.language && doc.language !== targetLang) {
-        const cached = translationMap.get(doc._id.toString());
-        if (cached) {
-          return {
-            ...doc,
-            title: cached.title,
-            description: cached.description,
-            tags: cached.tags ?? doc.tags,
-            cuisine: cached.cuisine ?? doc.cuisine,
-            language: targetLang,
-          };
-        }
-      }
-      return doc;
-    });
-
       const favSet = req.user
         ? await favoritedIds(app.collections, req.user.id, 'recipe', items.map((r) => r._id))
         : null;
       return {
-        items: translatedItems.map((r) =>
+        items: items.map((r) =>
         favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
       ),
       total,
@@ -406,94 +371,147 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       return reply.code(403).send({ error: 'forbidden' });
     }
 
-    let targetLang: 'he' | 'en' = 'he';
-    if (req.user) {
-      const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
-      if (userDoc?.locale) {
-        targetLang = userDoc.locale;
-      }
+     if (!req.user) {
+      return toRecipe(doc);
     }
-
-    let finalDoc = doc;
-
-    if (doc.language && doc.language !== targetLang) {
-      try {
-        const cachedTranslation = await app.collections.recipeTranslations?.findOne({
-          recipeId: doc._id,
-          language: targetLang,
-        });
-
-        if (cachedTranslation) {
-          app.log.info(`[recipes/:id] Translation cache hit for recipe ${doc._id}`);
-          finalDoc = {
-            ...doc,
-            title: cachedTranslation.title,
-            description: cachedTranslation.description,
-            tags: cachedTranslation.tags ?? doc.tags, 
-            cuisine: cachedTranslation.cuisine ?? doc.cuisine,
-            ingredients: cachedTranslation.ingredients,
-            steps: cachedTranslation.steps,
-            language: targetLang,
-          };
-        } else {
-          app.log.info(`[recipes/:id] Translation cache miss - calling AI for recipe ${doc._id}`);
-          const response = await fetch(`${config.aiBaseUrl}/translate/recipe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              recipe: {
-                title: doc.title,
-                description: doc.description,
-                tags: doc.tags, 
-                cuisine: doc.cuisine,
-                ingredients: doc.ingredients,
-                steps: doc.steps,
-              },
-              targetLanguage: targetLang,
-            }),
-          });
-
-          if (response.ok) {
-            const translatedData = (await response.json()) as {
-              title: string;
-              description?: string;
-              tags?: string[];
-              cuisine?: string;
-              ingredients: RecipeDoc['ingredients'];
-              steps: RecipeDoc['steps'];
-            };
-
-            await app.collections.recipeTranslations
-              ?.insertOne({
-                _id: new ObjectId(),
-                recipeId: doc._id,
-                language: targetLang,
-                title: translatedData.title,
-                description: translatedData.description,
-                tags: translatedData.tags ?? doc.tags, 
-                cuisine: translatedData.cuisine ?? doc.cuisine,
-                ingredients: translatedData.ingredients,
-                steps: translatedData.steps,
-                createdAt: new Date(),
-              })
-              .catch(() => {}); 
-
-            finalDoc = {
-              ...doc,
-              ...translatedData,
-              language: targetLang,
-            };
-          }
-        }
-      } catch (error) {
-        app.log.error(error, '[recipes/:id] AI translation failed, falling back to original doc');
-      }
-    }
-
-    if (!req.user) return toRecipe(finalDoc);
 
     const favSet = await favoritedIds(app.collections, req.user.id, 'recipe', [doc._id]);
-    return toRecipe(finalDoc, { isFavorite: favSet.has(doc._id.toString()) });
+    return toRecipe(doc, { isFavorite: favSet.has(doc._id.toString()) });
+  },
+);
+
+app.post(
+  '/recipes/:id/translate',
+  {
+    onRequest: [app.authenticate],
+    schema: {
+      params: IdParam,
+      tags: ['recipes'],
+    },
+  },
+  async (req, reply) => {
+    const recipeId = new ObjectId(req.params.id);
+
+    const recipe = await app.collections.recipes.findOne({
+      _id: recipeId,
+    });
+
+    if (!recipe) {
+      return reply.code(404).send({
+        error: 'recipe not found',
+      });
+    }
+
+    if (
+      !canRead(req, recipe) &&
+      !(await canReadViaShare(app.collections, req, recipe))
+    ) {
+      return reply.code(403).send({
+        error: 'forbidden',
+      });
+    }
+
+    const user = await app.collections.users.findOne(
+      { _id: new ObjectId(req.user.id) },
+      { projection: { locale: 1 } },
+    );
+
+    const targetLanguage: 'he' | 'en' = user?.locale ?? 'en';
+
+    // If the recipe is already in the user's language,
+    // there is nothing to translate.
+    if (recipe.language === targetLanguage) {
+      return reply.code(200).send(toRecipe(recipe));
+    }
+
+    // Check translation cache first.
+    const cachedTranslation =
+      await app.collections.recipeTranslations?.findOne({
+        recipeId,
+        language: targetLanguage,
+      });
+
+    if (cachedTranslation) {
+      return reply.code(200).send({
+        ...toRecipe(recipe),
+        title: cachedTranslation.title,
+        description: cachedTranslation.description,
+        tags: cachedTranslation.tags ?? recipe.tags,
+        cuisine: cachedTranslation.cuisine ?? recipe.cuisine,
+        ingredients: cachedTranslation.ingredients,
+        steps: cachedTranslation.steps,
+        language: targetLanguage,
+      });
+    }
+
+    try {
+      // No cached translation - call the AI service.
+      const response = await fetch(
+        `${config.aiBaseUrl}/translate/recipe`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            recipe: {
+              title: recipe.title,
+              description: recipe.description,
+              tags: recipe.tags,
+              cuisine: recipe.cuisine,
+              ingredients: recipe.ingredients,
+              steps: recipe.steps,
+            },
+            targetLanguage,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        return reply.code(500).send({
+          error: 'Failed to translate recipe',
+        });
+      }
+
+      const translatedData = (await response.json()) as {
+        title: string;
+        description?: string;
+        tags?: string[];
+        cuisine?: string;
+        ingredients: RecipeDoc['ingredients'];
+        steps: RecipeDoc['steps'];
+      };
+
+      // Save translation in cache.
+      await app.collections.recipeTranslations?.insertOne({
+        _id: new ObjectId(),
+        recipeId,
+        language: targetLanguage,
+        title: translatedData.title,
+        description: translatedData.description,
+        tags: translatedData.tags ?? recipe.tags,
+        cuisine: translatedData.cuisine ?? recipe.cuisine,
+        ingredients: translatedData.ingredients,
+        steps: translatedData.steps,
+        createdAt: new Date(),
+      });
+
+      // Return translated recipe.
+      return reply.code(200).send({
+        ...toRecipe(recipe),
+        ...translatedData,
+        language: targetLanguage,
+      });
+    } catch (error) {
+      app.log.error(
+        error,
+        '[recipes/:id/translate] Translation failed',
+      );
+
+      return reply.code(500).send({
+        error: 'Failed to translate recipe',
+      });
+    }
   },
 );
 
@@ -856,49 +874,24 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
 
-        let targetLang: 'he' | 'en' = 'he';
-      if (req.user) {
-        const userDoc = await app.collections.users.findOne({ _id: new ObjectId(req.user.id) });
-        if (userDoc?.locale) {
-          targetLang = userDoc.locale as 'he' | 'en';
-        }
-      }
-
-      const recipeIds = scored.map((s) => s.recipe._id);
-      const translations = await app.collections.recipeTranslations
-        ?.find({
-          recipeId: { $in: recipeIds },
-          language: targetLang,
-        })
-        .toArray() ?? [];
-
-      const translationMap = new Map(translations.map((t) => [t.recipeId.toString(), t]));
-
-      const translatedScored = scored.map(({ recipe, score }) => {
-        let finalRecipe = recipe;
-        if (recipe.language && recipe.language !== targetLang) {
-          const cached = translationMap.get(recipe._id.toString());
-          if (cached) {
-            finalRecipe = {
-              ...recipe,
-              title: cached.title,
-              description: cached.description,
-              tags: cached.tags ?? recipe.tags,
-              cuisine: cached.cuisine ?? recipe.cuisine,
-              language: targetLang,
-            };
-          }
-        }
-        return { recipe: finalRecipe, score };
-      });
-
       const favSet = req.user
-        ? await favoritedIds(app.collections, req.user.id, 'recipe', translatedScored.map((s) => s.recipe._id))
-        : null;
+      ? await favoritedIds(
+          app.collections,
+          req.user.id,
+          'recipe',
+          scored.map((s) => s.recipe._id),
+        )
+      : null;
 
       return {
-       items: translatedScored.map(({ recipe }) =>
-          favSet ? toRecipe(recipe, { isFavorite: favSet.has(recipe._id.toString()) }) : toRecipe(recipe),
+        items: scored.map(({ recipe }) =>
+          favSet
+            ? toRecipe(recipe, {
+                isFavorite: favSet.has(
+                  recipe._id.toString(),
+                ),
+              })
+            : toRecipe(recipe),
         ),
       };
     },
