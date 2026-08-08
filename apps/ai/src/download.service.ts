@@ -18,18 +18,14 @@ export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90
 export const downloadService = {
   async getVideoInfo(url: string): Promise<{ duration: number; title: string }> {
     try {
-      const options: any = {
+      const info = await ytDlp(url, {
         dumpSingleJson: true,
         skipDownload: true,
         noWarnings: true,
         noCheckCertificate: true,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      };
-      if (process.env.RESIDENTIAL_PROXY_URL) {
-        options.proxy = process.env.RESIDENTIAL_PROXY_URL;
-      }
-      const info = await ytDlp(url, options);
+      } as any);
 
       const parsed = typeof info === 'string' ? JSON.parse(info) : (info as any);
       return {
@@ -44,7 +40,7 @@ export const downloadService = {
   async getTopComments(url: string): Promise<string> {
     try {
       console.log(`[download.service] Fetching metadata and comments for: ${url}`);
-      
+
       const baseOptions: any = {
         dumpSingleJson: true,
         writeComments: true,
@@ -55,10 +51,6 @@ export const downloadService = {
         impersonate: 'chrome',
         extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
       };
-
-      if (process.env.RESIDENTIAL_PROXY_URL) {
-        baseOptions.proxy = process.env.RESIDENTIAL_PROXY_URL;
-      }
 
       const info = await ytDlp(url, baseOptions);
 
@@ -71,10 +63,10 @@ export const downloadService = {
         const topComments = parsedInfo.comments.slice(0, 2).map((c: any) => c.text);
         return topComments.join('\n\n');
       }
-      
+
       console.log(`[download.service] No 'comments' array found in yt-dlp output.`);
       console.log(`[download.service] (This usually means the platform blocks comment scraping without cookies)`);
-      
+
     } catch (error) {
       console.error('❌ [download.service] Failed to extract comments:', error instanceof Error ? error.message : String(error));
     }
@@ -119,23 +111,23 @@ export const downloadService = {
 
     const strategies = isTikTok
       ? [
-          {
-            output: outputPath,
-            format: 'b[height<=480]/b/best[height<=480]/best/worst',
-            noWarnings: true,
-            noCheckCertificate: true,
-            extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
-          },
-          {
-            output: outputPath,
-            format: 'b/best',
-            noWarnings: true,
-            noCheckCertificate: true,
-            extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
-          },
-        ]
+        {
+          output: outputPath,
+          format: 'b[height<=480]/b/best[height<=480]/best/worst',
+          noWarnings: true,
+          noCheckCertificate: true,
+          extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+        },
+        {
+          output: outputPath,
+          format: 'b/best',
+          noWarnings: true,
+          noCheckCertificate: true,
+          extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+        },
+      ]
       : isInstagram
-      ? [
+        ? [
           // Instagram blocks unauthenticated bots heavily — impersonating Chrome is
           // the most reliable cookie-free strategy.
           {
@@ -153,7 +145,7 @@ export const downloadService = {
             impersonate: 'chrome',
           },
         ]
-      : [
+        : [
           {
             output: outputPath,
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
@@ -170,15 +162,12 @@ export const downloadService = {
           },
         ];
 
-    // Inject cookies and/or proxy into all strategies
-    strategies.forEach(strategy => {
-      if (cookiePath) {
+    // Inject cookies into all strategies if a cookie file was found
+    if (cookiePath) {
+      strategies.forEach(strategy => {
         (strategy as any).cookies = cookiePath;
-      }
-      if (process.env.RESIDENTIAL_PROXY_URL) {
-        (strategy as any).proxy = process.env.RESIDENTIAL_PROXY_URL;
-      }
-    });
+      });
+    }
 
     let downloaded = false;
     let lastError: unknown;
@@ -207,7 +196,7 @@ export const downloadService = {
 
     // 1 & 2. Extract lightweight audio + 480p frames concurrently in parallel for max CPU speed
     await Promise.all([
-      execAsync(`"${ffmpeg}" -i "${outputPath}" -vn -ar 16000 -ac 1 -ab 32k "${audioPath}" -y`).catch(() => {}),
+      execAsync(`"${ffmpeg}" -i "${outputPath}" -vn -ar 16000 -ac 1 -ab 32k "${audioPath}" -y`).catch(() => { }),
       execAsync(`"${ffmpeg}" -i "${outputPath}" -vf "fps=1/4,scale=480:-1" -q:v 5 "${tempDir}/frame-%03d.jpg" -y`),
     ]);
 
