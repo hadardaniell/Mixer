@@ -202,12 +202,3 @@ export type RecipeTranslationDoc = {
   createdAt: Date;
 
 };
-
-export type BookTranslationDoc = {
-  _id: ObjectId;
-  bookId: ObjectId;
-  language: 'he' | 'en';
-  name: string;
-  description?: string;
-  createdAt: Date;
-};
