@@ -1,6 +1,7 @@
 import type { RecipeBook } from '@mixer/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { PlusCircle } from 'lucide-react-native';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView } from 'react-native';
 
@@ -38,6 +39,7 @@ export function SaveToBookSheet({ open, onOpenChange, recipeId }: SaveToBookShee
   const { t } = useTranslation();
   const theme = useTheme();
   const primary = theme.primary?.val as string;
+  const [error, setError] = useState<string | null>(null);
 
   const booksQ = useQuery({
     queryKey: ['feed', 'my-books'],
@@ -49,7 +51,17 @@ export function SaveToBookSheet({ open, onOpenChange, recipeId }: SaveToBookShee
 
   const pick = (bookId: string) => {
     if (add.isPending) return;
-    add.mutate({ bookId, recipeId }, { onSuccess: () => onOpenChange(false) });
+    setError(null);
+    add.mutate(
+      { bookId, recipeId },
+      {
+        onSuccess: () => onOpenChange(false),
+        onError: (err) => {
+          console.error('Failed to add recipe to book:', err);
+          setError(t('recipe.saveToBookSheet.error', 'Failed to add recipe to book'));
+        },
+      },
+    );
   };
 
   return (
@@ -99,6 +111,12 @@ export function SaveToBookSheet({ open, onOpenChange, recipeId }: SaveToBookShee
           </YStack>
         </ScrollView>
       )}
+
+      {error ? (
+        <Text color="$danger" fontSize={13} fontWeight="600" textAlign="center" paddingTop="$2">
+          {error}
+        </Text>
+      ) : null}
     </Sheet>
   );
 }

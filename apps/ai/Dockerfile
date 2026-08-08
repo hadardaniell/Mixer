@@ -46,6 +46,8 @@ COPY --from=build /app/packages/contracts/package.json ./packages/contracts/pack
 COPY --from=build /app/packages/contracts/dist ./packages/contracts/dist
 COPY --from=build /app/apps/ai/package.json ./apps/ai/package.json
 COPY --from=build /app/apps/ai/dist ./apps/ai/dist
+# Copy any cookie files that might exist
+COPY --from=build /app/apps/ai/*.txt ./apps/ai/
 # The app's OWN node_modules is not redundant with the hoisted root one: it holds the
 # @mixer/contracts workspace link, plus any dep whose version differs from the root's
 # (the root pins a newer fastify-type-provider-zod). Without it, resolution climbs to

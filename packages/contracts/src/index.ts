@@ -294,7 +294,7 @@ export type UpdateBookMemberInput = z.infer<typeof UpdateBookMemberInputSchema>;
 // --- AI extraction ---
 export const ExtractFromTextInputSchema = z.object({
   text: z.string().min(1).max(10000),
-  locale: z.string().optional().default('en'),
+  locale: z.string().optional().default('he'),
 });
 export type ExtractFromTextInput = z.infer<typeof ExtractFromTextInputSchema>;
 
@@ -328,12 +328,13 @@ const ImageItemSchema = z.object({
 
 export const ExtractFromImageInputSchema = z.object({
   images: z.array(ImageItemSchema).min(1).max(10),
-  locale: z.string().optional().default('en'),
+  locale: z.string().optional().default('he'),
 });
 export type ExtractFromImageInput = z.infer<typeof ExtractFromImageInputSchema>;
 
 export const ExtractFromUrlInputSchema = z.object({
   url: z.string().url(),
+  locale: z.string().optional().default('he'),
 });
 export type ExtractFromUrlInput = z.infer<typeof ExtractFromUrlInputSchema>;
 

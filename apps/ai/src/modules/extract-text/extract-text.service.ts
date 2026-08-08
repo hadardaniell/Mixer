@@ -51,7 +51,15 @@ The "difficulty" field must always be one of: "easy", "medium", "hard" — in En
 
 function buildPrompt(locale: string): string {
   const lang = locale === 'he' ? 'Hebrew (עברית)' : 'English';
-  return `${BASE_PROMPT}\nIMPORTANT: Output ALL text fields (title, description, ingredients, steps, tags, cuisine) in ${lang}, regardless of the language of the input text.`;
+  return `${BASE_PROMPT}
+
+CRITICAL INSTRUCTION FOR LANGUAGE:
+You MUST output the final JSON content in ${lang}.
+- Every ingredient "name" and "unit" MUST be translated to ${lang}.
+- Every step "text" MUST be translated to ${lang}.
+- The "title", "description", "tags", and "cuisine" MUST be in ${lang}.
+- DO NOT translate the "difficulty" field. It MUST remain "easy", "medium", or "hard".
+If the source text is in another language, you must translate the recipe instructions and ingredients into ${lang} while maintaining accuracy.`;
 }
 
 async function extractWithGeminiFallback(text: string, locale: string): Promise<Record<string, unknown>> {
