@@ -77,10 +77,10 @@ export const feedApi = {
       body: JSON.stringify({ images, locale }),
     }),
 
-  importUrl: (url: string) =>
+  importUrl: (url: string, locale?: string) =>
     http<ExtractFromTextResult>('/recipes/import/url', {
       method: 'POST',
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, locale }),
     }),
 
   // Uploads a cover image to Firebase Storage and returns its public URL.

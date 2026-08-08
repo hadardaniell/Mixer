@@ -36,7 +36,7 @@ export function CreateFromLinkScreen() {
     setError(null);
     try {
       const recipe = await create.mutateAsync({
-        extract: () => feedApi.importUrl(url),
+        extract: () => feedApi.importUrl(url, language),
         sourceType: 'url',
         sourceUrl: url,
       });

@@ -1,10 +1,15 @@
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import ytDlp from 'yt-dlp-exec';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import ffmpeg from 'ffmpeg-static';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const execAsync = promisify(exec);
 
@@ -74,6 +79,35 @@ export const downloadService = {
     const outputPath = path.join(tempDir, 'video.mp4');
 
     const isTikTok = url.toLowerCase().includes('tiktok.com');
+    const isInstagram = url.toLowerCase().includes('instagram.com');
+
+    // Check if a cookies.txt file exists to bypass login restrictions
+    // When running via turbo, process.cwd() is apps/ai. But let's check a few places to be safe.
+    const searchDirs = [
+      process.cwd(),
+      path.resolve(__dirname, '..'), // if __dirname is src or dist
+      path.resolve(__dirname, '../..'),
+    ];
+
+    let cookiePath: string | undefined;
+
+    for (const dir of searchDirs) {
+      const file = ['instagram-cookies.txt', 'cookies.txt'].find((f) => {
+        try {
+          fsSync.accessSync(path.join(dir, f), fsSync.constants.R_OK);
+          return true;
+        } catch {
+          return false;
+        }
+      });
+      if (file) {
+        cookiePath = path.join(dir, file);
+        break;
+      }
+    }
+    if (cookiePath) {
+      console.log(`[download.service] Found cookie file at ${cookiePath} — passing to yt-dlp`);
+    }
 
     const strategies = isTikTok
       ? [
@@ -92,6 +126,25 @@ export const downloadService = {
             extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
           },
         ]
+      : isInstagram
+      ? [
+          // Instagram blocks unauthenticated bots heavily — impersonating Chrome is
+          // the most reliable cookie-free strategy.
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+          },
+        ]
       : [
           {
             output: outputPath,
@@ -108,6 +161,13 @@ export const downloadService = {
             noCheckCertificate: true,
           },
         ];
+
+    // Inject cookies into all strategies if a cookie file was found
+    if (cookiePath) {
+      strategies.forEach(strategy => {
+        (strategy as any).cookies = cookiePath;
+      });
+    }
 
     let downloaded = false;
     let lastError: unknown;

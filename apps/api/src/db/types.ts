@@ -156,6 +156,7 @@ export type FriendshipDoc = {
 export type UrlExtractionCacheDoc = {
   _id: ObjectId;
   url: string;
+  locale?: string;
   extraction: Record<string, unknown>;
   extractedAt: Date;
 };
