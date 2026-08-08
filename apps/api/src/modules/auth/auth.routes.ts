@@ -70,6 +70,8 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
           ownerId: doc._id,
           name: locale === 'he' ? 'המתכונים שלי' : 'My Recipes',
           type: 'personal',
+          // Plumbing, not a book the user curates — kept out of the lists they browse.
+          system: true,
           members: [
             {
               userId: doc._id,

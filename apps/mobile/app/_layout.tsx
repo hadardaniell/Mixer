@@ -10,6 +10,8 @@ import { TamaguiProvider, YStack } from 'tamagui';
 import { GoogleProvider } from '@/features/auth/components/GoogleProvider';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { AUTH_FONT_FAMILY } from '@/features/auth/authFonts';
+import { ExtractionReadyBanner } from '@/features/recipe/components/ExtractionReadyBanner';
+import { ExtractionJobProvider } from '@/features/recipe/context/ExtractionJobContext';
 import { readInitialSettings, SettingsProvider } from '@/features/settings/context/SettingsContext';
 import { queryClient } from '@/shared/lib/queryClient';
 import { initI18n, isRTL } from '@/shared/lib/i18n';
@@ -190,14 +192,23 @@ export default function RootLayout() {
               <GoogleProvider>
                 <AuthProvider>
                   <SplashGate isReady={ready}>
-                    <YStack flex={1} backgroundColor="$background">
-                      <Stack
-                        screenOptions={{
-                          headerShown: false,
-                          contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
-                        }}
-                      />
-                    </YStack>
+                    {/* Inside the gate, above the router. Inside, because it calls
+                        `useTranslation` and mounting that before `initI18n` has run
+                        changes react-i18next's hook count on the ready flip — the trap
+                        SplashGate documents. Above the router, because an import has to
+                        survive the user leaving the screen that started it, and the
+                        banner has to reach them wherever they went. */}
+                    <ExtractionJobProvider>
+                      <YStack flex={1} backgroundColor="$background">
+                        <Stack
+                          screenOptions={{
+                            headerShown: false,
+                            contentStyle: { backgroundColor: APP_BACKGROUND_COLOR },
+                          }}
+                        />
+                        <ExtractionReadyBanner />
+                      </YStack>
+                    </ExtractionJobProvider>
                   </SplashGate>
                 </AuthProvider>
               </GoogleProvider>

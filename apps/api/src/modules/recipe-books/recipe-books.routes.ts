@@ -77,6 +77,10 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       const { q } = req.query;
       const filter: Filter<RecipeBookDoc> = {
         $or: [{ ownerId: userId }, { 'members.userId': userId }],
+        // The auto-created "my recipes" book is where saved recipes are filed behind
+        // the scenes; it isn't something the user browses, so it stays out of every
+        // list built on this route. Fetching it by id still works.
+        system: { $ne: true },
       };
       // Escape regex metacharacters so a user's query is matched literally.
       if (q) filter.name = { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
@@ -193,8 +197,10 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         liveShares.map(async (share) => {
           try {
             const now = new Date();
+            // The recipient owns and browses this copy — never hidden plumbing.
+            const { system: _system, ...bookFields } = book;
             const forked: RecipeBookDoc = {
-              ...book,
+              ...bookFields,
               _id: new ObjectId(),
               ownerId: share.friendId,
               members: [],

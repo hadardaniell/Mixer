@@ -26,6 +26,8 @@ export const recipeBooksValidator: CollectionValidator = {
         coverImageUrl: { bsonType: 'string' },
         coverKey: { bsonType: 'string' },
         type: { enum: ['personal', 'shared', 'meal'] },
+        // The auto-created "my recipes" book. Hidden from the browsable lists.
+        system: { bsonType: 'bool' },
         members: {
           bsonType: 'array',
           items: {

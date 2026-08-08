@@ -18,6 +18,10 @@ const config: ExpoConfig = {
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
+  // The whisk-x from the wordmark, white on ink — the same "black = action" the
+  // primary button and the FAB speak. Generated from `mixerXPath.ts`, so the icon and
+  // the mark inside the app can never drift apart.
+  icon: './src/assets/icon/icon.png',
   ios: {
     bundleIdentifier: 'com.hadardaniell.mixer',
     supportsTablet: false,
@@ -28,16 +32,28 @@ const config: ExpoConfig = {
   android: {
     package: 'com.hadardaniell.mixer',
     adaptiveIcon: {
-      backgroundColor: '#ffffff',
+      // Foreground is the bare white x on transparent; the ink is the background layer,
+      // which is what lets the launcher mask it to any shape without clipping the glyph.
+      foregroundImage: './src/assets/icon/adaptive-icon.png',
+      backgroundColor: '#111827',
     },
   },
   web: {
     bundler: 'metro',
+    favicon: './src/assets/icon/favicon.png',
   },
   plugins: [
     'expo-router',
     'expo-localization',
-    'expo-notifications',
+    [
+      'expo-notifications',
+      {
+        // Android draws the status-bar icon as a silhouette — anything but a white
+        // glyph on transparent comes out as a grey blob.
+        icon: './src/assets/icon/notification-icon.png',
+        color: '#111827',
+      },
+    ],
     [
       '@react-native-google-signin/google-signin',
       { iosUrlScheme },

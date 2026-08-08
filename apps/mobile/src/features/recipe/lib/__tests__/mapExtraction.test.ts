@@ -3,7 +3,7 @@ import type { ExtractFromTextResult } from '@mixer/contracts';
 import { mapExtraction } from '../mapExtraction';
 
 describe('mapExtraction', () => {
-  it('maps AI extraction payload into draft CreateRecipeInput', () => {
+  it('maps AI extraction payload into a published CreateRecipeInput', () => {
     const rawResult: ExtractFromTextResult = {
       title: 'פנקייק אוורירי',
       description: 'מתכון מהיר לפנקייקים',
@@ -22,7 +22,8 @@ describe('mapExtraction', () => {
     expect(mapped.title).toBe('פנקייק אוורירי');
     expect(mapped.coverImageUrl).toBe('https://images.pexels.com/photos/123/pexels-photo-123.jpeg');
     expect(mapped.visibility).toBe('private');
-    expect(mapped.status).toBe('draft');
+    // An import arrives finished — only the manual wizard produces drafts.
+    expect(mapped.status).toBe('published');
     expect(mapped.language).toBe('he');
     expect(mapped.source.type).toBe('manual');
     expect(mapped.ingredients).toHaveLength(1);

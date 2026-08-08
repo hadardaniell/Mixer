@@ -81,9 +81,13 @@ export function BookRecipeGrid({
           {t('book.loading')}
         </Text>
       ) : recipes.length === 0 ? (
-        <Text color="$textMuted" fontSize={13} textAlign="center" paddingVertical="$6">
-          {totalCount === 0 ? t('book.empty') : t('book.noSearchResults', { query })}
-        </Text>
+        // Centred in the space the grid would have filled, so the line reads as a
+        // state rather than as a caption that lost its content.
+        <YStack minHeight={200} alignItems="center" justifyContent="center" paddingHorizontal="$4">
+          <Text color="$textMuted" fontSize={13} textAlign="center">
+            {totalCount === 0 ? t('book.empty') : t('book.noSearchResults', { query })}
+          </Text>
+        </YStack>
       ) : (
         <XStack flexWrap="wrap" gap="$3" justifyContent="space-between">
           {recipes.map((r) => (

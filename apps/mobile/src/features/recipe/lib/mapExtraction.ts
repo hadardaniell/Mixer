@@ -51,6 +51,11 @@ export function mapExtraction(
       platform,
     },
     visibility: 'private',
-    status: 'draft',
+    // Published, not a draft. An import is a finished recipe from the user's point of
+    // view — they gave us a link and got a recipe back — so parking it in the drafts
+    // pile means doing a second step to claim something they already made. Drafts stay
+    // for the manual wizard, which is the flow you can genuinely leave half-written.
+    // It's still `private`, so publishing here means "in my kitchen", not "shared".
+    status: 'published',
   };
 }
