@@ -16,23 +16,53 @@ const execAsync = promisify(exec);
 export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90s), Shorts (3min), TikToks
 
 export const downloadService = {
-  async getVideoInfo(url: string): Promise<{ duration: number; title: string }> {
+  async getVideoInfo(url: string): Promise<{ duration: number; title: string; thumbnailUrl?: string }> {
     try {
-      const info = await ytDlp(url, {
+      const searchDirs = [
+        process.cwd(),
+        path.resolve(__dirname, '..'), // if __dirname is src or dist
+        path.resolve(__dirname, '../..'),
+      ];
+
+      let cookiePath: string | undefined;
+      for (const dir of searchDirs) {
+        const file = ['instagram-cookies.txt', 'cookies.txt'].find((f) => {
+          try {
+            fsSync.accessSync(path.join(dir, f), fsSync.constants.R_OK);
+            return true;
+          } catch {
+            return false;
+          }
+        });
+        if (file) {
+          cookiePath = path.join(dir, file);
+          break;
+        }
+      }
+
+      const options: any = {
         dumpSingleJson: true,
         skipDownload: true,
         noWarnings: true,
         noCheckCertificate: true,
         userAgent:
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      } as any);
+      };
+      
+      if (cookiePath) {
+        options.cookies = cookiePath;
+      }
+
+      const info = await ytDlp(url, options);
 
       const parsed = typeof info === 'string' ? JSON.parse(info) : (info as any);
       return {
         duration: parsed.duration ?? 0,
         title: parsed.title ?? '',
+        thumbnailUrl: parsed.thumbnail,
       };
-    } catch {
+    } catch (err) {
+      console.warn(`[download.service] getVideoInfo failed for ${url}:`, err instanceof Error ? err.message : err);
       return { duration: 0, title: '' };
     }
   },

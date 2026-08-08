@@ -265,20 +265,27 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
       const isVideo = isVideoUrl(url);
 
       if (isVideo) {
-        const isYouTube = /youtube\.com|youtu\.be/.test(url);
         let tempDirectory: string | undefined;
+        let instagramThumbnailUrl: string | undefined;
+
         try {
-          if (isYouTube) {
-            app.log.info(`[extract/url] YouTube URL detected — checking duration for: ${url}`);
+          if (isYouTube || isInstagram) {
+            app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
             try {
-              const { duration } = await downloadService.getVideoInfo(url);
-              if (duration > MAX_VIDEO_DURATION_SECONDS) {
+              const info = await downloadService.getVideoInfo(url);
+              
+              if (info.thumbnailUrl && isInstagram) {
+                instagramThumbnailUrl = info.thumbnailUrl;
+                app.log.info(`[extract/url] Captured Instagram thumbnail URL: ${instagramThumbnailUrl}`);
+              }
+
+              if (isYouTube && info.duration > MAX_VIDEO_DURATION_SECONDS) {
                 return reply.code(422).send({
-                  error: `Video is too long (${Math.round(duration / 60)} min). Only short videos up to ${MAX_VIDEO_DURATION_SECONDS / 60} minutes are supported (Shorts, Reels, TikToks).`,
+                  error: `Video is too long (${Math.round(info.duration / 60)} min). Only short videos up to ${MAX_VIDEO_DURATION_SECONDS / 60} minutes are supported (Shorts, Reels, TikToks).`,
                 });
               }
             } catch {
-              app.log.warn(`[extract/url] Could not fetch YouTube metadata for ${url} — proceeding anyway`);
+              app.log.warn(`[extract/url] Could not fetch video metadata for ${url} — proceeding anyway`);
             }
           }
 
@@ -289,18 +296,25 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
           const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
 
-          // For TikTok, override the Unsplash cover image with the actual video thumbnail
-          // from oEmbed — it's always directly relevant to the dish being cooked.
+          // For TikTok and Instagram, override the Unsplash cover image with the actual video thumbnail
+          // because it's directly relevant to the dish being cooked.
+          let videoThumbnailUrl: string | undefined = instagramThumbnailUrl;
+          
           if (url.includes('tiktok.com')) {
             try {
               const { thumbnailUrl } = await fetchTikTokOEmbed(url);
               if (thumbnailUrl) {
-                recipe.coverImageUrl = thumbnailUrl;
-                app.log.info(`[extract/url] Applied TikTok oEmbed thumbnail as cover image`);
+                videoThumbnailUrl = thumbnailUrl;
+                app.log.info(`[extract/url] Captured TikTok oEmbed thumbnail URL`);
               }
             } catch {
-              // Best-effort; keep whatever the video AI returned
+              // Best-effort; fallback to whatever we have
             }
+          }
+
+          if (videoThumbnailUrl) {
+            recipe.coverImageUrl = videoThumbnailUrl;
+            app.log.info(`[extract/url] Applied video thumbnail as recipe cover image`);
           }
 
           return recipe;
