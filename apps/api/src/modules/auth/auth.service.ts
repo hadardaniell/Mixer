@@ -110,7 +110,7 @@ export async function findOrCreateGoogleUser(
     passwordHash: null,
     displayName: profile.name ?? profile.email.split('@')[0]!,
     avatarUrl: profile.picture,
-    locale: 'en',
+    locale: 'he',
     role: 'user',
     providers: { google: { sub: profile.sub, email: profile.email, linkedAt: now } },
     emailVerifiedAt: now,

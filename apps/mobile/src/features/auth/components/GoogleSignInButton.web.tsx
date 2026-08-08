@@ -31,7 +31,30 @@ function redirectUri(): string {
  */
 let exchangeStarted = false;
 
-export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
+/**
+ * Outer component: renders nothing when the Web Client ID is missing.
+ * This avoids calling useGoogleLogin (which requires GoogleOAuthProvider)
+ * when the provider is absent.
+ */
+export function GoogleSignInButton(props: GoogleSignInButtonProps) {
+  const { t } = useTranslation();
+
+  if (!env.googleWebClientId) {
+    return (
+      <Text textAlign="center" color="$textMuted" fontSize="$2">
+        Google sign-in not configured
+      </Text>
+    );
+  }
+
+  return <GoogleSignInButtonInner {...props} />;
+}
+
+/**
+ * Inner component: guaranteed to be rendered inside GoogleOAuthProvider,
+ * so the useGoogleLogin hook is safe to call.
+ */
+function GoogleSignInButtonInner({ onError }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
   const { signIn } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -83,14 +106,6 @@ export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
     onError: () => onError(t('auth.networkError')),
   });
 
-  if (!env.googleWebClientId) {
-    return (
-      <Text textAlign="center" color="$textMuted" fontSize="$2">
-        Google sign-in not configured
-      </Text>
-    );
-  }
-
   // Mirrors the native button so both platforms look identical. The GSI-rendered button
   // is not used here: its branding requirement applies to the id-token flow it drives.
   return (
@@ -124,3 +139,4 @@ export function GoogleSignInButton({ onError }: GoogleSignInButtonProps) {
     </Pressable>
   );
 }
+
