@@ -21,8 +21,6 @@ export function RegisterScreen() {
   const { language } = useLanguage();
   const insets = useSafeAreaInsets();
 
-  if (isAuthenticated) return <Redirect href="/home" />;
-
   const [step, setStep] = useState<1 | 2>(1);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -105,6 +103,11 @@ export function RegisterScreen() {
       setLoading(false);
     }
   };
+
+  // Must stay BELOW every hook. `signIn()` at the end of a successful registration
+  // flips this to true and re-renders the screen; bailing out above the useStates
+  // would render fewer hooks than the previous pass and crash React.
+  if (isAuthenticated) return <Redirect href="/home" />;
 
   return (
     <YStack flex={1} backgroundColor="$bg">

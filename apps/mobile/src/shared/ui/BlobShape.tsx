@@ -19,8 +19,12 @@ import { useTheme } from 'tamagui';
  * reads as the same kind of life without any path interpolation.
  */
 
-/** Four hand-tuned silhouettes so a row of blobs never looks stamped. */
-const PATHS = [
+/**
+ * Four hand-tuned silhouettes so a row of blobs never looks stamped. Drawn in a
+ * 100×100 box — exported so a still composition can paint one straight into its
+ * own `Svg` instead of stacking an animated view behind it.
+ */
+export const BLOB_PATHS = [
   'M53.3,10.2c14.6,1.9,26.9,11.4,32.6,24.4c5.7,13,4.8,29.4-3.9,40.9c-8.7,11.5-25.2,18-40.3,15.6C26.6,88.7,12.9,77.4,8.6,63.2C4.3,49,9.4,32,20.6,21.3C31.8,10.6,38.7,8.3,53.3,10.2z',
   'M45.8,8.6c16.4-1.4,33.1,7.4,40.2,21.4c7.1,14,4.6,33.2-6.1,44.9c-10.7,11.7-29.6,15.9-44.4,10.2C20.7,79.4,9.8,63.8,8.3,47.6C6.8,31.4,14.7,14.6,29.4,10.6C34.6,9.2,40.4,9.1,45.8,8.6z',
   'M50.6,7.9c17.8,0,35.9,10.7,40.4,26.1c4.5,15.4-4.6,35.5-19.2,44.9c-14.6,9.4-34.7,8.1-45.9-2.5C14.7,65.8,12.4,45.9,16.6,30.9C20.8,15.9,32.8,7.9,50.6,7.9z',
@@ -38,7 +42,7 @@ interface BlobShapeProps {
 export function BlobShape({ size, color, variant = 0 }: BlobShapeProps) {
   const theme = useTheme();
   const t = useSharedValue(0);
-  const i = ((variant % PATHS.length) + PATHS.length) % PATHS.length;
+  const i = ((variant % BLOB_PATHS.length) + BLOB_PATHS.length) % BLOB_PATHS.length;
 
   // react-native-svg has no idea what a Tamagui token is: handing `fill` the
   // string "$accentLavender" silently paints the blob black. Resolve here so
@@ -71,7 +75,7 @@ export function BlobShape({ size, color, variant = 0 }: BlobShapeProps) {
   return (
     <Animated.View style={[{ width: size, height: size }, style]} pointerEvents="none">
       <Svg width={size} height={size} viewBox="0 0 100 100">
-        <Path d={PATHS[i]} fill={fill} />
+        <Path d={BLOB_PATHS[i]} fill={fill} />
       </Svg>
     </Animated.View>
   );

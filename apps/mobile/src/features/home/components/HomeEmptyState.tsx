@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Text, YStack } from 'tamagui';
 
-import { MixerBowl } from '@/shared/ui/MixerBowl';
+import { GhostRecipeCard } from '@/features/home/components/GhostRecipeCard';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 
 interface HomeEmptyStateProps {
@@ -12,15 +12,18 @@ interface HomeEmptyStateProps {
  * Shown when every feed section is empty — a brand-new account, where each section
  * hides itself and the screen would otherwise be the CTA card floating in white.
  *
- * The bowl carries this, not color: the design language keeps surfaces monochrome and
- * lets the mark and motion do the work.
+ * The illustration is the outline of the card that isn't there yet — not the mixer
+ * bowl. The CTA directly above already carries a stirring bowl, so a second, larger
+ * one repeated the mark and set two loops running against each other on one screen.
+ * The ghost card is still, and says something the bowl couldn't: this is where your
+ * first recipe lands.
  */
 export function HomeEmptyState({ onCreatePress }: HomeEmptyStateProps) {
   const { t } = useTranslation();
 
   return (
     <YStack alignItems="center" paddingHorizontal="$4" paddingTop={12} gap={18}>
-      <MixerBowl size={132} animated />
+      <GhostRecipeCard size={132} />
 
       <YStack alignItems="center" gap="$2">
         <Text fontSize={20} fontWeight="700" letterSpacing={-0.6} color="$text" textAlign="center">

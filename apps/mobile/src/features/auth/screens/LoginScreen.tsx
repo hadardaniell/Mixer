@@ -27,8 +27,6 @@ export function LoginScreen() {
   const { language } = useLanguage();
   const insets = useSafeAreaInsets();
 
-  if (isAuthenticated) return <Redirect href="/home" />;
-
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +58,10 @@ export function LoginScreen() {
       setLoading(false);
     }
   };
+
+  // Must stay BELOW every hook — `signIn()` flips this mid-session and re-renders
+  // the screen, so an early bail-out above the useStates drops hooks React expects.
+  if (isAuthenticated) return <Redirect href="/home" />;
 
   return (
     <YStack
