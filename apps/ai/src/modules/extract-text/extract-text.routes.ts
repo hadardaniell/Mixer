@@ -271,24 +271,22 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         let extractedThumbnailUrl: string | undefined;
 
         try {
-          if (isYouTube || isInstagram) {
-            app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
-            try {
-              const info = await downloadService.getVideoInfo(url);
-              
-              if (info.thumbnailUrl) {
-                extractedThumbnailUrl = info.thumbnailUrl;
-                app.log.info(`[extract/url] Captured video thumbnail URL: ${extractedThumbnailUrl}`);
-              }
-
-              if (isYouTube && info.duration > MAX_VIDEO_DURATION_SECONDS) {
-                return reply.code(422).send({
-                  error: `Video is too long (${Math.round(info.duration / 60)} min). Only short videos up to ${MAX_VIDEO_DURATION_SECONDS / 60} minutes are supported (Shorts, Reels, TikToks).`,
-                });
-              }
-            } catch {
-              app.log.warn(`[extract/url] Could not fetch video metadata for ${url} — proceeding anyway`);
+          app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
+          try {
+            const info = await downloadService.getVideoInfo(url);
+            
+            if (info.thumbnailUrl) {
+              extractedThumbnailUrl = info.thumbnailUrl;
+              app.log.info(`[extract/url] Captured video thumbnail URL: ${extractedThumbnailUrl}`);
             }
+
+            if (info.duration > MAX_VIDEO_DURATION_SECONDS) {
+              return reply.code(422).send({
+                error: `Video is too long (${Math.round(info.duration / 60)} min). Only short videos up to ${MAX_VIDEO_DURATION_SECONDS / 60} minutes are supported (Shorts, Reels, TikToks).`,
+              });
+            }
+          } catch {
+            app.log.warn(`[extract/url] Could not fetch video metadata for ${url} — proceeding anyway`);
           }
 
           app.log.info(`[extract/url] Starting download and frame extraction for video URL: ${url}`);
@@ -298,7 +296,8 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
           const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
 
-          // For TikTok, Instagram, and YouTube, override the Unsplash cover image with the actual video thumbnail
+          // For all video platforms (TikTok, Instagram, YouTube, Facebook, Pinterest, etc), 
+          // override the Unsplash cover image with the actual video thumbnail
           // because it's directly relevant to the dish being cooked.
           let videoThumbnailUrl: string | undefined = extractedThumbnailUrl;
           
