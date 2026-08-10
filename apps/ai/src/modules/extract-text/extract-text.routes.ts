@@ -274,7 +274,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
           try {
             const info = await downloadService.getVideoInfo(url);
-            
+
             if (info.thumbnailUrl) {
               extractedThumbnailUrl = info.thumbnailUrl;
               app.log.info(`[extract/url] Captured video thumbnail URL: ${extractedThumbnailUrl}`);
@@ -300,7 +300,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           // override the Unsplash cover image with the actual video thumbnail
           // because it's directly relevant to the dish being cooked.
           let videoThumbnailUrl: string | undefined = extractedThumbnailUrl;
-          
+
           if (url.includes('tiktok.com')) {
             try {
               const { thumbnailUrl } = await fetchTikTokOEmbed(url);
