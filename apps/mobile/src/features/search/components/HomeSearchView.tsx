@@ -50,11 +50,17 @@ export function HomeSearchView({ query }: HomeSearchViewProps) {
     // Semantic (embedding) search for recipes, with a keyword-search fallback so
     // results still appear if the embedding service is unavailable.
     queryFn: async () => {
-      try {
-        return await feedApi.semanticSearchRecipes(debounced);
-      } catch {
-        return feedApi.searchRecipes(debounced);
-      }
+      const [semanticResult, textResult] = await Promise.allSettled([
+        feedApi.semanticSearchRecipes(debounced),
+        feedApi.searchRecipes(debounced),
+      ]);
+      const semanticItems =
+        semanticResult.status === 'fulfilled' ? semanticResult.value.items : [];
+      const textItems =
+        textResult.status === 'fulfilled' ? textResult.value.items : [];
+      // Semantic results first (AI-ranked), then text-only matches not already included
+      const seenIds = new Set(semanticItems.map((r) => r.id));
+      return { items: [...semanticItems, ...textItems.filter((r) => !seenIds.has(r.id))] };
     },
     enabled,
   });
