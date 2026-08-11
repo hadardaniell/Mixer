@@ -17,16 +17,9 @@ import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
 import { generateAndStoreCoverImage, getSuggestedCoverImageUrl } from './recipes.service.js';
+import { cosineSimilarity, escapeRegex, applySearchFilter } from './search.utils.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
-
-function cosineSimilarity(a: number[], b: number[]): number {
-  const dot = a.reduce((sum, val, i) => sum + val * (b[i] ?? 0), 0);
-  const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-  const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-  if (magA === 0 || magB === 0) return 0;
-  return dot / (magA * magB);
-}
 
 async function generateAndStoreEmbedding(
   collections: { recipes: import('mongodb').Collection<RecipeDoc> },
@@ -335,19 +328,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         filter.categoryIds = new ObjectId(categoryId);
       }
       if (q) {
-        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const searchOr = [
-          { title: { $regex: escaped, $options: 'i' } },
-          { tags: { $regex: escaped, $options: 'i' } },
-          { description: { $regex: escaped, $options: 'i' } },
-        ];
-        if (filter.$or) {
-          // Visibility already uses $or — combine with $and to avoid overwriting it
-          filter.$and = [{ $or: filter.$or }, { $or: searchOr }];
-          delete filter.$or;
-        } else {
-          filter.$or = searchOr;
-        }
+        Object.assign(filter, applySearchFilter(filter as Record<string, unknown>, q));
       }
 
       const cursor = app.collections.recipes.find(filter, {
