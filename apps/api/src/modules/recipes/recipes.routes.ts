@@ -334,7 +334,21 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       if (categoryId && ObjectId.isValid(categoryId)) {
         filter.categoryIds = new ObjectId(categoryId);
       }
-      if (q) filter.$text = { $search: q };
+      if (q) {
+        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchOr = [
+          { title: { $regex: escaped, $options: 'i' } },
+          { tags: { $regex: escaped, $options: 'i' } },
+          { description: { $regex: escaped, $options: 'i' } },
+        ];
+        if (filter.$or) {
+          // Visibility already uses $or — combine with $and to avoid overwriting it
+          filter.$and = [{ $or: filter.$or }, { $or: searchOr }];
+          delete filter.$or;
+        } else {
+          filter.$or = searchOr;
+        }
+      }
 
       const cursor = app.collections.recipes.find(filter, {
         sort: { createdAt: -1 },
@@ -871,6 +885,7 @@ app.post(
 
       const scored = recipes
         .map((r) => ({ recipe: r, score: cosineSimilarity(queryEmbedding, r.embedding!) }))
+        .filter(({ score }) => score >= 0.5)
         .sort((a, b) => b.score - a.score)
         .slice(0, 10);
 
@@ -894,6 +909,26 @@ app.post(
             : toRecipe(recipe),
         ),
       };
+    },
+  );
+
+  // One-time backfill: generate embeddings for every recipe that doesn't have one.
+  // Call POST /recipes/backfill-embeddings once after the AI service is running.
+  app.post(
+    '/recipes/backfill-embeddings',
+    { onRequest: [app.authenticate], schema: { tags: ['recipes'] } },
+    async () => {
+      const recipes = await app.collections.recipes
+        .find({ embedding: { $exists: false }, status: { $ne: 'draft' } })
+        .toArray();
+
+      let done = 0;
+      for (const recipe of recipes) {
+        await generateAndStoreEmbedding(app.collections, recipe._id, recipe);
+        done++;
+      }
+
+      return { backfilled: done, total: recipes.length };
     },
   );
 };
