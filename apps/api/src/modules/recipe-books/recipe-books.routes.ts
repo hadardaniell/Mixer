@@ -12,6 +12,7 @@ import {
 import type { Filter } from 'mongodb';
 import type { RecipeBookDoc } from '../../db/types.js';
 import { toRecipeBook } from './recipe-books.mapper.js';
+import { memberRole } from './recipe-books.utils.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
 
@@ -24,12 +25,6 @@ const IdAndRecipeParam = z.object({
   id: z.string().regex(/^[a-f0-9]{24}$/i),
   recipeId: z.string().regex(/^[a-f0-9]{24}$/i),
 });
-
-function memberRole(book: RecipeBookDoc, userId: string): 'owner' | 'editor' | 'viewer' | null {
-  if (book.ownerId.toString() === userId) return 'owner';
-  const m = book.members.find((m) => m.userId.toString() === userId);
-  return m?.role ?? null;
-}
 
 export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(

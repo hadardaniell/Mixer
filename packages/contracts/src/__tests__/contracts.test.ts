@@ -8,6 +8,9 @@ import {
   RecipeListQuerySchema,
   ExtractFromTextResultSchema,
   ExtractFromImageInputSchema,
+  CreateShareInputSchema,
+  SharedItemSchema,
+  ShareListQuerySchema,
 } from '../index.js';
 
 describe('Contracts Zod Schemas', () => {
@@ -203,6 +206,135 @@ describe('Contracts Zod Schemas', () => {
         ingredients: [{ amount: 2, unit: 'כוס' }],
       });
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('Share Schemas', () => {
+    const validId = '507f1f77bcf86cd799439011';
+
+    describe('CreateShareInputSchema', () => {
+      it('accepts a valid recipe share input', () => {
+        const result = CreateShareInputSchema.safeParse({
+          resourceType: 'recipe',
+          resourceId: validId,
+          friendId: validId,
+        });
+        expect(result.success).toBe(true);
+      });
+
+      it('accepts book as resourceType', () => {
+        const result = CreateShareInputSchema.safeParse({
+          resourceType: 'book',
+          resourceId: validId,
+          friendId: validId,
+        });
+        expect(result.success).toBe(true);
+      });
+
+      it('rejects an invalid resourceType', () => {
+        const result = CreateShareInputSchema.safeParse({
+          resourceType: 'playlist',
+          resourceId: validId,
+          friendId: validId,
+        });
+        expect(result.success).toBe(false);
+      });
+
+      it('rejects a malformed resourceId', () => {
+        const result = CreateShareInputSchema.safeParse({
+          resourceType: 'recipe',
+          resourceId: 'not-an-object-id',
+          friendId: validId,
+        });
+        expect(result.success).toBe(false);
+      });
+
+      it('rejects missing friendId', () => {
+        const result = CreateShareInputSchema.safeParse({
+          resourceType: 'recipe',
+          resourceId: validId,
+        });
+        expect(result.success).toBe(false);
+      });
+    });
+
+    describe('SharedItemSchema', () => {
+      const validItem = {
+        id: validId,
+        resourceType: 'recipe',
+        resourceId: validId,
+        resourceName: 'Pasta',
+        ownerId: validId,
+        ownerName: 'Alice',
+        friendId: validId,
+        status: 'pending',
+        savedAt: null,
+        savedResourceId: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      };
+
+      it('accepts a valid pending shared item', () => {
+        expect(SharedItemSchema.safeParse(validItem).success).toBe(true);
+      });
+
+      it('accepts an accepted item with savedAt and savedResourceId set', () => {
+        const result = SharedItemSchema.safeParse({
+          ...validItem,
+          status: 'accepted',
+          savedAt: '2026-03-01T00:00:00.000Z',
+          savedResourceId: validId,
+        });
+        expect(result.success).toBe(true);
+      });
+
+      it('accepts rejected status', () => {
+        expect(SharedItemSchema.safeParse({ ...validItem, status: 'rejected' }).success).toBe(true);
+      });
+
+      it('rejects an invalid status value', () => {
+        expect(SharedItemSchema.safeParse({ ...validItem, status: 'cancelled' }).success).toBe(false);
+      });
+
+      it('rejects missing resourceName', () => {
+        const { resourceName: _, ...rest } = validItem;
+        expect(SharedItemSchema.safeParse(rest).success).toBe(false);
+      });
+    });
+
+    describe('ShareListQuerySchema', () => {
+      it('accepts a valid status filter', () => {
+        const result = ShareListQuerySchema.safeParse({ status: 'pending' });
+        expect(result.success).toBe(true);
+        if (result.success) expect(result.data.status).toBe('pending');
+      });
+
+      it('accepts no status (optional)', () => {
+        const result = ShareListQuerySchema.safeParse({});
+        expect(result.success).toBe(true);
+        if (result.success) expect(result.data.status).toBeUndefined();
+      });
+
+      it('coerces limit and skip strings to numbers', () => {
+        const result = ShareListQuerySchema.safeParse({ limit: '10', skip: '5' });
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.limit).toBe(10);
+          expect(result.data.skip).toBe(5);
+        }
+      });
+
+      it('applies default limit=20 and skip=0', () => {
+        const result = ShareListQuerySchema.safeParse({});
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.limit).toBe(20);
+          expect(result.data.skip).toBe(0);
+        }
+      });
+
+      it('rejects an invalid status value', () => {
+        expect(ShareListQuerySchema.safeParse({ status: 'expired' }).success).toBe(false);
+      });
     });
   });
 
