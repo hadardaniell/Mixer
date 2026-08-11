@@ -19,6 +19,7 @@ import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { bookToCard } from '@/shared/lib/bookToCard';
 import { recipeToCard } from '@/shared/lib/recipeToCard';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
+import { mergeSearchResults } from '../lib/mergeSearchResults';
 import { BookCard } from '@/shared/ui/BookCard';
 import { Loader } from '@/shared/ui/Loader';
 import { RecipeCard } from '@/shared/ui/RecipeCard';
@@ -58,9 +59,7 @@ export function HomeSearchView({ query }: HomeSearchViewProps) {
         semanticResult.status === 'fulfilled' ? semanticResult.value.items : [];
       const textItems =
         textResult.status === 'fulfilled' ? textResult.value.items : [];
-      // Semantic results first (AI-ranked), then text-only matches not already included
-      const seenIds = new Set(semanticItems.map((r) => r.id));
-      return { items: [...semanticItems, ...textItems.filter((r) => !seenIds.has(r.id))] };
+      return { items: mergeSearchResults(semanticItems, textItems) };
     },
     enabled,
   });

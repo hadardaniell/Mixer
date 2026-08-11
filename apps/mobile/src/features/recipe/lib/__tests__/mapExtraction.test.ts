@@ -40,6 +40,72 @@ describe('mapExtraction', () => {
     expect(mapped.source.type).toBe('image');
   });
 
+  it('converts zero numeric fields to undefined so they pass schema validation', () => {
+    const rawResult: ExtractFromTextResult = {
+      title: 'מרק עוף',
+      servings: 0,
+      prepTimeMinutes: 0,
+      cookTimeMinutes: 0,
+      ingredients: [{ name: 'עוף', amount: 0, unit: 'יחידה' }],
+      steps: [{ order: 1, text: 'לבשל', durationMinutes: 0 }],
+    };
+
+    const mapped = mapExtraction(rawResult, 'he', 'manual', 'מתכון ללא שם');
+
+    // AI returns 0 when it doesn't know the value — 0 violates .positive() in the schema
+    expect(mapped.servings).toBeUndefined();
+    expect(mapped.prepTimeMinutes).toBeUndefined();
+    expect(mapped.cookTimeMinutes).toBeUndefined();
+    expect(mapped.ingredients[0]!.amount).toBeUndefined();
+    expect(mapped.steps[0]!.durationMinutes).toBeUndefined();
+  });
+
+  it('preserves non-zero numeric fields unchanged', () => {
+    const rawResult: ExtractFromTextResult = {
+      title: 'פסטה',
+      servings: 4,
+      prepTimeMinutes: 10,
+      cookTimeMinutes: 20,
+      ingredients: [{ name: 'פסטה', amount: 200, unit: 'גרם' }],
+      steps: [{ order: 1, text: 'לבשל', durationMinutes: 10 }],
+    };
+
+    const mapped = mapExtraction(rawResult, 'he', 'manual', 'מתכון ללא שם');
+
+    expect(mapped.servings).toBe(4);
+    expect(mapped.prepTimeMinutes).toBe(10);
+    expect(mapped.cookTimeMinutes).toBe(20);
+    expect(mapped.ingredients[0]!.amount).toBe(200);
+    expect(mapped.steps[0]!.durationMinutes).toBe(10);
+  });
+
+  it('handles a mix of zero and non-zero values in the same recipe', () => {
+    const rawResult: ExtractFromTextResult = {
+      title: 'סלט',
+      servings: 2,
+      prepTimeMinutes: 0,
+      cookTimeMinutes: 0,
+      ingredients: [
+        { name: 'עגבנייה', amount: 3, unit: 'יחידה' },
+        { name: 'שמן', amount: 0, unit: 'כף' },
+      ],
+      steps: [
+        { order: 1, text: 'לחתוך', durationMinutes: 5 },
+        { order: 2, text: 'לערבב', durationMinutes: 0 },
+      ],
+    };
+
+    const mapped = mapExtraction(rawResult, 'he', 'manual', 'מתכון ללא שם');
+
+    expect(mapped.servings).toBe(2);
+    expect(mapped.prepTimeMinutes).toBeUndefined();
+    expect(mapped.cookTimeMinutes).toBeUndefined();
+    expect(mapped.ingredients[0]!.amount).toBe(3);
+    expect(mapped.ingredients[1]!.amount).toBeUndefined();
+    expect(mapped.steps[0]!.durationMinutes).toBe(5);
+    expect(mapped.steps[1]!.durationMinutes).toBeUndefined();
+  });
+
   it('detects platform correctly from URL', () => {
     const youtubeResult = mapExtraction({}, 'en', 'url', 'Recipe', 'https://www.youtube.com/watch?v=123');
     expect(youtubeResult.source.platform).toBe('youtube');
