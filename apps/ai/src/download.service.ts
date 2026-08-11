@@ -16,7 +16,7 @@ const execAsync = promisify(exec);
 export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90s), Shorts (3min), TikToks
 
 export const downloadService = {
-  async getVideoInfo(url: string): Promise<{ duration: number; title: string; thumbnailUrl?: string }> {
+  async getVideoInfo(url: string): Promise<{ duration: number; title: string; description?: string; thumbnailUrl?: string }> {
     try {
       const searchDirs = [
         process.cwd(),
@@ -60,6 +60,7 @@ export const downloadService = {
       return {
         duration: parsed.duration ?? 0,
         title: parsed.title ?? '',
+        description: parsed.description,
         thumbnailUrl: parsed.thumbnail,
       };
     } catch (err) {
@@ -111,6 +112,7 @@ export const downloadService = {
 
     const isTikTok = url.toLowerCase().includes('tiktok.com');
     const isInstagram = url.toLowerCase().includes('instagram.com');
+    const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
 
     // Check if a cookies.txt file exists to bypass login restrictions
     // When running via turbo, process.cwd() is apps/ai. But let's check a few places to be safe.
@@ -167,6 +169,30 @@ export const downloadService = {
             noWarnings: true,
             noCheckCertificate: true,
             impersonate: 'chrome',
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+          },
+        ]
+      : isYouTube
+      ? [
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+          },
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            extractorArgs: 'youtube:player_client=mweb,android,web',
           },
           {
             output: outputPath,

@@ -104,6 +104,88 @@ async function fetchInstagramFallbackText(url: string, log: (msg: string) => voi
 }
 
 /**
+ * For YouTube URLs, use the public oEmbed API to retrieve the video caption/title
+ * AND the thumbnail URL.
+ */
+async function fetchYouTubeOEmbed(url: string): Promise<{ caption: string; title?: string; author?: string; thumbnailUrl?: string }> {
+  const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+  const response = await fetch(oembedUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  });
+  if (!response.ok) {
+    throw new Error(`YouTube oEmbed failed: ${response.status} ${response.statusText}`);
+  }
+  const data = (await response.json()) as { title?: string; author_name?: string; thumbnail_url?: string };
+  const caption = `YouTube video title by ${data.author_name ?? 'unknown'}:\n${data.title ?? ''}`;
+  return { caption, title: data.title, author: data.author_name, thumbnailUrl: data.thumbnail_url };
+}
+
+/**
+ * Combines YouTube oEmbed + yt-dlp metadata/description + any external recipe link content
+ * to give as much context as possible when Gemini video analysis fails.
+ */
+async function fetchYouTubeFallbackText(
+  url: string,
+  log: (msg: string) => void,
+): Promise<{ text: string; thumbnailUrl?: string }> {
+  const parts: string[] = [];
+  let thumbnailUrl: string | undefined;
+
+  // 1. Try yt-dlp metadata (includes full description + title + thumbnail)
+  try {
+    const info = await downloadService.getVideoInfo(url);
+    if (info.thumbnailUrl) thumbnailUrl = info.thumbnailUrl;
+    if (info.title) parts.push(`Title: ${info.title}`);
+    if (info.description) parts.push(`Description:\n${info.description}`);
+  } catch (err) {
+    log(`[extract/url] YouTube yt-dlp metadata failed: ${err instanceof Error ? err.message : err}`);
+  }
+
+  // 2. Try oEmbed as secondary / backup metadata provider
+  if (parts.length === 0) {
+    try {
+      const oembed = await fetchYouTubeOEmbed(url);
+      if (oembed.caption) parts.push(oembed.caption);
+      if (oembed.thumbnailUrl && !thumbnailUrl) thumbnailUrl = oembed.thumbnailUrl;
+    } catch (err) {
+      log(`[extract/url] YouTube oEmbed failed: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  // 3. Check if description contains an external recipe URL (e.g. blog link)
+  const fullText = parts.join('\n\n');
+  const urlMatches = fullText.match(/https?:\/\/[^\s"']+/g);
+  if (urlMatches) {
+    for (const link of urlMatches) {
+      if (
+        !link.includes('youtube.com') &&
+        !link.includes('youtu.be') &&
+        !link.includes('instagram.com') &&
+        !link.includes('tiktok.com') &&
+        !link.includes('facebook.com')
+      ) {
+        try {
+          log(`[extract/url] Found external link in YouTube description: ${link}`);
+          const externalPageText = await fetchWebpageText(link);
+          if (externalPageText && externalPageText.trim().length > 100) {
+            parts.push(`\n--- Recipe webpage content from link in description (${link}) ---\n${externalPageText.slice(0, 8000)}`);
+            break;
+          }
+        } catch (err) {
+          log(`[extract/url] Failed to fetch external link from YouTube description: ${err instanceof Error ? err.message : err}`);
+        }
+      }
+    }
+  }
+
+  if (parts.length === 0) {
+    throw new Error('All YouTube text extraction strategies failed');
+  }
+
+  return { text: parts.join('\n\n'), thumbnailUrl };
+}
+
+/**
  * For TikTok URLs, use the public oEmbed API to retrieve the video caption/title
  * AND the thumbnail URL (an actual frame from the video, highly relevant).
  */
@@ -274,7 +356,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
           try {
             const info = await downloadService.getVideoInfo(url);
-            
+
             if (info.thumbnailUrl) {
               extractedThumbnailUrl = info.thumbnailUrl;
               app.log.info(`[extract/url] Captured video thumbnail URL: ${extractedThumbnailUrl}`);
@@ -300,7 +382,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           // override the Unsplash cover image with the actual video thumbnail
           // because it's directly relevant to the dish being cooked.
           let videoThumbnailUrl: string | undefined = extractedThumbnailUrl;
-          
+
           if (url.includes('tiktok.com')) {
             try {
               const { thumbnailUrl } = await fetchTikTokOEmbed(url);
@@ -310,6 +392,16 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
               }
             } catch {
               // Best-effort; fallback to whatever we have
+            }
+          } else if (isYouTube) {
+            try {
+              const { thumbnailUrl } = await fetchYouTubeOEmbed(url);
+              if (thumbnailUrl) {
+                videoThumbnailUrl = thumbnailUrl;
+                app.log.info(`[extract/url] Captured YouTube oEmbed thumbnail URL`);
+              }
+            } catch {
+              // Best-effort
             }
           }
 
@@ -329,16 +421,22 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           try {
             const isTikTok = url.includes('tiktok.com');
             const isInstagram = url.includes('instagram.com');
+            const isYouTube = /youtube\.com|youtu\.be/.test(url);
             let text: string;
-            let tiktokThumbnailUrl: string | undefined;
+            let videoThumbnailUrlFallback: string | undefined = extractedThumbnailUrl;
             if (isTikTok) {
               app.log.info(`[extract/url] TikTok detected — fetching caption + page text via oEmbed + Jina: ${url}`);
               const result = await fetchTikTokFallbackText(url, (msg) => app.log.info(msg));
               text = result.text;
-              tiktokThumbnailUrl = result.thumbnailUrl;
+              if (result.thumbnailUrl) videoThumbnailUrlFallback = result.thumbnailUrl;
             } else if (isInstagram) {
               app.log.info(`[extract/url] Instagram detected — scraping page text via Jina: ${url}`);
               text = await fetchInstagramFallbackText(url, (msg) => app.log.info(msg));
+            } else if (isYouTube) {
+              app.log.info(`[extract/url] YouTube detected — fetching metadata/description via yt-dlp + oEmbed: ${url}`);
+              const result = await fetchYouTubeFallbackText(url, (msg) => app.log.info(msg));
+              text = result.text;
+              if (result.thumbnailUrl) videoThumbnailUrlFallback = result.thumbnailUrl;
             } else {
               app.log.info(`[extract/url] Scraping text from webpage URL (fallback): ${url}`);
               text = await fetchWebpageText(url);
@@ -346,13 +444,8 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
 
             app.log.info(`[extract/url] Extracting recipe from caption/scraped text`);
             const recipe = await extractRecipeFromText(text, locale);
-            // Use the actual TikTok video thumbnail as the cover image — it's
-            // always relevant to the dish being cooked in that specific video.
-            if (tiktokThumbnailUrl && !recipe.coverImageUrl) {
-              return { ...recipe, coverImageUrl: tiktokThumbnailUrl };
-            }
-            if (tiktokThumbnailUrl) {
-              recipe.coverImageUrl = tiktokThumbnailUrl;
+            if (videoThumbnailUrlFallback) {
+              recipe.coverImageUrl = videoThumbnailUrlFallback;
             }
             return recipe;
 
