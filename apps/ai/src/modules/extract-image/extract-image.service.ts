@@ -91,7 +91,7 @@ RULES:
 - "title" MUST be concise and clean (under 10 words). DO NOT include hashtags or repeated SEO tag lists like "מתכונים ביחד מתכונים לשבת".
 - Combine all images when multiple are provided to build the most complete recipe possible.`;
 
-function buildPrompt(locale: string): string {
+export function buildPrompt(locale: string): string {
   const lang = locale === 'he' ? 'Hebrew (עברית)' : 'English';
   return `${BASE_VISION_PROMPT}\n- Output ALL text fields (title, description, ingredients, steps, tags, cuisine) in ${lang}, regardless of the language visible in the image.`;
 }

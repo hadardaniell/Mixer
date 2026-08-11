@@ -18,6 +18,7 @@ import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
 import { generateAndStoreCoverImage, getSuggestedCoverImageUrl } from './recipes.service.js';
 import { cosineSimilarity, escapeRegex, applySearchFilter } from './search.utils.js';
+import { canRead, tagMatchesCategory } from './recipes.utils.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -47,11 +48,6 @@ async function generateAndStoreEmbedding(
   } catch {
     // silently fail — embedding is optional, recipe save must succeed
   }
-}
-
-function canRead(req: { user?: { id: string; role: string } }, doc: RecipeDoc): boolean {
-  if (doc.visibility !== 'private') return true;
-  return req.user?.id === doc.ownerId.toString();
 }
 
 /**
@@ -94,9 +90,7 @@ async function deriveCategoryIds(
   const ids: ObjectId[] = [];
   for (const c of cats) {
     const keys = [c.slug, c.label.he, c.label.en].map((k) => k.trim().toLowerCase());
-    const hit = cleaned.some((tag) =>
-      keys.some((k) => k.length > 1 && (k === tag || k.includes(tag) || tag.includes(k))),
-    );
+    const hit = cleaned.some((tag) => tagMatchesCategory(tag, keys));
     if (hit) ids.push(c._id);
   }
   return ids;
