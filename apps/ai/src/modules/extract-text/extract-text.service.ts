@@ -49,7 +49,7 @@ Return ONLY the JSON object, no explanation, no markdown, no code blocks.
 If a field cannot be determined from the text, omit it.
 The "difficulty" field must always be one of: "easy", "medium", "hard" — in English.`;
 
-function buildPrompt(locale: string): string {
+export function buildPrompt(locale: string): string {
   const lang = locale === 'he' ? 'Hebrew (עברית)' : 'English';
   return `${BASE_PROMPT}
 

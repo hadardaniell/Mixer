@@ -6,6 +6,8 @@ import {
   UpdateOwnUserSchema,
   CreateRecipeInputSchema,
   RecipeListQuerySchema,
+  ExtractFromTextResultSchema,
+  ExtractFromImageInputSchema,
 } from '../index.js';
 
 describe('Contracts Zod Schemas', () => {
@@ -141,6 +143,119 @@ describe('Contracts Zod Schemas', () => {
       if (result.success) {
         expect(result.data.limit).toBe(50);
         expect(result.data.skip).toBe(10);
+      }
+    });
+  });
+
+  describe('ExtractFromTextResultSchema', () => {
+    it('accepts a full valid recipe from the AI', () => {
+      const result = ExtractFromTextResultSchema.safeParse({
+        title: 'פסטה ברוטב עגבניות',
+        description: 'מתכון קלאסי',
+        ingredients: [{ name: 'פסטה', amount: 200, unit: 'גרם' }],
+        steps: [{ order: 1, text: 'לבשל את הפסטה', durationMinutes: 10 }],
+        servings: 4,
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 20,
+        difficulty: 'easy',
+        cuisine: 'איטלקית',
+        tags: ['פסטה', 'ארוחת ערב'],
+        coverImageUrl: 'https://images.pexels.com/photos/1/pasta.jpg',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts an empty object — all fields are optional (AI may return partial data)', () => {
+      const result = ExtractFromTextResultSchema.safeParse({});
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts a recipe with only a title', () => {
+      const result = ExtractFromTextResultSchema.safeParse({ title: 'חומוס ביתי' });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects an invalid difficulty value', () => {
+      const result = ExtractFromTextResultSchema.safeParse({
+        title: 'פסטה',
+        difficulty: 'very hard',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects a coverImageUrl that is not a valid URL', () => {
+      const result = ExtractFromTextResultSchema.safeParse({
+        title: 'פסטה',
+        coverImageUrl: 'not-a-url',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects a step that is missing required "text" field', () => {
+      const result = ExtractFromTextResultSchema.safeParse({
+        steps: [{ order: 1 }],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects an ingredient that is missing required "name" field', () => {
+      const result = ExtractFromTextResultSchema.safeParse({
+        ingredients: [{ amount: 2, unit: 'כוס' }],
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('ExtractFromImageInputSchema', () => {
+    const validImage = {
+      imageBase64: 'abc123base64data==',
+      mimeType: 'image/jpeg',
+    };
+
+    it('accepts a valid jpeg image input', () => {
+      const result = ExtractFromImageInputSchema.safeParse({ images: [validImage] });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts png and webp mime types', () => {
+      expect(
+        ExtractFromImageInputSchema.safeParse({
+          images: [{ ...validImage, mimeType: 'image/png' }],
+        }).success,
+      ).toBe(true);
+      expect(
+        ExtractFromImageInputSchema.safeParse({
+          images: [{ ...validImage, mimeType: 'image/webp' }],
+        }).success,
+      ).toBe(true);
+    });
+
+    it('rejects an unsupported mime type', () => {
+      const result = ExtractFromImageInputSchema.safeParse({
+        images: [{ ...validImage, mimeType: 'image/gif' }],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects an empty base64 string', () => {
+      const result = ExtractFromImageInputSchema.safeParse({
+        images: [{ imageBase64: '', mimeType: 'image/jpeg' }],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects an empty images array', () => {
+      const result = ExtractFromImageInputSchema.safeParse({ images: [] });
+      expect(result.success).toBe(false);
+    });
+
+    it('defaults mimeType to image/jpeg when omitted', () => {
+      const result = ExtractFromImageInputSchema.safeParse({
+        images: [{ imageBase64: 'abc123' }],
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.images[0]!.mimeType).toBe('image/jpeg');
       }
     });
   });
