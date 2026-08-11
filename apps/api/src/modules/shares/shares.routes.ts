@@ -5,6 +5,7 @@ import { CreateShareInputSchema, ShareListQuerySchema } from '@mixer/contracts';
 import type { RecipeBookDoc, RecipeDoc, SharedItemDoc } from '../../db/types.js';
 import type { Collections } from '../../plugins/mongo.js';
 import { notificationService } from '../../services/notification.service.js';
+import { toSharedItem } from './shares.utils.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -19,22 +20,6 @@ async function resolveResourceName(
   }
   const b = await collections.recipeBooks.findOne({ _id: resourceId }, { projection: { name: 1 } });
   return b?.name ?? 'Deleted book';
-}
-
-function toSharedItem(doc: SharedItemDoc, resourceName: string, ownerName: string) {
-  return {
-    id: doc._id.toString(),
-    resourceType: doc.resourceType,
-    resourceId: doc.resourceId.toString(),
-    resourceName,
-    ownerId: doc.ownerId.toString(),
-    ownerName,
-    friendId: doc.friendId.toString(),
-    status: doc.status,
-    savedAt: doc.savedAt?.toISOString() ?? null,
-    savedResourceId: doc.savedResourceId?.toString() ?? null,
-    createdAt: doc.createdAt.toISOString(),
-  };
 }
 
 async function forkRecipe(
