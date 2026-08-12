@@ -98,6 +98,38 @@ describe('getPushMessage', () => {
     });
   });
 
+  describe('BOOK_INVITE_ACCEPTED', () => {
+    const payload = { fromUserName: 'Roni', bookName: 'Family Recipes' };
+
+    it('returns English title and body with name and book', () => {
+      const result = getPushMessage('BOOK_INVITE_ACCEPTED', payload, 'en');
+      expect(result?.title).toBe('Invitation accepted');
+      expect(result?.body).toBe('Roni accepted your invitation to "Family Recipes"');
+    });
+
+    it('returns Hebrew title and body', () => {
+      const result = getPushMessage('BOOK_INVITE_ACCEPTED', payload, 'he');
+      expect(result?.title).toBe('ההזמנה אושרה');
+      expect(result?.body).toBe('Roni אישר/ה את ההזמנה שלך ל"Family Recipes"');
+    });
+  });
+
+  describe('BOOK_INVITE_REJECTED', () => {
+    const payload = { fromUserName: 'Roni', bookName: 'Family Recipes' };
+
+    it('returns English title and body with name and book', () => {
+      const result = getPushMessage('BOOK_INVITE_REJECTED', payload, 'en');
+      expect(result?.title).toBe('Invitation declined');
+      expect(result?.body).toBe('Roni declined your invitation to "Family Recipes"');
+    });
+
+    it('returns Hebrew title and body', () => {
+      const result = getPushMessage('BOOK_INVITE_REJECTED', payload, 'he');
+      expect(result?.title).toBe('ההזמנה נדחתה');
+      expect(result?.body).toBe('Roni דחה/תה את ההזמנה שלך ל"Family Recipes"');
+    });
+  });
+
   describe('edge cases', () => {
     it('returns null for an unknown notification type', () => {
       expect(getPushMessage('UNKNOWN_TYPE', {}, 'en')).toBeNull();
