@@ -1,3 +1,4 @@
+//apps/mobile/src/features/profile/hooks/useProfile.ts
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type { PublicUser, Recipe, RecipeBook } from '@mixer/contracts';

@@ -1,3 +1,4 @@
+//apps/mobile/src/shared/lib/httpClient.ts
 import type { AuthResponse } from '@mixer/contracts';
 
 import { env } from '@/shared/config/env';

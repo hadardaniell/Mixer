@@ -1,3 +1,4 @@
+//apps/mobile/src/shared/lib/imageFormData.ts
 import { Platform } from 'react-native';
 
 export interface UploadableFile {

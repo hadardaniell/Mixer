@@ -1,3 +1,4 @@
+//apps/mobile/src/features/profile/components/ProfileHeader.tsx
 import type { PublicUser } from '@mixer/contracts';
 import { Camera, Settings, UserPlus, type LucideIcon } from 'lucide-react-native';
 import { ActivityIndicator, Image } from 'react-native';

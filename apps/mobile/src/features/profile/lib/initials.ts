@@ -1,3 +1,4 @@
+//apps/mobile/src/features/profile/lib/initials.ts
 /** Up to two uppercase initials for an avatar fallback. */
 export function initials(name?: string): string {
   if (!name) return '?';

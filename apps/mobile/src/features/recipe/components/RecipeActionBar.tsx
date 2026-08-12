@@ -1,4 +1,5 @@
-import { Bookmark, Check, Copy, CopyPlus, Share2, type LucideIcon } from 'lucide-react-native';
+//apps/mobile/src/features/recipe/components/RecipeActionBar.tsx
+import { Bookmark, Check, Copy, CopyPlus, Share2, Languages, type LucideIcon } from 'lucide-react-native';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Spinner, Text, useTheme, View, XStack } from 'tamagui';
@@ -16,6 +17,9 @@ interface RecipeActionBarProps {
   onCopy: () => void;
   /** Briefly true after a copy — swaps the copy icon for a green check. */
   copied: boolean;
+  onTranslate: () => void;
+  isTranslated: boolean;
+  isTranslating?: boolean;
 }
 
 /**
@@ -31,6 +35,9 @@ export function RecipeActionBar({
   onSaveToBook,
   onCopy,
   copied,
+  onTranslate,
+  isTranslated,
+  isTranslating,
 }: RecipeActionBarProps) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -71,6 +78,13 @@ export function RecipeActionBar({
       iconColor: copied ? (theme.success?.val as string) : undefined,
       onPress: onCopy,
     },
+    {
+      key: 'translate',
+      label: isTranslated ? t('recipe.actions.showOriginal') : t('recipe.actions.translate'),
+      Icon: Languages,
+      loading: isTranslating,
+      onPress: onTranslate,
+    }
   ];
 
   return (

@@ -1,3 +1,4 @@
+//apps/mobile/src/features/profile/components/ProfileFilterChips.tsx
 import { useTranslation } from 'react-i18next';
 import { Text, XStack } from 'tamagui';
 
