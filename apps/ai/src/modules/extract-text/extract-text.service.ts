@@ -128,7 +128,10 @@ export async function extractRecipeFromText(
     }
   }
 
-  if (parsed.isRecipe === false) {
+  const ingredientsList = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
+  const stepsList = Array.isArray(parsed.steps) ? parsed.steps : [];
+
+  if (parsed.isRecipe === false || (ingredientsList.length === 0 && stepsList.length === 0)) {
     throw new Error('not_a_recipe');
   }
 

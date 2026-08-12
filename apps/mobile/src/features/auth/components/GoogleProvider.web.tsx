@@ -4,6 +4,10 @@ import type { ReactNode } from 'react';
 import { env } from '@/shared/config/env';
 
 export function GoogleProvider({ children }: { children: ReactNode }) {
-  if (!env.googleWebClientId) return <>{children}</>;
-  return <GoogleOAuthProvider clientId={env.googleWebClientId}>{children}</GoogleOAuthProvider>;
+  const clientId =
+    env.googleWebClientId ||
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+    'disabled-google-client-id.apps.googleusercontent.com';
+
+  return <GoogleOAuthProvider clientId={clientId}>{children}</GoogleOAuthProvider>;
 }

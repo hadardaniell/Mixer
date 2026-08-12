@@ -141,7 +141,17 @@ async function fetchYouTubeFallbackText(
     log(`[extract/url] YouTube yt-dlp metadata failed: ${err instanceof Error ? err.message : err}`);
   }
 
-  // 2. Try oEmbed as secondary / backup metadata provider
+  // 2. Try fetching top/pinned comments (often contains recipe when description is empty)
+  try {
+    const comments = await downloadService.getTopComments(url);
+    if (comments && comments.trim().length > 0) {
+      parts.push(`Top Comments:\n${comments}`);
+    }
+  } catch (err) {
+    log(`[extract/url] YouTube top comments failed: ${err instanceof Error ? err.message : err}`);
+  }
+
+  // 3. Try oEmbed as secondary / backup metadata provider
   if (parts.length === 0) {
     try {
       const oembed = await fetchYouTubeOEmbed(url);

@@ -689,25 +689,33 @@ app.post(
       // Check global cache first — if any user already extracted this URL, reuse it
       const cached = await app.collections.urlExtractionCache.findOne({ url, locale: effectiveLocale });
       if (cached) {
-        app.log.info(`[import/url] Cache hit for ${url} (locale: ${effectiveLocale})`);
         const result = cached.extraction as Record<string, unknown>;
-        if (!result.coverImageUrl && typeof result.title === 'string' && result.title) {
-          const coverImageUrl = await getSuggestedCoverImageUrl({
-            title: result.title,
-            description: typeof result.description === 'string' ? result.description : undefined,
-            cuisine: typeof result.cuisine === 'string' ? result.cuisine : undefined,
-            ingredients: Array.isArray(result.ingredients)
-              ? (result.ingredients as Array<{ name: string }>)
-              : undefined,
-          });
-          if (coverImageUrl) {
-            result.coverImageUrl = coverImageUrl;
-            await app.collections.urlExtractionCache
-              .updateOne({ _id: cached._id }, { $set: { 'extraction.coverImageUrl': coverImageUrl } })
-              .catch(() => {});
+        const cachedIngs = Array.isArray(result.ingredients) ? result.ingredients : [];
+        const cachedSteps = Array.isArray(result.steps) ? result.steps : [];
+
+        if (cachedIngs.length > 0 || cachedSteps.length > 0) {
+          app.log.info(`[import/url] Cache hit for ${url} (locale: ${effectiveLocale})`);
+          if (!result.coverImageUrl && typeof result.title === 'string' && result.title) {
+            const coverImageUrl = await getSuggestedCoverImageUrl({
+              title: result.title,
+              description: typeof result.description === 'string' ? result.description : undefined,
+              cuisine: typeof result.cuisine === 'string' ? result.cuisine : undefined,
+              ingredients: Array.isArray(result.ingredients)
+                ? (result.ingredients as Array<{ name: string }>)
+                : undefined,
+            });
+            if (coverImageUrl) {
+              result.coverImageUrl = coverImageUrl;
+              await app.collections.urlExtractionCache
+                .updateOne({ _id: cached._id }, { $set: { 'extraction.coverImageUrl': coverImageUrl } })
+                .catch(() => {});
+            }
           }
+          return ExtractFromTextResultSchema.parse(result);
+        } else {
+          app.log.info(`[import/url] Evicting empty cache entry for ${url}`);
+          await app.collections.urlExtractionCache.deleteOne({ _id: cached._id }).catch(() => {});
         }
-        return ExtractFromTextResultSchema.parse(result);
       }
 
       // Cache miss — call the AI service. `/extract/url` branches internally:
@@ -744,10 +752,15 @@ app.post(
         }
       }
 
-      // Save to cache so future requests skip the AI call
-      await app.collections.urlExtractionCache
-        .insertOne({ _id: new ObjectId(), url, locale: effectiveLocale, extraction, extractedAt: new Date() })
-        .catch(() => {}); // ignore duplicate-key race (two simultaneous requests for same URL)
+      const extractedIngs = Array.isArray(extraction.ingredients) ? extraction.ingredients : [];
+      const extractedSteps = Array.isArray(extraction.steps) ? extraction.steps : [];
+
+      // Save to cache only if valid ingredients or steps exist
+      if (extractedIngs.length > 0 || extractedSteps.length > 0) {
+        await app.collections.urlExtractionCache
+          .insertOne({ _id: new ObjectId(), url, locale: effectiveLocale, extraction, extractedAt: new Date() })
+          .catch(() => {}); // ignore duplicate-key race
+      }
 
       return ExtractFromTextResultSchema.parse(extraction);
     },
