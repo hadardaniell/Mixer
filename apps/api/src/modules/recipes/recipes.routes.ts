@@ -407,13 +407,6 @@ app.post(
 
     const targetLanguage: 'he' | 'en' = user?.locale ?? 'en';
 
-    // If the recipe is already in the user's language,
-    // there is nothing to translate.
-    if (recipe.language === targetLanguage) {
-      return reply.code(200).send(toRecipe(recipe));
-    }
-
-    // Check translation cache first.
     const cachedTranslation =
       await app.collections.recipeTranslations?.findOne({
         recipeId,
@@ -434,7 +427,6 @@ app.post(
     }
 
     try {
-      // No cached translation - call the AI service.
       const response = await fetch(
         `${config.aiBaseUrl}/translate/recipe`,
         {
@@ -471,7 +463,6 @@ app.post(
         steps: RecipeDoc['steps'];
       };
 
-      // Save translation in cache.
       await app.collections.recipeTranslations?.insertOne({
         _id: new ObjectId(),
         recipeId,
@@ -485,7 +476,6 @@ app.post(
         createdAt: new Date(),
       });
 
-      // Return translated recipe.
       return reply.code(200).send({
         ...toRecipe(recipe),
         ...translatedData,

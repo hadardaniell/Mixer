@@ -1,3 +1,4 @@
+//apps/mobile/src/features/settings/api/settingsApi.ts
 import type { PublicUser, UpdateOwnUserInput } from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';

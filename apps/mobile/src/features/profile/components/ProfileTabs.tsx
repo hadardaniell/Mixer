@@ -1,3 +1,4 @@
+//apps/mobile/src/features/profile/components/ProfileTabs.tsx
 import { useTranslation } from 'react-i18next';
 import { Text, View, XStack, YStack } from 'tamagui';
 

@@ -1,3 +1,4 @@
+//apps/mobile/src/features/settings/hooks/usePickAvatar.ts
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 

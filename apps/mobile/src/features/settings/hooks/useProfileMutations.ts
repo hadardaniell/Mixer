@@ -1,3 +1,4 @@
+//apps/mobile/src/features/settings/hooks/useProfileMutations.ts
 import type { PublicUser, UpdateOwnUserInput } from '@mixer/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 

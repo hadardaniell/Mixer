@@ -413,7 +413,9 @@
       "share": "שיתוף",
       "saveAs": "שמירה בשם",
       "saveToBook": "שמירה לספר",
-      "copy": "העתקת מתכון"
+      "copy": "העתקת מתכון",
+      "translate": "תרגום",
+      "showOriginal": "חזרה למקור"
     },
     "createdBy": "נוצר על ידי {{name}}",
     "saveToBookSheet": {

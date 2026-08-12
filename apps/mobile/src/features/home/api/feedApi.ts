@@ -1,3 +1,4 @@
+//apps/mobile/src/features/home/api/feedApi.ts
 import type {
   CreateRecipeBookInput,
   CreateRecipeInput,
@@ -116,4 +117,7 @@ export const feedApi = {
 
   addRecipeToBook: (bookId: string, recipeId: string) =>
     http<RecipeBook>(`/recipe-books/${bookId}/recipes/${recipeId}`, { method: 'POST' }),
+
+  translateRecipe: (id: string) =>
+    http<Recipe>(`/recipes/${id}/translate`, { method: 'POST',}),
 };

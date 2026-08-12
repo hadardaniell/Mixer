@@ -1,3 +1,4 @@
+//apps/mobile/src/features/recipe/screens/RecipeScreen.tsx
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
@@ -33,6 +34,9 @@ import { useDeleteRecipe } from '../hooks/useDeleteRecipe';
 import { useRecipe } from '../hooks/useRecipe';
 import { useRecipeEditor } from '../hooks/useRecipeEditor';
 import { useSaveAsRecipe } from '../hooks/useSaveAsRecipe';
+import { useTranslateRecipe } from '../hooks/useTranslateRecipe';
+import type { Recipe } from '@mixer/contracts';
+
 
 interface RecipeScreenProps {
   recipeId: string;
@@ -46,11 +50,19 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
   const isRtl = isRTL(language);
 
   const { user } = useAuth();
-  const { data: recipe, isLoading, isError } = useRecipe(recipeId);
+  const { data: initialRecipe, isLoading, isError } = useRecipe(recipeId);
   const toggleFavorite = useToggleRecipeFavorite();
-  const editor = useRecipeEditor(recipe);
+  //const editor = useRecipeEditor(recipe);
   const deleteRecipe = useDeleteRecipe();
   const saveAs = useSaveAsRecipe();
+  const translateRecipe = useTranslateRecipe();
+
+  const [translatedRecipe, setTranslatedRecipe] = useState<Recipe | null>(null);
+  const [isShowingTranslation, setIsShowingTranslation] = useState(false);
+
+  // Active Recipe Data (swaps between translated and initial)
+  const recipe = isShowingTranslation && translatedRecipe ? translatedRecipe : initialRecipe;
+  const editor = useRecipeEditor(recipe);
 
   // Quantity multiplier — the recipe's authored amounts are "כמות 1" (×1).
   const [multiplier, setMultiplier] = useState(1);
@@ -67,6 +79,25 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
     () => (recipe?.ingredients ?? []).map((i) => i.note).filter((n): n is string => !!n),
     [recipe],
   );
+
+  const handleToggleTranslate = () => {
+    if (isShowingTranslation) {
+      setIsShowingTranslation(false);
+      return;
+    }
+
+    if (translatedRecipe && translatedRecipe.id === recipeId) {
+      setIsShowingTranslation(true);
+      return;
+    }
+
+    translateRecipe.mutate(recipeId, {
+      onSuccess: (data) => {
+        setTranslatedRecipe(data);
+        setIsShowingTranslation(true);
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -192,6 +223,9 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
               onSaveToBook={() => setBookSheetOpen(true)}
               onCopy={handleCopy}
               copied={copied}
+              onTranslate={handleToggleTranslate}
+              isTranslated={isShowingTranslation}
+              isTranslating={translateRecipe.isPending}
             />
             {shareNotice ? (
               <Text fontSize={13} fontWeight="600" color="$danger" textAlign="center">

@@ -1,3 +1,4 @@
+//apps/mobile/src/features/profile/components/ProfileContentSkeleton.tsx
 import { XStack, YStack } from 'tamagui';
 
 import { Skeleton } from '@/shared/ui/Skeleton';
