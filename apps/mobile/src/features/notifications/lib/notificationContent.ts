@@ -2,6 +2,8 @@ import type { Notification } from '@mixer/contracts';
 import type { TFunction } from 'i18next';
 import {
   Bookmark,
+  BookCheck,
+  BookX,
   Check,
   Share2,
   UserMinus,
@@ -13,7 +15,8 @@ import {
 
 export type NotificationAction =
   | { kind: 'friend'; fromUserId: string }
-  | { kind: 'share'; shareId: string };
+  | { kind: 'share'; shareId: string }
+  | { kind: 'bookInvite'; bookId: string };
 
 export interface NotificationContent {
   Icon: LucideIcon;
@@ -121,7 +124,28 @@ export function getNotificationContent(n: Notification, t: TFunction): Notificat
           name: n.payload.fromUserName,
           book: n.payload.bookName,
         }),
+        action: { kind: 'bookInvite' as const, bookId: n.payload.bookId },
+      };
+    case 'BOOK_INVITE_ACCEPTED':
+      return {
+        Icon: BookCheck,
+        color: 'success',
+        title: t('notifications.items.bookInviteAccepted.title'),
+        body: t('notifications.items.bookInviteAccepted.body', {
+          name: n.payload.fromUserName,
+          book: n.payload.bookName,
+        }),
         route: `/books/${n.payload.bookId}`,
+      };
+    case 'BOOK_INVITE_REJECTED':
+      return {
+        Icon: BookX,
+        color: 'warning',
+        title: t('notifications.items.bookInviteRejected.title'),
+        body: t('notifications.items.bookInviteRejected.body', {
+          name: n.payload.fromUserName,
+          book: n.payload.bookName,
+        }),
       };
   }
 }

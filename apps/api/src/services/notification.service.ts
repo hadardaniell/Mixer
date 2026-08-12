@@ -55,6 +55,18 @@ export type NotificationPayloadMap = {
     bookName: string;
     role: 'editor' | 'viewer';
   };
+  BOOK_INVITE_ACCEPTED: {
+    fromUserId: string;
+    fromUserName: string;
+    bookId: string;
+    bookName: string;
+  };
+  BOOK_INVITE_REJECTED: {
+    fromUserId: string;
+    fromUserName: string;
+    bookId: string;
+    bookName: string;
+  };
 };
 
 export type NotificationType = keyof NotificationPayloadMap;

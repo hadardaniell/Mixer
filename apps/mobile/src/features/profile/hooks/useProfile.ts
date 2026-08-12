@@ -144,8 +144,8 @@ export function useProfile(userId?: string): ProfileData {
     [myRecipesQ.data],
   );
   const books = useMemo(
-    () => (myBooksQ.data?.items ?? []).map(buildBookCard),
-    [myBooksQ.data, buildBookCard],
+    () => (myBooksQ.data?.items ?? []).filter((b) => b.ownerId === myId).map(buildBookCard),
+    [myBooksQ.data, buildBookCard, myId],
   );
   const favoriteRecipes = useMemo(
     () => (favRecipesQ.data?.items ?? []).map(toRecipeCard),

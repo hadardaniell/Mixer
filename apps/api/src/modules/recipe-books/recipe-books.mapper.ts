@@ -14,6 +14,7 @@ export function toRecipeBook(doc: RecipeBookDoc, opts: { isFavorite?: boolean } 
     members: doc.members.map((m) => ({
       userId: m.userId.toString(),
       role: m.role,
+      status: m.status,
       addedAt: m.addedAt.toISOString(),
       invitedBy: m.invitedBy?.toString(),
     })),

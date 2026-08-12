@@ -67,7 +67,13 @@ export function useHomeFeed(): HomeFeed {
   const sharedRecipeIds = useMemo(() => {
     const set = new Set<string>();
     for (const b of books) {
-      if (b.ownerId !== myId) for (const id of b.recipeIds) set.add(id);
+      const isMyBook = b.ownerId === myId;
+      const hasOtherMembers = b.members.some((m: { userId: string }) => m.userId !== myId);
+      // Include recipes from books I don't own, AND from my own books that have
+      // other members (friends may have added recipes there too).
+      if (!isMyBook || hasOtherMembers) {
+        for (const id of b.recipeIds) set.add(id);
+      }
     }
     return Array.from(set);
   }, [books, myId]);

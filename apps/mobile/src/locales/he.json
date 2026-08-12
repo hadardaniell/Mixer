@@ -91,6 +91,14 @@
       "bookInvite": {
         "title": "הזמנה לספר",
         "body": "{{name}} הזמין/ה אותך לשתף פעולה על \"{{book}}\""
+      },
+      "bookInviteAccepted": {
+        "title": "ההזמנה אושרה",
+        "body": "{{name}} הצטרף/ה ל\"{{book}}\""
+      },
+      "bookInviteRejected": {
+        "title": "ההזמנה נדחתה",
+        "body": "{{name}} דחה/תה את ההזמנה ל\"{{book}}\""
       }
     }
   },
@@ -349,6 +357,7 @@
     "members": {
       "title": "חברים בספר",
       "you": "{{name}} (אתם)",
+      "pending": "ממתין",
       "removeTitle": "הסרת חבר",
       "removeMessage": "להסיר את {{name}} מהספר?",
       "removeConfirm": "הסירו"

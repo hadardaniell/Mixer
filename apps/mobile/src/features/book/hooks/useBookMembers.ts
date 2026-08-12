@@ -9,6 +9,7 @@ import type { BookRole } from './useBook';
 export interface BookMember {
   userId: string;
   role: BookRole;
+  status?: 'pending' | 'active';
   displayName: string;
   avatarUrl?: string;
   isMe: boolean;
@@ -39,6 +40,7 @@ export function useBookMembers(book: RecipeBook | undefined, myId: string | unde
         return {
           userId: m.userId,
           role: m.role,
+          status: m.status,
           displayName: u?.displayName ?? '',
           avatarUrl: u?.avatarUrl,
           isMe: m.userId === myId,
