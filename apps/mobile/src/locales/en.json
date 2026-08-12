@@ -416,7 +416,9 @@
       "share": "Share",
       "saveAs": "Save a copy",
       "saveToBook": "Save to book",
-      "copy": "Copy recipe"
+      "copy": "Copy recipe",
+      "translate": "Translate",
+      "showOriginal": "Show original"
     },
     "createdBy": "Created by {{name}}",
     "saveToBookSheet": {
