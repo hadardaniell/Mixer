@@ -102,6 +102,7 @@ export type CategoryDoc = {
 export type RecipeBookMember = {
   userId: ObjectId;
   role: 'owner' | 'editor' | 'viewer';
+  status?: 'pending' | 'active';
   addedAt: Date;
   invitedBy?: ObjectId;
 };
@@ -189,7 +190,9 @@ export type NotificationDoc = {
     | 'FRIEND_REQUEST'
     | 'FRIEND_ACCEPTED'
     | 'FRIEND_UNFRIENDED'
-    | 'BOOK_INVITE';
+    | 'BOOK_INVITE'
+    | 'BOOK_INVITE_ACCEPTED'
+    | 'BOOK_INVITE_REJECTED';
   payload: Record<string, unknown>;
   read: boolean;
   createdAt: Date;

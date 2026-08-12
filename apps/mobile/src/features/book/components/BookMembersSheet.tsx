@@ -59,16 +59,20 @@ export function BookMembersSheet({
                 {m.isMe ? t('book.members.you', { name: m.displayName }) : m.displayName}
               </Text>
 
-              <RolePill
-                role={m.role}
-                label={t(`book.roles.${m.role}`)}
-                // Only the owner changes roles, and the owner's own role is fixed.
-                onPress={
-                  isOwner && m.role !== 'owner'
-                    ? () => onChangeRole(m.userId, m.role === 'editor' ? 'viewer' : 'editor')
-                    : undefined
-                }
-              />
+              {m.status === 'pending' ? (
+                <RolePill role="pending" label={t('book.members.pending')} />
+              ) : (
+                <RolePill
+                  role={m.role}
+                  label={t(`book.roles.${m.role}`)}
+                  // Only the owner changes roles, and the owner's own role is fixed.
+                  onPress={
+                    isOwner && m.role !== 'owner'
+                      ? () => onChangeRole(m.userId, m.role === 'editor' ? 'viewer' : 'editor')
+                      : undefined
+                  }
+                />
+              )}
 
               {isOwner && m.role !== 'owner' ? (
                 <YStack
@@ -167,11 +171,14 @@ function RolePill({
   label,
   onPress,
 }: {
-  role: 'owner' | 'editor' | 'viewer';
+  role: 'owner' | 'editor' | 'viewer' | 'pending';
   label: string;
   onPress?: () => void;
 }) {
   const interactive = !!onPress;
+  const bg =
+    role === 'owner' ? '$accentLime' : role === 'pending' ? '$bgSubtle' : '$accentLavender';
+  const color = role === 'owner' ? '$text' : role === 'pending' ? '$textMuted' : '$primary';
   return (
     <XStack
       onPress={onPress}
@@ -181,12 +188,12 @@ function RolePill({
       height={30}
       paddingHorizontal={12}
       borderRadius={999}
-      backgroundColor={role === 'owner' ? '$accentLime' : '$accentLavender'}
+      backgroundColor={bg}
       borderWidth={interactive ? 1 : 0}
       borderColor="$primary"
       pressStyle={interactive ? { opacity: 0.8 } : undefined}
     >
-      <Text color={role === 'owner' ? '$text' : '$primary'} fontSize={13} fontWeight="600">
+      <Text color={color} fontSize={13} fontWeight="600">
         {label}
       </Text>
     </XStack>

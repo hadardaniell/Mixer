@@ -232,9 +232,12 @@ export type Category = z.infer<typeof CategorySchema>;
 export const RecipeBookTypeSchema = z.enum(['personal', 'shared', 'meal']);
 export const RecipeBookMemberRoleSchema = z.enum(['owner', 'editor', 'viewer']);
 
+export const RecipeBookMemberStatusSchema = z.enum(['pending', 'active']);
+
 export const RecipeBookMemberSchema = z.object({
   userId: ObjectIdString,
   role: RecipeBookMemberRoleSchema,
+  status: RecipeBookMemberStatusSchema.optional(),
   addedAt: IsoDate,
   invitedBy: ObjectIdString.optional(),
 });
@@ -431,6 +434,8 @@ export const NotificationTypeSchema = z.enum([
   'FRIEND_ACCEPTED',
   'FRIEND_UNFRIENDED',
   'BOOK_INVITE',
+  'BOOK_INVITE_ACCEPTED',
+  'BOOK_INVITE_REJECTED',
 ]);
 export type NotificationType = z.infer<typeof NotificationTypeSchema>;
 
@@ -477,6 +482,12 @@ export const BookInvitePayloadSchema = z.object({
   bookName: z.string(),
   role: z.enum(['editor', 'viewer']),
 });
+export const BookInviteResponsePayloadSchema = z.object({
+  fromUserId: ObjectIdString,
+  fromUserName: z.string(),
+  bookId: ObjectIdString,
+  bookName: z.string(),
+});
 
 const notificationBase = {
   id: ObjectIdString,
@@ -494,6 +505,8 @@ export const NotificationSchema = z.discriminatedUnion('type', [
   z.object({ ...notificationBase, type: z.literal('FRIEND_ACCEPTED'), payload: FriendActivityPayloadSchema }),
   z.object({ ...notificationBase, type: z.literal('FRIEND_UNFRIENDED'), payload: FriendActivityPayloadSchema }),
   z.object({ ...notificationBase, type: z.literal('BOOK_INVITE'), payload: BookInvitePayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('BOOK_INVITE_ACCEPTED'), payload: BookInviteResponsePayloadSchema }),
+  z.object({ ...notificationBase, type: z.literal('BOOK_INVITE_REJECTED'), payload: BookInviteResponsePayloadSchema }),
 ]);
 export type Notification = z.infer<typeof NotificationSchema>;
 

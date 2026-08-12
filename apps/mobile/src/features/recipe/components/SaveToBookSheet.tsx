@@ -1,13 +1,14 @@
 import type { RecipeBook } from '@mixer/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { PlusCircle } from 'lucide-react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView } from 'react-native';
 
 import { Loader } from '@/shared/ui/Loader';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { feedApi } from '@/features/home/api/feedApi';
 import { useAddRecipeToBook } from '@/features/recipe/hooks/useAddRecipeToBook';
 import { BookCard, type BookCardData } from '@/shared/ui/BookCard';
@@ -41,12 +42,27 @@ export function SaveToBookSheet({ open, onOpenChange, recipeId }: SaveToBookShee
   const primary = theme.primary?.val as string;
   const [error, setError] = useState<string | null>(null);
 
+  const { user } = useAuth();
+  const myId = user?.id;
+
   const booksQ = useQuery({
     queryKey: ['feed', 'my-books'],
     queryFn: () => feedApi.myBooks(),
     enabled: open,
   });
-  const books = booksQ.data?.items ?? [];
+
+  // Only show books where the current user can add recipes (owner or editor)
+  // and where the recipe isn't already present.
+  const books = useMemo(
+    () =>
+      (booksQ.data?.items ?? []).filter((b) => {
+        if (b.recipeIds.includes(recipeId)) return false;
+        if (b.ownerId === myId) return true;
+        const me = b.members.find((m) => m.userId === myId);
+        return me?.role === 'editor';
+      }),
+    [booksQ.data, myId, recipeId],
+  );
   const add = useAddRecipeToBook();
 
   const pick = (bookId: string) => {

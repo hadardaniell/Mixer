@@ -91,6 +91,14 @@
       "bookInvite": {
         "title": "Book invitation",
         "body": "{{name}} invited you to collaborate on \"{{book}}\""
+      },
+      "bookInviteAccepted": {
+        "title": "Invitation accepted",
+        "body": "{{name}} joined \"{{book}}\""
+      },
+      "bookInviteRejected": {
+        "title": "Invitation declined",
+        "body": "{{name}} declined the invitation to \"{{book}}\""
       }
     }
   },
@@ -352,6 +360,7 @@
     "members": {
       "title": "Members",
       "you": "{{name}} (you)",
+      "pending": "Pending",
       "removeTitle": "Remove member",
       "removeMessage": "Remove {{name}} from this book?",
       "removeConfirm": "Remove"

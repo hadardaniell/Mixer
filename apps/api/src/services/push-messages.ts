@@ -49,6 +49,14 @@ const messages: Record<string, LocaleCopy> = {
     en: { title: 'Book invitation', body: '{{name}} invited you to collaborate on "{{book}}"' },
     he: { title: 'הזמנה לספר', body: '{{name}} הזמין/ה אותך לשתף פעולה על "{{book}}"' },
   },
+  BOOK_INVITE_ACCEPTED: {
+    en: { title: 'Invitation accepted', body: '{{name}} accepted your invitation to "{{book}}"' },
+    he: { title: 'ההזמנה אושרה', body: '{{name}} אישר/ה את ההזמנה שלך ל"{{book}}"' },
+  },
+  BOOK_INVITE_REJECTED: {
+    en: { title: 'Invitation declined', body: '{{name}} declined your invitation to "{{book}}"' },
+    he: { title: 'ההזמנה נדחתה', body: '{{name}} דחה/תה את ההזמנה שלך ל"{{book}}"' },
+  },
 };
 
 // Maps each notification type's payload keys to the {{placeholder}} names used above.
@@ -61,6 +69,8 @@ const payloadVars: Record<string, (payload: Record<string, unknown>) => Record<s
   FRIEND_ACCEPTED:        (p) => ({ name: p.fromUserName }),
   FRIEND_UNFRIENDED:      (p) => ({ name: p.fromUserName }),
   BOOK_INVITE:            (p) => ({ name: p.fromUserName, book: p.bookName }),
+  BOOK_INVITE_ACCEPTED:  (p) => ({ name: p.fromUserName, book: p.bookName }),
+  BOOK_INVITE_REJECTED:  (p) => ({ name: p.fromUserName, book: p.bookName }),
 };
 
 export function getPushMessage(

@@ -71,7 +71,10 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       const userId = new ObjectId(req.user.id);
       const { q } = req.query;
       const filter: Filter<RecipeBookDoc> = {
-        $or: [{ ownerId: userId }, { 'members.userId': userId }],
+        $or: [
+          { ownerId: userId },
+          { members: { $elemMatch: { userId, status: { $ne: 'pending' } } } },
+        ],
         // The auto-created "my recipes" book is where saved recipes are filed behind
         // the scenes; it isn't something the user browses, so it stays out of every
         // list built on this route. Fetching it by id still works.
@@ -316,6 +319,7 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       const member = {
         userId: new ObjectId(req.body.userId),
         role: req.body.role,
+        status: 'pending' as const,
         addedAt: new Date(),
         invitedBy: new ObjectId(req.user.id),
       };
@@ -340,6 +344,92 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         role: req.body.role,
       });
 
+      return toRecipeBook(updated!);
+    },
+  );
+
+  app.put(
+    '/recipe-books/:id/members/accept',
+    {
+      onRequest: [app.authenticate],
+      schema: { params: IdParam, tags: ['recipe-books'] },
+    },
+    async (req, reply) => {
+      const _id = new ObjectId(req.params.id);
+      const userOid = new ObjectId(req.user.id);
+      const book = await app.collections.recipeBooks.findOne({ _id });
+      if (!book) return reply.code(404).send({ error: 'book not found' });
+
+      const hasPending = book.members.some(
+        (m) => m.userId.toString() === req.user.id && m.status === 'pending',
+      );
+      if (!hasPending) return reply.code(404).send({ error: 'pending invite not found' });
+
+      const [updated, invitee] = await Promise.all([
+        app.collections.recipeBooks.findOneAndUpdate(
+          { _id, 'members.userId': userOid },
+          { $set: { 'members.$.status': 'active', updatedAt: new Date() } },
+          { returnDocument: 'after' },
+        ),
+        app.collections.users.findOne(
+          { _id: userOid },
+          { projection: { displayName: 1 } },
+        ),
+        app.collections.notifications.deleteOne({
+          userId: userOid,
+          type: 'BOOK_INVITE',
+          'payload.bookId': _id.toString(),
+        }),
+      ]);
+      await notificationService.send(book.ownerId.toString(), 'BOOK_INVITE_ACCEPTED', {
+        fromUserId: req.user.id,
+        fromUserName: invitee?.displayName ?? '',
+        bookId: _id.toString(),
+        bookName: book.name,
+      });
+      return toRecipeBook(updated!);
+    },
+  );
+
+  app.put(
+    '/recipe-books/:id/members/decline',
+    {
+      onRequest: [app.authenticate],
+      schema: { params: IdParam, tags: ['recipe-books'] },
+    },
+    async (req, reply) => {
+      const _id = new ObjectId(req.params.id);
+      const userOid = new ObjectId(req.user.id);
+      const book = await app.collections.recipeBooks.findOne({ _id });
+      if (!book) return reply.code(404).send({ error: 'book not found' });
+
+      const hasPending = book.members.some(
+        (m) => m.userId.toString() === req.user.id && m.status === 'pending',
+      );
+      if (!hasPending) return reply.code(404).send({ error: 'pending invite not found' });
+
+      const [updated, invitee] = await Promise.all([
+        app.collections.recipeBooks.findOneAndUpdate(
+          { _id },
+          { $pull: { members: { userId: userOid } }, $set: { updatedAt: new Date() } },
+          { returnDocument: 'after' },
+        ),
+        app.collections.users.findOne(
+          { _id: userOid },
+          { projection: { displayName: 1 } },
+        ),
+        app.collections.notifications.deleteOne({
+          userId: userOid,
+          type: 'BOOK_INVITE',
+          'payload.bookId': _id.toString(),
+        }),
+      ]);
+      await notificationService.send(book.ownerId.toString(), 'BOOK_INVITE_REJECTED', {
+        fromUserId: req.user.id,
+        fromUserName: invitee?.displayName ?? '',
+        bookId: _id.toString(),
+        bookName: book.name,
+      });
       return toRecipeBook(updated!);
     },
   );
@@ -399,11 +489,23 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
       }
       const setFields: Record<string, unknown> = { updatedAt: new Date() };
       if (!book.language) setFields.language = 'he';
-      const updated = await app.collections.recipeBooks.findOneAndUpdate(
-        { _id },
-        { $pull: { members: { userId: userOid } }, $set: setFields },
-        { returnDocument: 'after' },
+      const isPending = book.members.some(
+        (m) => m.userId.toString() === req.params.userId && m.status === 'pending',
       );
+      const [updated] = await Promise.all([
+        app.collections.recipeBooks.findOneAndUpdate(
+          { _id },
+          { $pull: { members: { userId: userOid } }, $set: setFields },
+          { returnDocument: 'after' },
+        ),
+        isPending
+          ? app.collections.notifications.deleteOne({
+              userId: userOid,
+              type: 'BOOK_INVITE',
+              'payload.bookId': _id.toString(),
+            })
+          : Promise.resolve(),
+      ]);
       return toRecipeBook(updated!);
     },
   );

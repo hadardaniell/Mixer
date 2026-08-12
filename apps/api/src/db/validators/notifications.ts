@@ -20,6 +20,8 @@ export const notificationsValidator: CollectionValidator = {
             'FRIEND_ACCEPTED',
             'FRIEND_UNFRIENDED',
             'BOOK_INVITE',
+            'BOOK_INVITE_ACCEPTED',
+            'BOOK_INVITE_REJECTED',
           ],
         },
         payload: { bsonType: 'object' },

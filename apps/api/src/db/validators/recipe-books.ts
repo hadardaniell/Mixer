@@ -36,6 +36,7 @@ export const recipeBooksValidator: CollectionValidator = {
             properties: {
               userId: { bsonType: 'objectId' },
               role: { enum: ['owner', 'editor', 'viewer'] },
+              status: { enum: ['pending', 'active'] },
               addedAt: { bsonType: 'date' },
               invitedBy: { bsonType: 'objectId' },
             },

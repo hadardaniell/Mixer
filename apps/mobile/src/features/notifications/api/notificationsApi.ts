@@ -35,4 +35,8 @@ export const notificationsApi = {
     http<unknown>(`/shares/${shareId}/accept`, { method: 'PUT' }),
   declineShare: (shareId: string) =>
     http<unknown>(`/shares/${shareId}/reject`, { method: 'PUT' }),
+  acceptBookInvite: (bookId: string) =>
+    http<unknown>(`/recipe-books/${bookId}/members/accept`, { method: 'PUT' }),
+  declineBookInvite: (bookId: string) =>
+    http<unknown>(`/recipe-books/${bookId}/members/decline`, { method: 'PUT' }),
 };

@@ -4,6 +4,8 @@ import type { Notification } from '@mixer/contracts';
 
 vi.mock('lucide-react-native', () => ({
   Bookmark: 'Bookmark',
+  BookCheck: 'BookCheck',
+  BookX: 'BookX',
   Check: 'Check',
   Share2: 'Share2',
   UserMinus: 'UserMinus',
@@ -194,7 +196,7 @@ describe('getNotificationContent', () => {
     expect(result.avatar?.name).toBe('Lior');
   });
 
-  it('BOOK_INVITE — Bookmark icon, info color, route to book, no action', () => {
+  it('BOOK_INVITE — Bookmark icon, info color, bookInvite action, no route', () => {
     const n: Notification = {
       ...BASE,
       type: 'BOOK_INVITE',
@@ -209,7 +211,45 @@ describe('getNotificationContent', () => {
     const result = getNotificationContent(n, t);
     expect(result.Icon).toBe('Bookmark');
     expect(result.color).toBe('info');
+    expect(result.action).toEqual({ kind: 'bookInvite', bookId: ID.book });
+    expect(result.route).toBeUndefined();
+    expect(result.avatar).toBeUndefined();
+  });
+
+  it('BOOK_INVITE_ACCEPTED — BookCheck icon, success color, route to book, no action', () => {
+    const n: Notification = {
+      ...BASE,
+      type: 'BOOK_INVITE_ACCEPTED',
+      payload: {
+        fromUserId: ID.user,
+        fromUserName: 'Roni',
+        bookId: ID.book,
+        bookName: 'Family Recipes',
+      },
+    };
+    const result = getNotificationContent(n, t);
+    expect(result.Icon).toBe('BookCheck');
+    expect(result.color).toBe('success');
     expect(result.route).toBe(`/books/${ID.book}`);
+    expect(result.action).toBeUndefined();
+    expect(result.avatar).toBeUndefined();
+  });
+
+  it('BOOK_INVITE_REJECTED — BookX icon, warning color, no route, no action', () => {
+    const n: Notification = {
+      ...BASE,
+      type: 'BOOK_INVITE_REJECTED',
+      payload: {
+        fromUserId: ID.user,
+        fromUserName: 'Roni',
+        bookId: ID.book,
+        bookName: 'Family Recipes',
+      },
+    };
+    const result = getNotificationContent(n, t);
+    expect(result.Icon).toBe('BookX');
+    expect(result.color).toBe('warning');
+    expect(result.route).toBeUndefined();
     expect(result.action).toBeUndefined();
     expect(result.avatar).toBeUndefined();
   });

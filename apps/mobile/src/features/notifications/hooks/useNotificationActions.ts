@@ -12,6 +12,10 @@ interface ShareActionVars {
   notificationId: string;
   shareId: string;
 }
+interface BookInviteActionVars {
+  notificationId: string;
+  bookId: string;
+}
 
 /**
  * Mutations for the notifications inbox. Every action invalidates the
@@ -76,6 +80,16 @@ export function useNotificationActions() {
     onSuccess: invalidateSocial,
     onError: (err, v) => settleAction(err, v.notificationId),
   });
+  const acceptBookInvite = useMutation({
+    mutationFn: (v: BookInviteActionVars) => notificationsApi.acceptBookInvite(v.bookId),
+    onSuccess: invalidateSocial,
+    onError: (err, v) => settleAction(err, v.notificationId),
+  });
+  const declineBookInvite = useMutation({
+    mutationFn: (v: BookInviteActionVars) => notificationsApi.declineBookInvite(v.bookId),
+    onSuccess: invalidateNotifications,
+    onError: (err, v) => settleAction(err, v.notificationId),
+  });
 
   return {
     markRead,
@@ -85,5 +99,7 @@ export function useNotificationActions() {
     declineFriend,
     acceptShare,
     declineShare,
+    acceptBookInvite,
+    declineBookInvite,
   };
 }

@@ -72,6 +72,23 @@ async function canReadViaShare(
   return share !== null;
 }
 
+// Returns true when the recipe lives in a book the requesting user is a member
+// of (any role: viewer, editor, or owner). This lets book members read all
+// recipes in a shared book even if those recipes are private.
+async function canReadViaBook(
+  collections: Collections,
+  req: { user?: { id: string } },
+  doc: RecipeDoc,
+): Promise<boolean> {
+  if (!req.user) return false;
+  const userId = new ObjectId(req.user.id);
+  const book = await collections.recipeBooks.findOne({
+    recipeIds: doc._id,
+    $or: [{ ownerId: userId }, { 'members.userId': userId }],
+  });
+  return book !== null;
+}
+
 /**
  * Best-effort mapping of a recipe's free-text tags onto the curated `categories`
  * collection, so browse-by-category (which filters on `categoryIds`) has data to
@@ -239,7 +256,13 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       try {
         const original = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
         if (!original) return reply.code(404).send({ error: 'recipe not found' });
-        if (!canRead(req, original)) return reply.code(403).send({ error: 'forbidden' });
+        if (
+          !canRead(req, original) &&
+          !(await canReadViaShare(app.collections, req, original)) &&
+          !(await canReadViaBook(app.collections, req, original))
+        ) {
+          return reply.code(403).send({ error: 'forbidden' });
+        }
 
         const now = new Date();
         const doc: RecipeDoc = {
@@ -298,9 +321,16 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       } else if (!req.user) {
         filter.visibility = { $ne: 'private' };
       } else {
+        const userId = new ObjectId(req.user.id);
+        const memberBooks = await app.collections.recipeBooks
+          .find({ $or: [{ ownerId: userId }, { 'members.userId': userId }] })
+          .project({ recipeIds: 1 })
+          .toArray();
+        const bookRecipeIds = memberBooks.flatMap((b) => (b as { recipeIds?: ObjectId[] }).recipeIds ?? []);
         filter.$or = [
-          { ownerId: new ObjectId(req.user.id) },
+          { ownerId: userId },
           { visibility: { $ne: 'private' } },
+          ...(bookRecipeIds.length ? [{ _id: { $in: bookRecipeIds } }] : []),
         ];
       }
 
@@ -356,7 +386,11 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
   async (req, reply) => {
     const doc = await app.collections.recipes.findOne({ _id: new ObjectId(req.params.id) });
     if (!doc) return reply.code(404).send({ error: 'recipe not found' });
-    if (!canRead(req, doc) && !(await canReadViaShare(app.collections, req, doc))) {
+    if (
+      !canRead(req, doc) &&
+      !(await canReadViaShare(app.collections, req, doc)) &&
+      !(await canReadViaBook(app.collections, req, doc))
+    ) {
       return reply.code(403).send({ error: 'forbidden' });
     }
 
@@ -838,9 +872,24 @@ app.post(
 
       const { embedding: queryEmbedding } = await embedResponse.json() as { embedding: number[] };
 
-      const visibilityFilter: Filter<RecipeDoc> = req.user
-        ? { $or: [{ ownerId: new ObjectId(req.user.id) }, { visibility: { $in: ['public', 'unlisted'] } }] }
-        : { visibility: { $in: ['public', 'unlisted'] } };
+      let visibilityFilter: Filter<RecipeDoc>;
+      if (req.user) {
+        const userId = new ObjectId(req.user.id);
+        const memberBooks = await app.collections.recipeBooks
+          .find({ $or: [{ ownerId: userId }, { 'members.userId': userId }] })
+          .project({ recipeIds: 1 })
+          .toArray();
+        const bookRecipeIds = memberBooks.flatMap((b) => (b as { recipeIds?: ObjectId[] }).recipeIds ?? []);
+        visibilityFilter = {
+          $or: [
+            { ownerId: userId },
+            { visibility: { $in: ['public', 'unlisted'] } },
+            ...(bookRecipeIds.length ? [{ _id: { $in: bookRecipeIds } }] : []),
+          ],
+        };
+      } else {
+        visibilityFilter = { visibility: { $in: ['public', 'unlisted'] } };
+      }
 
       const recipes = await app.collections.recipes
         // Exclude drafts — search should only surface published recipes, even

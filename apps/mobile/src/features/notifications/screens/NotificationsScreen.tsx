@@ -38,7 +38,9 @@ export function NotificationsScreen() {
     actions.acceptFriend.isPending ||
     actions.declineFriend.isPending ||
     actions.acceptShare.isPending ||
-    actions.declineShare.isPending;
+    actions.declineShare.isPending ||
+    actions.acceptBookInvite.isPending ||
+    actions.declineBookInvite.isPending;
 
   const onOpen = (n: Notification) => {
     if (!n.read) actions.markRead.mutate(n.id);
@@ -51,6 +53,8 @@ export function NotificationsScreen() {
       actions.acceptFriend.mutate({ notificationId: n.id, fromUserId: n.payload.fromUserId });
     } else if (n.type === 'SHARE_REQUEST') {
       actions.acceptShare.mutate({ notificationId: n.id, shareId: n.payload.shareId });
+    } else if (n.type === 'BOOK_INVITE') {
+      actions.acceptBookInvite.mutate({ notificationId: n.id, bookId: n.payload.bookId });
     }
   };
 
@@ -59,6 +63,8 @@ export function NotificationsScreen() {
       actions.declineFriend.mutate({ notificationId: n.id, fromUserId: n.payload.fromUserId });
     } else if (n.type === 'SHARE_REQUEST') {
       actions.declineShare.mutate({ notificationId: n.id, shareId: n.payload.shareId });
+    } else if (n.type === 'BOOK_INVITE') {
+      actions.declineBookInvite.mutate({ notificationId: n.id, bookId: n.payload.bookId });
     }
   };
 
