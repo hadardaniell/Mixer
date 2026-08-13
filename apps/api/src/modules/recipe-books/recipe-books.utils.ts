@@ -1,3 +1,4 @@
+//apps/api/src/modules/recipe-books/recipe-books.utils.ts
 import type { RecipeBookDoc } from '../../db/types.js';
 
 export function memberRole(book: RecipeBookDoc, userId: string): 'owner' | 'editor' | 'viewer' | null {
