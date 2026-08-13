@@ -15,6 +15,7 @@ export interface BookForm {
   privacy: BookPrivacy;
   /** Invited friend ids (step 3) — stubbed until a friends API exists. */
   invitedIds: string[];
+  invitedRole: 'editor' | 'viewer';
   coverKey?: string;
 }
 
@@ -25,6 +26,7 @@ export const initialBookForm: BookForm = {
   recipeIds: [],
   privacy: 'personal',
   invitedIds: [],
+  invitedRole: 'editor',
   coverKey: DEFAULT_COVER_KEY,
 };
 
@@ -34,7 +36,9 @@ export type BookFormAction =
   | { type: 'removeTag'; value: string }
   | { type: 'toggleRecipe'; id: string }
   | { type: 'setRecipes'; ids: string[] }
-  | { type: 'toggleInvite'; id: string };
+  | { type: 'toggleInvite'; id: string }
+  | { type: 'setInvites'; ids: string[] }
+  | { type: 'setInviteRole'; role: 'editor' | 'viewer' };
 
 export function bookFormReducer(state: BookForm, action: BookFormAction): BookForm {
   switch (action.type) {
@@ -61,6 +65,17 @@ export function bookFormReducer(state: BookForm, action: BookFormAction): BookFo
         invitedIds: state.invitedIds.includes(action.id)
           ? state.invitedIds.filter((id) => id !== action.id)
           : [...state.invitedIds, action.id],
+      };
+    case 'setInvites':
+      return {
+        ...state,
+        invitedIds: action.ids,
+      };
+
+    case 'setInviteRole':
+      return {
+        ...state,
+        invitedRole: action.role,
       };
     default:
       return state;

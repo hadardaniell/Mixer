@@ -1,3 +1,4 @@
+//apps/mobile/src/features/book/screens/CreateBookScreen.tsx
 import { useRouter } from 'expo-router';
 import { useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,7 @@ import { Step4Cover } from '../components/Step4Cover';
 import { WizardFooter } from '@/features/recipe/components/manual/WizardFooter';
 import { useCreateBook } from '../hooks/useCreateBook';
 import { bookFormReducer, canAdvance, initialBookForm, toCreateInput } from '../lib/bookForm';
+import { bookApi } from '../api/bookApi';
 
 const TOTAL_STEPS = 4;
 
@@ -46,8 +48,17 @@ export function CreateBookScreen() {
       return;
     }
     try {
-      await create.mutateAsync(toCreateInput(form));
-      // No book-detail route yet; land on home where the new book appears.
+      const createdBook = await create.mutateAsync(toCreateInput(form));
+
+      if (form.privacy === 'shared' && form.invitedIds.length > 0) {
+        for (const userId of form.invitedIds) {
+          await bookApi.addMember(createdBook.id, {
+            userId,
+            role: form.invitedRole,
+          });
+        }
+      }
+
       router.replace('/home' as never);
     } catch {
       setError(t('createBook.saveError'));
