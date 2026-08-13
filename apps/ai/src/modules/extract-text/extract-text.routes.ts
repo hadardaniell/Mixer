@@ -70,30 +70,42 @@ async function fetchTikTokCaption(url: string): Promise<string> {
  * Instagram doesn't have a useful oEmbed API for captions, so Jina is our best bet.
  * The description field in Open Graph meta tags often contains the reel caption.
  */
-async function fetchInstagramFallbackText(url: string, log: (msg: string) => void): Promise<string> {
+async function fetchInstagramFallbackText(
+  url: string,
+  metadataDescription: string | undefined,
+  metadataTitle: string | undefined,
+  log: (msg: string) => void,
+): Promise<string> {
   const parts: string[] = [];
 
-  // 1. Jina page scrape with Accept-Language header to get English content
-  try {
-    log(`[extract/url] Instagram — scraping page text via Jina: ${url}`);
-    const headers: Record<string, string> = {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'en-US,en;q=0.9',
-    };
-    if (process.env.JINA_API_KEY) {
-      headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
-    }
-    const response = await fetch(`https://r.jina.ai/${url}`, { headers });
-    if (response.ok) {
-      const text = await response.text();
-      if (text && text.trim().length > 50) {
-        log(`[extract/url] Instagram Jina scrape succeeded (${text.length} chars)`);
-        parts.push(text.slice(0, 8000));
+  if (metadataDescription && metadataDescription.trim().length > 10) {
+    log(`[extract/url] Instagram — found caption/description from metadata (${metadataDescription.length} chars)`);
+    parts.push(`Instagram video title/caption:\n${metadataTitle ?? ''}\n\n${metadataDescription}`);
+  }
+
+  // Jina page scrape with Accept-Language header if metadata description was missing or too short
+  if (parts.length === 0) {
+    try {
+      log(`[extract/url] Instagram — scraping page text via Jina: ${url}`);
+      const headers: Record<string, string> = {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+      };
+      if (process.env.JINA_API_KEY) {
+        headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
       }
+      const response = await fetch(`https://r.jina.ai/${url}`, { headers });
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 50) {
+          log(`[extract/url] Instagram Jina scrape succeeded (${text.length} chars)`);
+          parts.push(text.slice(0, 8000));
+        }
+      }
+    } catch (err) {
+      log(`[extract/url] Instagram Jina scrape failed: ${err instanceof Error ? err.message : err}`);
     }
-  } catch (err) {
-    log(`[extract/url] Instagram Jina scrape failed: ${err instanceof Error ? err.message : err}`);
   }
 
   if (parts.length === 0) {
@@ -361,11 +373,16 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         const isInstagram = url.includes('instagram.com');
         let tempDirectory: string | undefined;
         let extractedThumbnailUrl: string | undefined;
+        let videoMetadataTitle: string | undefined;
+        let videoMetadataDescription: string | undefined;
 
         try {
           app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
           try {
             const info = await downloadService.getVideoInfo(url);
+            videoMetadataTitle = info.title;
+            videoMetadataDescription = info.description;
+            app.log.info(`[extract/url] Metadata title: "${info.title}", description length: ${info.description?.length ?? 0}`);
 
             if (info.thumbnailUrl) {
               extractedThumbnailUrl = info.thumbnailUrl;
@@ -422,11 +439,8 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
 
           return recipe;
         } catch (error) {
-          if (error instanceof Error && error.message === 'not_a_recipe') {
-            return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
-          }
           app.log.warn(
-            `[extract/url] Video processing failed for ${url} (${error instanceof Error ? error.message : error}) — falling back to caption/text scraping`,
+            `[extract/url] Video processing failed or returned no recipe for ${url} (${error instanceof Error ? error.message : error}) — falling back to caption/text scraping`,
           );
           try {
             const isTikTok = url.includes('tiktok.com');
@@ -440,8 +454,8 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
               text = result.text;
               if (result.thumbnailUrl) videoThumbnailUrlFallback = result.thumbnailUrl;
             } else if (isInstagram) {
-              app.log.info(`[extract/url] Instagram detected — scraping page text via Jina: ${url}`);
-              text = await fetchInstagramFallbackText(url, (msg) => app.log.info(msg));
+              app.log.info(`[extract/url] Instagram detected — extracting text from caption metadata: ${url}`);
+              text = await fetchInstagramFallbackText(url, videoMetadataDescription, videoMetadataTitle, (msg) => app.log.info(msg));
             } else if (isYouTube) {
               app.log.info(`[extract/url] YouTube detected — fetching metadata/description via yt-dlp + oEmbed: ${url}`);
               const result = await fetchYouTubeFallbackText(url, (msg) => app.log.info(msg));
