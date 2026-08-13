@@ -82,11 +82,40 @@ async function canReadViaBook(
 ): Promise<boolean> {
   if (!req.user) return false;
   const userId = new ObjectId(req.user.id);
+   // User owns the book or is an active member of it
   const book = await collections.recipeBooks.findOne({
     recipeIds: doc._id,
-    $or: [{ ownerId: userId }, { 'members.userId': userId }],
+    $or: [
+      { ownerId: userId },
+      {
+        members: {
+          $elemMatch: {
+            userId,
+            status: { $ne: 'pending' },
+          },
+        },
+      },
+    ],
   });
-  return book !== null;
+
+  if (book) return true;
+
+  // The book was shared with the user through a live share
+  const sharedBook = await collections.recipeBooks.findOne({
+    recipeIds: doc._id,
+  });
+
+  if (!sharedBook) return false;
+
+  const liveShare = await collections.sharedItems.findOne({
+    resourceType: 'book',
+    resourceId: sharedBook._id,
+    friendId: userId,
+    status: 'accepted',
+    savedAt: null,
+  });
+
+  return liveShare !== null;
 }
 
 /**
@@ -427,7 +456,8 @@ app.post(
 
     if (
       !canRead(req, recipe) &&
-      !(await canReadViaShare(app.collections, req, recipe))
+      !(await canReadViaShare(app.collections, req, recipe)) &&
+      !(await canReadViaBook(app.collections, req, recipe))
     ) {
       return reply.code(403).send({
         error: 'forbidden',
