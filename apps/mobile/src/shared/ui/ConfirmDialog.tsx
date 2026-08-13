@@ -1,3 +1,4 @@
+//apps/mobile/src/shared/ui/ConfirmDialog.tsx
 import { Modal } from 'react-native';
 import { Spinner, Text, YStack } from 'tamagui';
 

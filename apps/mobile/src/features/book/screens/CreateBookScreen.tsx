@@ -1,3 +1,4 @@
+//apps/mobile/src/features/book/screens/CreateBookScreen.tsx
 import { useRouter } from 'expo-router';
 import { useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -45,9 +46,13 @@ export function CreateBookScreen() {
       setStep((s) => s + 1);
       return;
     }
-    try {
-      await create.mutateAsync(toCreateInput(form));
-      // No book-detail route yet; land on home where the new book appears.
+   try {
+      await create.mutateAsync({
+        book: toCreateInput(form),
+        invitedIds: form.invitedIds,
+        invitedRole: form.invitedRole,
+      });
+
       router.replace('/home' as never);
     } catch {
       setError(t('createBook.saveError'));

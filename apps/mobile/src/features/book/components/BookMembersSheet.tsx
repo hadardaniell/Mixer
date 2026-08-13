@@ -1,3 +1,4 @@
+//apps/mobile/src/features/book/components/BookMembersSheet.tsx
 import { LogOut, Plus, UserMinus } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,125 +45,140 @@ export function BookMembersSheet({
   const [leaveOpen, setLeaveOpen] = useState(false);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} snapPoints={[72]}>
-      <Text color="$text" fontSize={18} fontWeight="700" textAlign="center">
-        {t('book.members.title')}
-      </Text>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange} snapPoints={[72]}>
+        <Text color="$text" fontSize={18} fontWeight="700" textAlign="center">
+          {t('book.members.title')}
+        </Text>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <YStack gap="$1" paddingBottom="$4" opacity={busy ? 0.6 : 1}>
-          {members.map((m) => (
-            <XStack key={m.userId} alignItems="center" gap="$3" paddingVertical="$2">
-              <MemberAvatar displayName={m.displayName} avatarUrl={m.avatarUrl} size={44} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <YStack gap="$1" paddingBottom="$4" opacity={busy ? 0.6 : 1}>
+            {members.map((m) => (
+              <XStack key={m.userId} alignItems="center" gap="$3" paddingVertical="$2">
+                <MemberAvatar displayName={m.displayName} avatarUrl={m.avatarUrl} size={44} />
 
-              <Text flex={1} color="$text" fontSize={15} fontWeight="600" numberOfLines={1}>
-                {m.isMe ? t('book.members.you', { name: m.displayName }) : m.displayName}
-              </Text>
+                <Text flex={1} color="$text" fontSize={15} fontWeight="600" numberOfLines={1}>
+                  {m.isMe ? t('book.members.you', { name: m.displayName }) : m.displayName}
+                </Text>
 
-              {m.status === 'pending' ? (
-                <RolePill role="pending" label={t('book.members.pending')} />
-              ) : (
-                <RolePill
-                  role={m.role}
-                  label={t(`book.roles.${m.role}`)}
-                  // Only the owner changes roles, and the owner's own role is fixed.
-                  onPress={
-                    isOwner && m.role !== 'owner'
-                      ? () => onChangeRole(m.userId, m.role === 'editor' ? 'viewer' : 'editor')
-                      : undefined
-                  }
-                />
-              )}
+                {m.status === 'pending' ? (
+                  <RolePill role="pending" label={t('book.members.pending')} />
+                ) : (
+                  <RolePill
+                    role={m.role}
+                    label={t(`book.roles.${m.role}`)}
+                    // Only the owner changes roles, and the owner's own role is fixed.
+                    onPress={
+                      isOwner && m.role !== 'owner'
+                        ? () => onChangeRole(m.userId, m.role === 'editor' ? 'viewer' : 'editor')
+                        : undefined
+                    }
+                  />
+                )}
 
-              {isOwner && m.role !== 'owner' ? (
+                {isOwner && m.role !== 'owner' ? (
+                  <YStack
+                     onPress={() => {
+                      setPendingRemove(m);
+                      onOpenChange(false);
+                    }}
+                    hitSlop={8}
+                    pressStyle={{ opacity: 0.7 }}
+                    accessibilityRole="button"
+                  >
+                    <UserMinus size={20} color={theme.danger?.val as string} />
+                  </YStack>
+                ) : null}
+              </XStack>
+            ))}
+
+            {isOwner ? (
+              <XStack
+                onPress={onAddMembers}
+                alignItems="center"
+                gap="$3"
+                paddingVertical="$3"
+                pressStyle={{ opacity: 0.7 }}
+              >
                 <YStack
-                  onPress={() => setPendingRemove(m)}
-                  hitSlop={8}
-                  pressStyle={{ opacity: 0.7 }}
-                  accessibilityRole="button"
+                  width={44}
+                  height={44}
+                  borderRadius={999}
+                  backgroundColor="$accentLavender"
+                  alignItems="center"
+                  justifyContent="center"
                 >
-                  <UserMinus size={20} color={theme.danger?.val as string} />
+                  <Plus size={22} color={theme.primary?.val as string} strokeWidth={2.5} />
                 </YStack>
-              ) : null}
-            </XStack>
-          ))}
-
-          {isOwner ? (
-            <XStack
-              onPress={onAddMembers}
-              alignItems="center"
-              gap="$3"
-              paddingVertical="$3"
-              pressStyle={{ opacity: 0.7 }}
-            >
-              <YStack
-                width={44}
-                height={44}
-                borderRadius={999}
-                backgroundColor="$accentLavender"
+                <Text color="$primary" fontSize={15} fontWeight="600">
+                  {t('book.addMembers')}
+                </Text>
+              </XStack>
+            ) : (
+              <XStack
+                onPress={() => {
+                  setLeaveOpen(true);
+                  onOpenChange(false);
+                }}
                 alignItems="center"
-                justifyContent="center"
+                gap="$3"
+                paddingVertical="$3"
+                pressStyle={{ opacity: 0.7 }}
               >
-                <Plus size={22} color={theme.primary?.val as string} strokeWidth={2.5} />
-              </YStack>
-              <Text color="$primary" fontSize={15} fontWeight="600">
-                {t('book.addMembers')}
-              </Text>
-            </XStack>
-          ) : (
-            <XStack
-              onPress={() => setLeaveOpen(true)}
-              alignItems="center"
-              gap="$3"
-              paddingVertical="$3"
-              pressStyle={{ opacity: 0.7 }}
-            >
-              <YStack
-                width={44}
-                height={44}
-                borderRadius={999}
-                backgroundColor="$accentPink"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <LogOut size={20} color={theme.danger?.val as string} />
-              </YStack>
-              <Text color="$danger" fontSize={15} fontWeight="600">
-                {t('book.leave')}
-              </Text>
-            </XStack>
-          )}
-        </YStack>
-      </ScrollView>
+                <YStack
+                  width={44}
+                  height={44}
+                  borderRadius={999}
+                  backgroundColor="$accentPink"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <LogOut size={20} color={theme.danger?.val as string} />
+                </YStack>
+                <Text color="$danger" fontSize={15} fontWeight="600">
+                  {t('book.leave')}
+                </Text>
+              </XStack>
+            )}
+          </YStack>
+        </ScrollView>
+      </Sheet>
 
       <ConfirmDialog
-        open={pendingRemove !== null}
-        title={t('book.members.removeTitle')}
-        message={t('book.members.removeMessage', { name: pendingRemove?.displayName ?? '' })}
-        confirmLabel={t('book.members.removeConfirm')}
-        cancelLabel={t('common.cancel')}
-        destructive
-        onConfirm={() => {
-          if (pendingRemove) onRemoveMember(pendingRemove);
-          setPendingRemove(null);
-        }}
-        onCancel={() => setPendingRemove(null)}
-      />
+          open={pendingRemove !== null}
+          title={t('book.members.removeTitle')}
+          message={t('book.members.removeMessage', { name: pendingRemove?.displayName ?? '' })}
+          confirmLabel={t('book.members.removeConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
+          onConfirm={() => {
+            if (pendingRemove) onRemoveMember(pendingRemove);
+            setPendingRemove(null);
+            onOpenChange(true);
+          }}
+           onCancel={() => {
+            setPendingRemove(null);
+            onOpenChange(true);
+          }}
+        />
 
-      <ConfirmDialog
-        open={leaveOpen}
-        title={t('book.leaveTitle')}
-        message={t('book.leaveMessage')}
-        confirmLabel={t('book.leaveConfirm')}
-        cancelLabel={t('common.cancel')}
-        destructive
-        onConfirm={() => {
-          setLeaveOpen(false);
-          onLeave();
-        }}
-        onCancel={() => setLeaveOpen(false)}
-      />
-    </Sheet>
+        <ConfirmDialog
+          open={leaveOpen}
+          title={t('book.leaveTitle')}
+          message={t('book.leaveMessage')}
+          confirmLabel={t('book.leaveConfirm')}
+          cancelLabel={t('common.cancel')}
+          destructive
+          onConfirm={() => {
+            setLeaveOpen(false);
+            onLeave();
+          }}
+          onCancel={() => {
+            setLeaveOpen(false);
+            onOpenChange(true);
+          }}
+        />
+    </>
   );
 }
 

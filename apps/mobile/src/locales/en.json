@@ -325,6 +325,9 @@
       "inviteLabel": "Invite friends (optional)",
       "invitePlaceholder": "Search friends to invite...",
       "inviteComingSoon": "Friend invites coming soon",
+      "membersSelected": "Members selected",
+      "chooseMembers": "Choose members",
+      "inviteHint": "Choose the friends you want to share this book with",
       "skipHint": "You can skip this step"
     },
     "step4": {

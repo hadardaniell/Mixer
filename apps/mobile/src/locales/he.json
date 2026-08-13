@@ -322,7 +322,10 @@
       "inviteLabel": "הזמנת חברים (אופציונלי)",
       "invitePlaceholder": "חפשו חברים להזמנה...",
       "inviteComingSoon": "הזמנת חברים תהיה זמינה בקרוב",
-      "skipHint": "אפשר לדלג על השלב הזה"
+      "skipHint": "אפשר לדלג על השלב הזה",
+      "membersSelected": "חברים נבחרו",
+      "chooseMembers": "בחירת חברים",
+      "inviteHint": "בחרו את החברים שתרצו לשתף איתם את הספר"
     },
     "step4": {
       "title": "בחרו כריכה לספר",

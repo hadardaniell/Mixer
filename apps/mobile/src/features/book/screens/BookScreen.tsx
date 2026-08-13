@@ -1,3 +1,4 @@
+//apps/mobile/src/features/book/screens/BookScreen.tsx
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
