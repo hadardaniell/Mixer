@@ -124,12 +124,16 @@ export function ExtractionJobProvider({ children }: { children: React.ReactNode 
           }
         } catch (e) {
           if (currentId.current !== id) return;
-          setJob({
-            id,
-            status: 'failed',
-            sourceType,
-            errorKey: mapError?.(e) ?? 'newRecipe.errors.extractFailed',
-          });
+          const errorKey = mapError?.(e) ?? 'newRecipe.errors.extractFailed';
+          // A failure has to travel exactly as far as a success does. Someone who
+          // walked away from the cooking screen would otherwise never be told the
+          // import died — they'd go looking for a recipe that was never created.
+          const announce = !watching.current;
+          setJob({ id, status: 'failed', sourceType, errorKey, announce });
+
+          if (announce) {
+            void notifyLocally(t('cooking.failed.title'), t(errorKey));
+          }
         }
       })();
     },

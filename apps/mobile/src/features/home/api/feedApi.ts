@@ -18,6 +18,9 @@ interface ListResponse<T> {
   total?: number;
 }
 
+/** Must stay <= the `RecipesByIdsInputSchema` cap the API validates against. */
+const RECIPE_BATCH_SIZE = 200;
+
 export const feedApi = {
   myRecipes: (limit = 10) =>
     http<ListResponse<Recipe>>(`/recipes?owner=me&limit=${limit}`),
@@ -40,6 +43,30 @@ export const feedApi = {
   favoriteBooks: () => http<ListResponse<RecipeBook>>('/favorites?kind=book'),
 
   recipeById: (id: string) => http<Recipe>(`/recipes/${id}`),
+
+  /**
+   * Hydrates a batch of recipe ids in one round-trip. Prefer this over mapping
+   * `recipeById` over a list — that pattern is what made the home feed slow.
+   * Unreadable or deleted ids come back missing rather than as errors.
+   */
+  recipesByIds: async (ids: string[]): Promise<Recipe[]> => {
+    if (ids.length === 0) return [];
+    // The endpoint caps a batch at 200 ids; a long list goes as a few parallel
+    // requests rather than one per id.
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += RECIPE_BATCH_SIZE) {
+      chunks.push(ids.slice(i, i + RECIPE_BATCH_SIZE));
+    }
+    const responses = await Promise.all(
+      chunks.map((chunk) =>
+        http<ListResponse<Recipe>>('/recipes/by-ids', {
+          method: 'POST',
+          body: JSON.stringify({ ids: chunk }),
+        }),
+      ),
+    );
+    return responses.flatMap((r) => r.items);
+  },
 
   /** Inbox of things friends shared directly with me (as opposed to via a shared book). */
   receivedShares: (limit = 50) =>

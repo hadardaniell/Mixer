@@ -4,7 +4,8 @@
     "cancel": "בטל",
     "close": "סגור",
     "all": "הכל",
-    "search": "חפש"
+    "search": "חפש",
+    "more": "עוד"
   },
   "nav": {
     "home": "בית",
@@ -278,7 +279,8 @@
     },
     "failed": {
       "title": "משהו נשרף לנו",
-      "back": "חזרה"
+      "back": "חזרה",
+      "retry": "לנסות שוב"
     }
   },
   "createBook": {
