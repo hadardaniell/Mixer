@@ -1,3 +1,4 @@
+//apps/mobile/src/features/book/lib/bookForm.ts
 import type { CreateRecipeBookInput } from '@mixer/contracts';
 
 import { DEFAULT_COVER_KEY } from '@/shared/ui/BookCoverArt';
