@@ -16,7 +16,6 @@ import { Step4Cover } from '../components/Step4Cover';
 import { WizardFooter } from '@/features/recipe/components/manual/WizardFooter';
 import { useCreateBook } from '../hooks/useCreateBook';
 import { bookFormReducer, canAdvance, initialBookForm, toCreateInput } from '../lib/bookForm';
-import { bookApi } from '../api/bookApi';
 
 const TOTAL_STEPS = 4;
 
@@ -47,17 +46,12 @@ export function CreateBookScreen() {
       setStep((s) => s + 1);
       return;
     }
-    try {
-      const createdBook = await create.mutateAsync(toCreateInput(form));
-
-      if (form.privacy === 'shared' && form.invitedIds.length > 0) {
-        for (const userId of form.invitedIds) {
-          await bookApi.addMember(createdBook.id, {
-            userId,
-            role: form.invitedRole,
-          });
-        }
-      }
+   try {
+      await create.mutateAsync({
+        book: toCreateInput(form),
+        invitedIds: form.invitedIds,
+        invitedRole: form.invitedRole,
+      });
 
       router.replace('/home' as never);
     } catch {
