@@ -116,7 +116,10 @@ export function BookMembersSheet({
               </XStack>
             ) : (
               <XStack
-                onPress={() => setLeaveOpen(true)}
+                onPress={() => {
+                  setLeaveOpen(true);
+                  onOpenChange(false);
+                }}
                 alignItems="center"
                 gap="$3"
                 paddingVertical="$3"
@@ -170,7 +173,10 @@ export function BookMembersSheet({
             setLeaveOpen(false);
             onLeave();
           }}
-          onCancel={() => setLeaveOpen(false)}
+          onCancel={() => {
+            setLeaveOpen(false);
+            onOpenChange(true);
+          }}
         />
     </>
   );
