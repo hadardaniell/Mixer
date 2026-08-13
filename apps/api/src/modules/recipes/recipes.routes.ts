@@ -8,6 +8,7 @@ import {
   ExtractFromImageInputSchema,
   ExtractFromTextResultSchema,
   RecipeListQuerySchema,
+  RecipesByIdsInputSchema,
   UpdateRecipeInputSchema,
 } from '@mixer/contracts';
 import { config } from '../../config.js';
@@ -116,6 +117,93 @@ async function canReadViaBook(
   });
 
   return liveShare !== null;
+}
+
+/**
+ * The batch answer to `canRead` + `canReadViaShare` + `canReadViaBook`: which of
+ * these recipes may the caller read?
+ *
+ * The per-doc helpers above each hit the DB, so asking them about N recipes costs
+ * ~3N queries. This resolves the whole set in a fixed three, which is what makes a
+ * feed of dozens of ids affordable. The rules it encodes are exactly theirs —
+ * public or mine, shared with me directly, or living in a book I'm a member of /
+ * that was live-shared with me.
+ */
+async function readableRecipeIds(
+  collections: Collections,
+  req: { user?: { id: string } },
+  docs: RecipeDoc[],
+): Promise<Set<string>> {
+  const readable = new Set<string>();
+  const rest: RecipeDoc[] = [];
+  for (const doc of docs) {
+    if (canRead(req, doc)) readable.add(doc._id.toString());
+    else rest.push(doc);
+  }
+  if (!req.user || rest.length === 0) return readable;
+
+  const userId = new ObjectId(req.user.id);
+  const restIds = rest.map((d) => d._id);
+  const restSet = new Set(restIds.map((id) => id.toString()));
+
+  const [shares, books] = await Promise.all([
+    collections.sharedItems
+      .find({
+        resourceType: 'recipe',
+        resourceId: { $in: restIds },
+        friendId: userId,
+        status: { $in: ['pending', 'accepted'] },
+      })
+      .project<{ resourceId: ObjectId }>({ resourceId: 1 })
+      .toArray(),
+    collections.recipeBooks
+      .find({ recipeIds: { $in: restIds } })
+      .project<Pick<import('../../db/types.js').RecipeBookDoc, '_id' | 'ownerId' | 'members' | 'recipeIds'>>(
+        { ownerId: 1, members: 1, recipeIds: 1 },
+      )
+      .toArray(),
+  ]);
+
+  for (const s of shares) readable.add(s.resourceId.toString());
+
+  // Membership is decided in memory off the one book fetch above, rather than as a
+  // second filtered query, so the book path stays a single round-trip.
+  const outsiderBookIds: ObjectId[] = [];
+  for (const b of books) {
+    const isMember =
+      b.ownerId.equals(userId) ||
+      (b.members ?? []).some((m) => m.userId.equals(userId) && m.status !== 'pending');
+    if (isMember) {
+      for (const rid of b.recipeIds ?? []) {
+        if (restSet.has(rid.toString())) readable.add(rid.toString());
+      }
+    } else {
+      outsiderBookIds.push(b._id);
+    }
+  }
+
+  if (outsiderBookIds.length === 0) return readable;
+
+  const bookShares = await collections.sharedItems
+    .find({
+      resourceType: 'book',
+      resourceId: { $in: outsiderBookIds },
+      friendId: userId,
+      status: 'accepted',
+      savedAt: null,
+    })
+    .project<{ resourceId: ObjectId }>({ resourceId: 1 })
+    .toArray();
+  const sharedBookIds = new Set(bookShares.map((s) => s.resourceId.toString()));
+
+  for (const b of books) {
+    if (!sharedBookIds.has(b._id.toString())) continue;
+    for (const rid of b.recipeIds ?? []) {
+      if (restSet.has(rid.toString())) readable.add(rid.toString());
+    }
+  }
+
+  return readable;
 }
 
 /**
@@ -402,6 +490,38 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
       ),
       total,
+      };
+    },
+  );
+
+  /**
+   * Hydrate many recipe ids at once. The home feed and a book's recipe grid both
+   * start from a pile of ids, and fetching them one `GET /recipes/:id` at a time
+   * meant dozens of round-trips before anything could render.
+   *
+   * Registered before `/recipes/:id` so "by-ids" is never read as an id. Ids that
+   * don't resolve — deleted, or not readable by this user — are simply absent from
+   * `items`; the caller matches on id and drops the gaps.
+   */
+  app.post(
+    '/recipes/by-ids',
+    {
+      onRequest: [app.optionalAuthenticate],
+      schema: { body: RecipesByIdsInputSchema, tags: ['recipes'] },
+    },
+    async (req) => {
+      const oids = req.body.ids.map((id) => new ObjectId(id));
+      const docs = await app.collections.recipes.find({ _id: { $in: oids } }).toArray();
+      const readable = await readableRecipeIds(app.collections, req, docs);
+      const items = docs.filter((d) => readable.has(d._id.toString()));
+
+      const favSet = req.user
+        ? await favoritedIds(app.collections, req.user.id, 'recipe', items.map((r) => r._id))
+        : null;
+      return {
+        items: items.map((r) =>
+          favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
+        ),
       };
     },
   );

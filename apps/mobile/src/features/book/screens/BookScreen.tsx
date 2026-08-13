@@ -61,8 +61,12 @@ export function BookScreen({ bookId }: BookScreenProps) {
     return q ? recipes.filter((r) => r.name.toLowerCase().includes(q)) : recipes;
   }, [recipes, query]);
 
+  // Always land on the feed rather than unwinding the stack. A book is reached from
+  // several places — the feed, a "see all" list, a notification, a share link — and
+  // `router.back()` sent people somewhere different each time, or nowhere at all when
+  // the book was the first screen of the session.
   const goBack = () => {
-    router.back();
+    router.replace('/home');
   };
 
   if (isLoading) {

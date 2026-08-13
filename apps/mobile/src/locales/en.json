@@ -4,7 +4,8 @@
     "cancel": "Cancel",
     "close": "Close",
     "all": "All",
-    "search": "Search"
+    "search": "Search",
+    "more": "More"
   },
   "nav": {
     "home": "Home",
@@ -281,7 +282,8 @@
     },
     "failed": {
       "title": "That one burned",
-      "back": "Back"
+      "back": "Back",
+      "retry": "Try again"
     }
   },
   "createBook": {

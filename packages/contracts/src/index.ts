@@ -214,6 +214,16 @@ export const RecipeListQuerySchema = z.object({
 });
 export type RecipeListQuery = z.infer<typeof RecipeListQuerySchema>;
 
+// Batch hydration of recipe ids into full recipes. Exists so the home feed and a
+// book's grid can resolve dozens of ids in one round-trip instead of one request
+// per id — the same shape as `UsersByIdsInputSchema`. Ids the caller may not read
+// (or that no longer exist) are omitted from the response rather than erroring,
+// so one deleted recipe can't empty a whole row.
+export const RecipesByIdsInputSchema = z.object({
+  ids: z.array(ObjectIdString).min(1).max(200),
+});
+export type RecipesByIdsInput = z.infer<typeof RecipesByIdsInputSchema>;
+
 // --- categories ---
 // A food-type "chip" (e.g. pasta, soups, desserts). Labels are stored per
 // language in the DB so categories can be added/edited without an app release.

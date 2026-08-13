@@ -70,21 +70,19 @@ export function BookHero({
 
   return (
     <YStack width="100%">
-      {/* Floating Header Bar containing Back and Overflow buttons */}
+      {/* Back is the only thing floating up here now — the overflow moved down to sit
+          with the other two controls that act on this book (edit, favourite), so the
+          book's actions read as one group instead of one orphan in the corner. */}
       <XStack
         paddingHorizontal={20}
         paddingTop={insets.top + 8}
         paddingBottom={8}
-        justifyContent="space-between"
+        justifyContent="flex-start"
         alignItems="center"
         style={{ direction: isRtl ? 'rtl' : 'ltr' } as never}
       >
         <CircleButton onPress={onBack}>
           <BackIcon size={22} color={ink} strokeWidth={2.2} />
-        </CircleButton>
-
-        <CircleButton onPress={onOverflow}>
-          <MoreVertical size={22} color={ink} strokeWidth={2.2} />
         </CircleButton>
       </XStack>
 
@@ -104,8 +102,9 @@ export function BookHero({
             {book.name}
           </Text>
 
-          {/* Pencil then star, so the star lands on the outer edge of the row.
-              The edit pencil only shows for owners and editors. */}
+          {/* Pencil, star, then overflow — the overflow last so the "more" affordance
+              lands on the outer edge of the row, where a menu is expected. The edit
+              pencil only shows for owners and editors. */}
           <XStack alignItems="center" gap="$1">
             {canEdit ? (
               <YStack
@@ -127,6 +126,18 @@ export function BookHero({
               onPress={onToggleFavorite}
               size={26}
             />
+            <YStack
+              onPress={onOverflow}
+              role="button"
+              aria-label={t('common.more')}
+              width={38}
+              height={38}
+              alignItems="center"
+              justifyContent="center"
+              pressStyle={{ opacity: 0.7 }}
+            >
+              <MoreVertical size={22} color={theme.textMuted?.val as string} strokeWidth={2} />
+            </YStack>
           </XStack>
         </XStack>
 

@@ -1,4 +1,3 @@
-import type { Recipe } from '@mixer/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -37,16 +36,11 @@ export function useRecentlyViewed(limit = MAX_HOME_PREVIEW): {
   const recipesQ = useQuery({
     queryKey: ['feed', 'recently-viewed', stableKey],
     enabled: ids.length > 0,
-    queryFn: async () => {
-      // Resilient hydration: one deleted/inaccessible recipe (a 404) must not
-      // take down the whole row. `Promise.all` would reject on the first
-      // failure and hide every recently-viewed item; `allSettled` drops only
-      // the ones that failed and keeps the rest.
-      const settled = await Promise.allSettled(ids.map((id) => feedApi.recipeById(id)));
-      return settled
-        .filter((r): r is PromiseFulfilledResult<Recipe> => r.status === 'fulfilled')
-        .map((r) => r.value);
-    },
+    // One batch call rather than one request per id — the row is re-hydrated on
+    // every visit to home, so the round-trips added up. Resilient by
+    // construction: a deleted or now-inaccessible recipe is simply absent from
+    // the response instead of failing the whole row.
+    queryFn: () => feedApi.recipesByIds(ids),
   });
 
   const items = useMemo(() => {

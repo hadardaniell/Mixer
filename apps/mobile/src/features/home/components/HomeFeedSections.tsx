@@ -12,6 +12,7 @@ import {
 import { useHomeFeed } from '@/features/home/hooks/useHomeFeed';
 import { BookCard, type BookCardData } from '@/shared/ui/BookCard';
 import { FeedSection } from '@/shared/ui/FeedSection';
+import { Loader } from '@/shared/ui/Loader';
 import { RecipeCard, type RecipeCardData } from '@/shared/ui/RecipeCard';
 
 /** Feed mode body: the import CTA + the horizontal feed sections. */
@@ -44,6 +45,15 @@ export function HomeFeedSections() {
         </YStack>
 
         {isFeedEmpty ? <HomeEmptyState onCreatePress={openNewRecipe} /> : null}
+
+        {/* The rows all hide themselves while empty, so a loading feed used to be the
+            CTA card alone on white — indistinguishable from a brand-new account. The
+            orbiting blobs say "there's more coming" until the sections can render. */}
+        {feed.isLoading ? (
+          <YStack paddingVertical={48} alignItems="center" justifyContent="center">
+            <Loader />
+          </YStack>
+        ) : null}
 
         <FeedSection<RecipeCardData & { isFavorite: boolean }>
           title={t('home.recentlyViewed')}

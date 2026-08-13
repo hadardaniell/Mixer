@@ -14,13 +14,17 @@ import { MixerXMark } from '@/shared/ui/MixerXMark';
 const DWELL_MS = 9000;
 
 /**
- * "Your recipe is ready", dropped in from the top of whatever screen you're on.
+ * How a finished import announces itself, dropped in from the top of whatever screen
+ * you're on — "your recipe is ready", or that it failed.
  *
  * Mounted once at the root, above the router, because the whole point is that it can
  * reach the user wherever they wandered off to. It only appears for a job flagged
- * `announce` — one that finished while nobody was watching the cooking screen. Finish
- * with the screen open and you get taken to the recipe instead, which beats being told
- * about something already in front of you.
+ * `announce` — one that settled while nobody was watching the cooking screen. Settle
+ * with the screen open and it handles the outcome itself (navigating to the recipe, or
+ * showing the failure in place), which beats being told about what's in front of you.
+ *
+ * Both outcomes travel: a failure that stayed silent left the user waiting for a
+ * recipe that was never created.
  *
  * The three touch targets are siblings, never nested: on web a `<button>` inside a
  * `<button>` is invalid DOM and React says so out loud.
@@ -32,7 +36,10 @@ export function ExtractionReadyBanner() {
   const insets = useSafeAreaInsets();
   const { job, clear } = useExtractionJob();
 
-  const show = job?.status === 'ready' && !!job.recipe && job.announce === true;
+  const announced = job?.announce === true;
+  const isReady = job?.status === 'ready' && !!job.recipe && announced;
+  const isFailed = job?.status === 'failed' && announced;
+  const show = isReady || isFailed;
 
   // Retire on its own. A banner that waits forever becomes furniture.
   useEffect(() => {
@@ -41,12 +48,20 @@ export function ExtractionReadyBanner() {
     return () => clearTimeout(id);
   }, [show, clear]);
 
-  if (!show || !job?.recipe) return null;
+  if (!show || !job) return null;
 
-  const recipeId = job.recipe.id;
+  const title = isFailed ? t('cooking.failed.title') : t('cooking.ready.title');
+  const body = isFailed
+    ? t(job.errorKey ?? 'newRecipe.errors.extractFailed')
+    : t('cooking.ready.body', { title: job.recipe?.title });
+  const actionLabel = isFailed ? t('cooking.failed.retry') : t('cooking.ready.open');
+
+  // Success opens what was made; failure offers the only useful next move — going
+  // back to the import screen to try again.
+  const recipeId = job.recipe?.id;
   const open = () => {
     clear();
-    router.push(`/recipes/${recipeId}` as never);
+    router.push((isFailed ? '/new-recipe' : `/recipes/${recipeId}`) as never);
   };
 
   return (
@@ -83,15 +98,17 @@ export function ExtractionReadyBanner() {
               alignItems="center"
               justifyContent="center"
             >
-              <MixerXMark size={22} color="$primary" />
+              {/* Same mark either way — a failure greys it out rather than
+                  introducing a second colour just to say "bad". */}
+              <MixerXMark size={22} color={isFailed ? '$textSubtle' : '$primary'} />
             </YStack>
 
             <YStack flex={1} gap={1}>
               <Text fontSize={14} fontWeight="700" color="$text" numberOfLines={1}>
-                {t('cooking.ready.title')}
+                {title}
               </Text>
-              <Text fontSize={12} color="$textMuted" numberOfLines={1}>
-                {t('cooking.ready.body', { title: job.recipe.title })}
+              <Text fontSize={12} color="$textMuted" numberOfLines={2}>
+                {body}
               </Text>
             </YStack>
           </XStack>
@@ -107,7 +124,7 @@ export function ExtractionReadyBanner() {
             pressStyle={{ opacity: 0.85 }}
           >
             <Text fontSize={12.5} fontWeight="700" color="$buttonPrimaryText">
-              {t('cooking.ready.open')}
+              {actionLabel}
             </Text>
           </YStack>
         </Pressable>
