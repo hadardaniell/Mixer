@@ -17,6 +17,10 @@ interface ContactsSync {
  * "Contacts on Mixer" flow. Kept out of the screen so the permission +
  * contact-reading + normalization sequence lives in one testable place.
  *
+ * Native-only — the browser has no address book, so the web build shows a
+ * search prompt instead and never reaches this hook. See
+ * `ContactsEmptyState.web.tsx`.
+ *
  * Deliberately does not auto-run on mount — reading contacts is sensitive, so
  * it fires only when the user taps the connect button.
  */

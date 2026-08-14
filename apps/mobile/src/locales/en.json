@@ -119,6 +119,10 @@
     "remove": "Remove",
     "removeTitle": "Remove friend",
     "removeMessage": "Remove {{name}} from your friends?",
+    "searchPrompt": {
+      "title": "Find friends",
+      "subtitle": "Search above by name, or by full phone number."
+    },
     "contacts": {
       "sectionTitle": "Contacts on Mixer",
       "loading": "Finding your contacts…",

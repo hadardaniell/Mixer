@@ -119,6 +119,10 @@
     "remove": "הסרה",
     "removeTitle": "הסרת חבר",
     "removeMessage": "להסיר את {{name}} מרשימת החברים?",
+    "searchPrompt": {
+      "title": "מצאו חברים",
+      "subtitle": "חפשו למעלה לפי שם, או לפי מספר טלפון מלא."
+    },
     "contacts": {
       "sectionTitle": "אנשי קשר ב‑Mixer",
       "loading": "מחפשים את אנשי הקשר שלכם…",
