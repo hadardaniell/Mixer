@@ -303,6 +303,10 @@ const surfacesLight = {
   searchBar: '#F5F7F8', // search field fill (feed + search page)
   surfaceElevated: '#FFFFFF', // modals, menus
   overlay: 'rgba(17, 24, 39, 0.50)', // modal/sheet scrim
+  // Circular controls floating on a cover photo. Translucent so the picture
+  // reads through them, and identical in both modes: the disc sits on the
+  // photo, never on the app canvas, and its glyphs are always ink.
+  discOnPhoto: 'rgba(255, 255, 255, 0.80)',
   // Foregrounds used on top of `background`. With a light canvas these are the
   // dark ink/muted values; themes pull them into $text / $textMuted etc.
   onBackground: '#111827',
@@ -317,6 +321,7 @@ const surfacesDark = {
   searchBar: '#1B2230', // search field fill (feed + search page)
   surfaceElevated: '#232C3C',
   overlay: 'rgba(0, 0, 0, 0.6)',
+  discOnPhoto: 'rgba(255, 255, 255, 0.80)',
   onBackground: '#F1F3F7',
   onBackgroundMuted: '#AEB6C2',
   onBackgroundSubtle: '#7E8696',

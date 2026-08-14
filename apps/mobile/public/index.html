@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!--
+      `viewport-fit=cover` lets the page reach under the notch and the home
+      indicator, which is what makes a saved page feel installed rather than
+      letterboxed inside a white frame.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
+    />
+    <title>Mixer</title>
+
+    <!--
+      Home-screen icons.
+
+      iOS takes its icon ONLY from `apple-touch-icon` and ignores the manifest
+      entirely; Android reads only the manifest. Hence both, and hence this file:
+      "Add to Home Screen" reads the document as served, so neither can be
+      injected from JavaScript after the app mounts.
+
+      180px is the size iOS asks for. Both images are opaque ink — iOS
+      composites a home-screen icon onto white, so a transparent glyph would
+      come out as a blank square.
+    -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Mixer" />
+
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#111827" />
+
+    <!-- react-native-web's recommended reset: body must not scroll, so the app's
+         own ScrollViews behave the way they do on native. -->
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

@@ -53,8 +53,17 @@ export function CreateFromLinkScreen() {
     }
   }, [params.url, params.text, params.link]);
 
-  // Pre-fill URL if launched from system Share Intent or incoming deep link
+  // Pre-fill URL if launched from a system Share Intent or an incoming deep link.
+  //
+  // Native only. On web there is no share intent to read, and
+  // `Linking.getInitialURL()` resolves to the page's *own* address — so this
+  // pre-filled the field with Mixer's own URL on every visit
+  // (`http://localhost:8081/start` in dev, the deployed origin in production).
+  // A web share arrives as a search param instead, via the manifest's
+  // `share_target`, which the effect above already handles.
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     Linking.getInitialURL().then((initialUrl) => {
       if (initialUrl) {
         const extracted = extractUrl(initialUrl);

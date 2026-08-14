@@ -92,13 +92,10 @@ export default function RootLayout() {
           }
           themeColor.setAttribute('content', APP_BACKGROUND_COLOR);
 
-          let manifestLink = document.querySelector('link[rel="manifest"]');
-          if (!manifestLink) {
-            manifestLink = document.createElement('link');
-            manifestLink.setAttribute('rel', 'manifest');
-            manifestLink.setAttribute('href', '/manifest.json');
-            document.head.appendChild(manifestLink);
-          }
+          // The manifest link used to be created here. It now ships in the served
+          // HTML (`app/+html.tsx`), because "Add to Home Screen" reads the
+          // document before any of this runs — injecting it from an effect was
+          // always too late for the one thing it was for.
           const styleId = 'app-rtl-overrides';
           let style = document.getElementById(styleId);
           if (!style) {

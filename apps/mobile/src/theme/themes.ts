@@ -18,6 +18,7 @@ type ThemeShape = {
   categoryChipText: string;
   surfaceElevated: string;
   overlay: string;
+  discOnPhoto: string;
 
   // Text
   text: string;
@@ -145,6 +146,7 @@ const buildTheme = (mode: 'Light' | 'Dark'): ThemeShape => {
     categoryChipText: c.gray12Light,
     surfaceElevated: c[k('surfaceElevated')],
     overlay: c[k('overlay')],
+    discOnPhoto: c[k('discOnPhoto')],
 
     // Text — on the page background (dark teal), so use mint foregrounds.
     // Components on white `surface` (inputs, cards) keep using gray scale.
