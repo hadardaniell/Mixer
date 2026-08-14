@@ -49,6 +49,60 @@ async function fetchWebpageText(url: string): Promise<string> {
 }
 
 /**
+ * Reads the page's Open Graph preview image (`og:image`).
+ *
+ * This is what TikTok/YouTube get from oEmbed, for everyone else: a picture the
+ * page itself declares as representing its content — on a recipe site that's the
+ * photo of the finished dish. Far better than anything we could search for, and
+ * it costs one request.
+ *
+ * Not read from `fetchWebpageText`: that goes through Jina Reader, which returns
+ * markdown with the `<head>` already stripped. So we fetch the raw HTML here.
+ *
+ * Best-effort by design — returns undefined on anything unexpected. A missing
+ * cover is handled downstream; a thrown error would fail the whole import.
+ */
+async function fetchOpenGraphImage(url: string, log: (msg: string) => void): Promise<string | undefined> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return undefined;
+
+    // Meta tags live in <head>, so the opening chunk is all we need — pages can
+    // be megabytes and we are only after one attribute.
+    const html = (await response.text()).slice(0, 200_000);
+
+    // Attribute order varies between sites (`property` before or after
+    // `content`), so try both arrangements before giving up.
+    const patterns = [
+      /<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url|:url)?|twitter:image)["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image(?::secure_url|:url)?|twitter:image)["']/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      const raw = match?.[1]?.trim();
+      if (!raw) continue;
+      // Some sites declare a root-relative path; the recipe schema requires an
+      // absolute URL, so resolve it against the page.
+      const absolute = new URL(raw, url).toString();
+      if (!/^https?:/i.test(absolute)) continue;
+      log(`[extract/url] Captured og:image as recipe cover: ${absolute}`);
+      return absolute;
+    }
+    return undefined;
+  } catch (err) {
+    log(`[extract/url] og:image lookup failed: ${err instanceof Error ? err.message : err}`);
+    return undefined;
+  }
+}
+
+/**
  * For TikTok URLs, use the public oEmbed API to retrieve the video caption/title.
  * This avoids scraping the TikTok HTML page which contains no useful recipe text.
  */
@@ -462,8 +516,18 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
               text = result.text;
               if (result.thumbnailUrl) videoThumbnailUrlFallback = result.thumbnailUrl;
             } else {
+              // Everything without a dedicated branch — Facebook, Pinterest, a
+              // plain recipe site. No oEmbed to ask, so take the page's own
+              // declared preview image.
               app.log.info(`[extract/url] Scraping text from webpage URL (fallback): ${url}`);
-              text = await fetchWebpageText(url);
+              const [pageText, ogImageUrl] = await Promise.all([
+                fetchWebpageText(url),
+                fetchOpenGraphImage(url, (msg) => app.log.info(msg)),
+              ]);
+              text = pageText;
+              if (!videoThumbnailUrlFallback && ogImageUrl) {
+                videoThumbnailUrlFallback = ogImageUrl;
+              }
             }
 
             app.log.info(`[extract/url] Extracting recipe from caption/scraped text`);
@@ -490,10 +554,19 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
       } else {
         try {
           app.log.info(`[extract/url] Scraping text from webpage URL: ${url}`);
-          const text = await fetchWebpageText(url);
+          // In parallel with the text scrape — it's an independent request and
+          // Jina is the slow half, so the cover costs no extra wall-clock time.
+          const [text, ogImageUrl] = await Promise.all([
+            fetchWebpageText(url),
+            fetchOpenGraphImage(url, (msg) => app.log.info(msg)),
+          ]);
 
           app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
-          return await extractRecipeFromText(text);
+          const recipe = await extractRecipeFromText(text);
+          if (!recipe.coverImageUrl && ogImageUrl) {
+            recipe.coverImageUrl = ogImageUrl;
+          }
+          return recipe;
         } catch (error) {
           if (error instanceof Error && error.message === 'not_a_recipe') {
             return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });

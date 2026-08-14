@@ -16,6 +16,7 @@ import type {
   UrlExtractionCacheDoc,
   RecipeTranslationDoc,
   PushTokenDoc,
+  CoverImageDoc,
 } from '../db/types.js';
 
 export type Collections = {
@@ -31,6 +32,7 @@ export type Collections = {
   urlExtractionCache: Collection<UrlExtractionCacheDoc>;
   recipeTranslations: Collection<RecipeTranslationDoc>;
   pushTokens: Collection<PushTokenDoc>;
+  coverImages: Collection<CoverImageDoc>;
 };
 
 declare module 'fastify' {
@@ -65,6 +67,7 @@ export async function mongoPlugin(app: FastifyInstance): Promise<void> {
     urlExtractionCache: db.collection<UrlExtractionCacheDoc>('url_extraction_cache'),
     recipeTranslations: db.collection<RecipeTranslationDoc>('recipe_translations'),
     pushTokens: db.collection<PushTokenDoc>('push_tokens'),
+    coverImages: db.collection<CoverImageDoc>('cover_images'),
   };
 
   await ensureValidators(app, db);
@@ -186,4 +189,8 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   await collections.pushTokens.createIndex({ userId: 1, deviceId: 1 }, { unique: true });
   // Fast lookup when Expo reports an invalid token and we need to delete it.
   await collections.pushTokens.createIndex({ token: 1 });
+
+  // One image per dish — the whole point of the cover library is that the same
+  // dish never gets generated twice.
+  await collections.coverImages.createIndex({ dishKey: 1 }, { unique: true });
 }

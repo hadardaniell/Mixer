@@ -14,6 +14,7 @@ import { extractImageRoutes } from './modules/extract-image/extract-image.routes
 import { embedRoutes } from './modules/embed/embed.routes.js';
 import { translateRoutes } from './modules/translate/translate.routes.js';
 import { suggestKeywordRoutes } from './modules/suggest-keyword/suggest-keyword.routes.js';
+import { generateImageRoutes } from './modules/generate-image/generate-image.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   // `warn`: silence Fastify's startup ("Server listening at…") and per-request
@@ -49,6 +50,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(embedRoutes);
   await app.register(translateRoutes);
   await app.register(suggestKeywordRoutes);
-  
+  await app.register(generateImageRoutes);
+
   return app;
 }
