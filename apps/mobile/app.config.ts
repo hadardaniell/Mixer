@@ -37,6 +37,24 @@ const config: ExpoConfig = {
       foregroundImage: './src/assets/icon/adaptive-icon.png',
       backgroundColor: '#111827',
     },
+    intentFilters: [
+      {
+        action: 'VIEW',
+        autoVerify: true,
+        data: [
+          { scheme: 'mixer' },
+          { scheme: 'com.hadardaniell.mixer' },
+        ],
+        category: ['DEFAULT', 'BROWSABLE'],
+      },
+      {
+        action: 'SEND',
+        category: ['DEFAULT'],
+        data: [
+          { mimeType: 'text/plain' },
+        ],
+      },
+    ],
   },
   web: {
     bundler: 'metro',
