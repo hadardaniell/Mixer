@@ -370,6 +370,12 @@ export const ExtractFailureCodeSchema = z.enum([
   'video_too_long',
   /** Never got the content at all: site blocked us, scraper down, dead link. */
   'source_unreachable',
+  /**
+   * A full-length YouTube link. Refused from the URL alone, before any network
+   * call — importing one needs the video itself, and downloading it is blocked.
+   * Only Shorts are supported.
+   */
+  'youtube_not_supported',
 ]);
 export type ExtractFailureCode = z.infer<typeof ExtractFailureCodeSchema>;
 
