@@ -198,6 +198,8 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
           editing={editing}
           onStartEdit={editor.start}
           onCancelEdit={editor.cancel}
+          onDelete={() => setDeleteOpen(true)}
+          isDeleting={deleteRecipe.isPending}
           editTitle={form.title}
           editDescription={form.description}
           editCoverImageUrl={form.coverImageUrl}
@@ -276,22 +278,6 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
               pressStyle={{ opacity: 0.6 }}
             >
               {t('recipe.edit.cancel')}
-            </Text>
-
-            {/* Destructive, owner-only. Kept apart from save/cancel with extra
-                space so it isn't hit by accident. */}
-            <Text
-              onPress={deleteRecipe.isPending ? undefined : () => setDeleteOpen(true)}
-              fontSize={15}
-              fontWeight="700"
-              color="$danger"
-              textAlign="center"
-              paddingVertical="$2"
-              marginTop="$3"
-              opacity={deleteRecipe.isPending ? 0.5 : 1}
-              pressStyle={{ opacity: 0.6 }}
-            >
-              {deleteRecipe.isPending ? t('recipe.delete.deleting') : t('recipe.delete.action')}
             </Text>
           </YStack>
         ) : (
