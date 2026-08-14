@@ -47,6 +47,7 @@ export function RegisterStep2({
   const success = theme.success?.val as string;
 
   const passwordValid = password.length >= 8;
+  const passwordStarted = password.length > 0;
   const confirmMismatch = !!confirmPassword && confirmPassword !== password;
   const ready = passwordValid && !!confirmPassword && agreed && !confirmMismatch;
 
@@ -94,8 +95,8 @@ export function RegisterStep2({
               }
             />
             <XStack alignItems="center" gap="$2">
-              <Check size={16} color={passwordValid ? success : muted} />
-              <Text color={passwordValid ? '$success' : '$textMuted'} fontSize={13}>
+              {passwordValid ? <Check size={16} color={success} /> : <View style={{ width: 16, height: 16 }} />}
+              <Text color={passwordValid ? '$success' : passwordStarted ? '$dangerText' : '$textMuted'} fontSize={13}>
                 {t('auth.passwordMinHint')}
               </Text>
             </XStack>
