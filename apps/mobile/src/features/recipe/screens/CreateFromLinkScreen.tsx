@@ -1,8 +1,8 @@
 import { Globe, Link as LinkIcon, MessageCircle, Play } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, ScrollView, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
@@ -17,6 +17,18 @@ import { IconChip } from '@/shared/ui/IconChip';
 
 const INPUT_FONT = Platform.select({ web: 'Rubik', default: 'Rubik_400Regular' });
 
+function extractUrl(input?: string | null): string | null {
+  if (!input) return null;
+  try {
+    const decoded = decodeURIComponent(input);
+    const match = decoded.match(/(https?:\/\/[^\s"'<>]+)/i);
+    return match ? match[1] : null;
+  } catch {
+    const match = input.match(/(https?:\/\/[^\s"'<>]+)/i);
+    return match ? match[1] : null;
+  }
+}
+
 export function CreateFromLinkScreen() {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -26,8 +38,52 @@ export function CreateFromLinkScreen() {
   const isRtl = isRTL(language);
   const ink = theme.text?.val as string;
 
+  const params = useLocalSearchParams<{ url?: string; text?: string; link?: string }>();
   const [url, setUrl] = useState('');
   const { start } = useExtractionJob();
+
+  // Pre-fill URL if passed via route search params
+  useEffect(() => {
+    const candidate = params.url || params.text || params.link;
+    if (candidate) {
+      const extracted = extractUrl(candidate);
+      if (extracted) {
+        setUrl(extracted);
+      }
+    }
+  }, [params.url, params.text, params.link]);
+
+  // Pre-fill URL if launched from a system Share Intent or an incoming deep link.
+  //
+  // Native only. On web there is no share intent to read, and
+  // `Linking.getInitialURL()` resolves to the page's *own* address — so this
+  // pre-filled the field with Mixer's own URL on every visit
+  // (`http://localhost:8081/start` in dev, the deployed origin in production).
+  // A web share arrives as a search param instead, via the manifest's
+  // `share_target`, which the effect above already handles.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    Linking.getInitialURL().then((initialUrl) => {
+      if (initialUrl) {
+        const extracted = extractUrl(initialUrl);
+        if (extracted) {
+          setUrl(extracted);
+        }
+      }
+    });
+
+    const subscription = Linking.addEventListener('url', (event) => {
+      if (event.url) {
+        const extracted = extractUrl(event.url);
+        if (extracted) {
+          setUrl(extracted);
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // The extraction is handed to the job provider and this screen is replaced by the
   // cooking screen straight away. Nothing is awaited here — that's what lets the user

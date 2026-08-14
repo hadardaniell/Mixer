@@ -91,6 +91,11 @@ export default function RootLayout() {
             document.head.appendChild(themeColor);
           }
           themeColor.setAttribute('content', APP_BACKGROUND_COLOR);
+
+          // The manifest link used to be created here. It now ships in the served
+          // HTML (`public/index.html`), because "Add to Home Screen" reads the
+          // document before any of this runs — injecting it from an effect was
+          // always too late for the one thing it was for.
           const styleId = 'app-rtl-overrides';
           let style = document.getElementById(styleId);
           if (!style) {

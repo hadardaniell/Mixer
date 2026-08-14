@@ -18,6 +18,10 @@ const zlib = require('zlib');
 
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'src/assets/icon') + path.sep;
+// Web icons are fetched by URL from the served root (the manifest and the
+// apple-touch-icon link both point at absolute paths), so they go to `public/`
+// rather than into the bundler's asset graph.
+const WEB_OUT = path.join(ROOT, 'public') + path.sep;
 
 const VB = { x: 693.1, y: 295.3, w: 193.5, h: 209.4 };
 const PATH = (() => {
@@ -198,6 +202,7 @@ function compose(size, alpha, { bg, fg }) {
 
 const polys = parsePath(PATH);
 fs.mkdirSync(OUT, { recursive: true });
+fs.mkdirSync(WEB_OUT, { recursive: true });
 
 const assets = [
   // Store / home-screen icon: opaque, no alpha channel — Apple rejects transparency.
@@ -208,17 +213,32 @@ const assets = [
   // Android notification icon: the platform renders it as a white silhouette.
   { name: 'notification-icon.png', size: 96, coverage: 0.7, bg: null, fg: WHITE },
   { name: 'favicon.png', size: 64, coverage: 0.62, bg: INK, fg: WHITE },
+  // Web home-screen icons — the same white-x-on-ink as the favicon, so a page
+  // saved from the browser looks identical to the app installed from a store.
+  //
+  // All three are opaque: iOS composites a home-screen icon onto white, so a
+  // transparent glyph would come out as a white square. Same reason `icon.png`
+  // above carries no alpha.
+  //
+  // iOS reads `apple-touch-icon` from the HTML and ignores the manifest's icons
+  // entirely; Android reads only the manifest. Hence both sets.
+  { name: 'apple-touch-icon.png', size: 180, coverage: 0.62, bg: INK, fg: WHITE, web: true },
+  { name: 'pwa-192.png', size: 192, coverage: 0.62, bg: INK, fg: WHITE, web: true },
+  // Android may crop this to a circle for a maskable slot, so the glyph is held
+  // inside the 66% safe zone rather than at the favicon's tighter framing.
+  { name: 'pwa-512.png', size: 512, coverage: 0.48, bg: INK, fg: WHITE, web: true },
 ];
 
 for (const a of assets) {
   const alpha = rasterize(polys, a.size, a.coverage);
   const { buf, channels } = compose(a.size, alpha, { bg: a.bg, fg: a.fg });
-  const bytes = writePng(OUT + a.name, a.size, buf, channels);
+  const dir = a.web ? WEB_OUT : OUT;
+  const bytes = writePng(dir + a.name, a.size, buf, channels);
   // Sanity: how much of the square the glyph actually covers.
   let ink = 0;
   for (let p = 0; p < alpha.length; p++) if (alpha[p] > 127) ink++;
   console.log(
-    `${a.name}  ${a.size}x${a.size}  ${channels === 4 ? 'RGBA' : 'RGB'}  ` +
+    `${a.web ? 'public/' : ''}${a.name}  ${a.size}x${a.size}  ${channels === 4 ? 'RGBA' : 'RGB'}  ` +
       `${(bytes / 1024).toFixed(1)}KB  glyph=${((ink / alpha.length) * 100).toFixed(1)}%`,
   );
 }

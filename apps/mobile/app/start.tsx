@@ -21,7 +21,9 @@ export default function StartScreen() {
       backgroundColor="$bg"
       paddingHorizontal="$5"
       paddingTop={insets.top + 24}
-      paddingBottom={insets.bottom + 24}
+      // 32 = the 2em asked for, at the 16px root size. React Native has no `em`,
+      // so it is resolved here rather than left as a unit the runtime ignores.
+      paddingBottom={insets.bottom + 32}
     >
       <YStack flex={1} justifyContent="space-between">
         {/* Hero: the mixer animation, tagline beneath it */}
