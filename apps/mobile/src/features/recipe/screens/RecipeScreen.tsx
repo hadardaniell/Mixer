@@ -132,11 +132,8 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
       return next;
     });
 
-  // Only the owner sees "share" (the server refuses to share someone else's
-  // recipe); everyone else gets "save a copy" in that slot instead. Owners still
-  // can't share an unpublished draft, so that one reason stays surfaced.
   const isOwner = recipe.ownerId === user?.id;
-  const canShare = isOwner && recipe.status !== 'draft';
+  const canShare = recipe.status !== 'draft';
   const { editing, form, dispatch } = editor;
 
   const handleShare = () => {
@@ -144,7 +141,6 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
       setShareSheetOpen(true);
       return;
     }
-    // Owner + draft — the only remaining block worth explaining.
     setShareNotice('draft');
     if (shareNoticeTimer.current) clearTimeout(shareNoticeTimer.current);
     shareNoticeTimer.current = setTimeout(() => setShareNotice(null), 3000);
