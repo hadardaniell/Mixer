@@ -26,7 +26,7 @@ import {
   needsGeneratedCover,
 } from './recipes.service.js';
 import { cosineSimilarity, escapeRegex, applySearchFilter } from './search.utils.js';
-import { canRead, tagMatchesCategory } from './recipes.utils.js';
+import { canRead, tagMatchesCategory, visibleRecipeFilter } from './recipes.utils.js';
 
 const IdParam = z.object({ id: z.string().regex(/^[a-f0-9]{24}$/i) });
 
@@ -478,17 +478,13 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       } else if (!req.user) {
         filter.visibility = { $ne: 'private' };
       } else {
-        const userId = new ObjectId(req.user.id);
-        const memberBooks = await app.collections.recipeBooks
-          .find({ $or: [{ ownerId: userId }, { 'members.userId': userId }] })
-          .project({ recipeIds: 1 })
-          .toArray();
-        const bookRecipeIds = memberBooks.flatMap((b) => (b as { recipeIds?: ObjectId[] }).recipeIds ?? []);
-        filter.$or = [
-          { ownerId: userId },
-          { visibility: { $ne: 'private' } },
-          ...(bookRecipeIds.length ? [{ _id: { $in: bookRecipeIds } }] : []),
-        ];
+        // Browsing and search are scoped to what the home feed shows — the
+        // caller's own recipes plus everything reached through their books,
+        // direct shares and favourites. This used to also match every
+        // non-private recipe in the database, which made category browsing and
+        // search a catalogue of strangers' recipes.
+        const scope = await visibleRecipeFilter(app.collections, new ObjectId(req.user.id));
+        Object.assign(filter, scope);
       }
 
       // Drafts are private work-in-progress. They surface only when explicitly
@@ -1087,24 +1083,11 @@ app.post(
 
       const { embedding: queryEmbedding } = await embedResponse.json() as { embedding: number[] };
 
-      let visibilityFilter: Filter<RecipeDoc>;
-      if (req.user) {
-        const userId = new ObjectId(req.user.id);
-        const memberBooks = await app.collections.recipeBooks
-          .find({ $or: [{ ownerId: userId }, { 'members.userId': userId }] })
-          .project({ recipeIds: 1 })
-          .toArray();
-        const bookRecipeIds = memberBooks.flatMap((b) => (b as { recipeIds?: ObjectId[] }).recipeIds ?? []);
-        visibilityFilter = {
-          $or: [
-            { ownerId: userId },
-            { visibility: { $in: ['public', 'unlisted'] } },
-            ...(bookRecipeIds.length ? [{ _id: { $in: bookRecipeIds } }] : []),
-          ],
-        };
-      } else {
-        visibilityFilter = { visibility: { $in: ['public', 'unlisted'] } };
-      }
+      // Same scope as the keyword listing above — the two must agree, or a
+      // recipe would be findable by one search box and not the other.
+      const visibilityFilter: Filter<RecipeDoc> = req.user
+        ? await visibleRecipeFilter(app.collections, new ObjectId(req.user.id))
+        : { visibility: { $in: ['public', 'unlisted'] } };
 
       const recipes = await app.collections.recipes
         // Exclude drafts — search should only surface published recipes, even

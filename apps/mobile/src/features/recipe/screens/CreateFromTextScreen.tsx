@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlignLeft } from 'lucide-react-native';
-import { KeyboardAvoidingView, Platform, Pressable, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
@@ -45,8 +45,19 @@ export function CreateFromTextScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Scrollable for the same reason as the link screen: the absolute tab bar
+          clips whatever doesn't fit, and here the CTA and the inspiration chips
+          sit below a text box that grows. `keyboardShouldPersistTaps` so a tap
+          on the CTA lands while the keyboard is still up, instead of being eaten
+          by the dismiss. */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
       <YStack
-        flex={1}
+        flexGrow={1}
         width="100%"
         paddingHorizontal="$4"
         paddingTop={insets.top + 24}
@@ -64,7 +75,7 @@ export function CreateFromTextScreen() {
         </YStack>
 
         <YStack
-          flex={1}
+          flexGrow={1}
           backgroundColor="$surface"
           borderRadius={14}
           borderWidth={focused ? 2 : 1}
@@ -143,6 +154,7 @@ export function CreateFromTextScreen() {
           </XStack>
         </YStack>
       </YStack>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
