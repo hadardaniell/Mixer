@@ -15,6 +15,7 @@ import { videoLlamaService } from '../../videoLlama.service.js';
 import { retryWithBackoff } from '../../utils/retry.utils.js';
 import { SourceUnreachableError } from './extract-failure.js';
 import { stripMarkdownNoise } from '../../utils/markdown.utils.js';
+import { isUnsupportedYouTubeUrl } from '../../utils/youtube.utils.js';
 
 function isVideoUrl(url: string): boolean {
   const lowercaseUrl = url.toLowerCase();
@@ -463,6 +464,20 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (req, reply) => {
       const { url, locale } = req.body as ExtractFromUrlInput;
+
+      // Answered from the URL alone, before any network call: a full-length
+      // YouTube video can only be imported by downloading it, and that is
+      // blocked from our egress addresses. Letting it through would mean the
+      // user waits out the whole download-and-fallback chain to reach a failure
+      // we could have named immediately.
+      if (isUnsupportedYouTubeUrl(url)) {
+        app.log.info(`[extract/url] Refusing non-Shorts YouTube link: ${url}`);
+        return reply.code(422).send({
+          error: 'Only YouTube Shorts are supported; full-length videos cannot be imported.',
+          code: 'youtube_not_supported',
+        });
+      }
+
       const isVideo = isVideoUrl(url);
 
       if (isVideo) {

@@ -27,6 +27,12 @@ describe('describeExtractionError', () => {
     );
   });
 
+  it('explains that only YouTube Shorts can be imported', () => {
+    expect(describeExtractionError(failure({ code: 'youtube_not_supported' })).key).toBe(
+      'newRecipe.errors.youtubeNotSupported',
+    );
+  });
+
   it('treats a non-HTTP throw as being offline — there was no response to read', () => {
     expect(describeExtractionError(new TypeError('Network request failed')).key).toBe(
       'newRecipe.errors.offline',

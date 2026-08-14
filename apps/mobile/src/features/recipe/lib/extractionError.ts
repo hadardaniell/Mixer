@@ -10,6 +10,7 @@ const KEY_BY_CODE: Record<string, string> = {
   not_a_recipe: 'newRecipe.errors.notARecipe',
   video_too_long: 'newRecipe.errors.videoTooLong',
   source_unreachable: 'newRecipe.errors.sourceUnreachable',
+  youtube_not_supported: 'newRecipe.errors.youtubeNotSupported',
 };
 
 /**

@@ -169,7 +169,8 @@
       "notARecipe": "We read the whole page and found no recipe on it. Check that the link points straight at the recipe, not at a category or profile page.",
       "videoTooLong": "That video is too long ({{actualMinutes}} min). We can extract from videos up to {{maxMinutes}} minutes — Reels, Shorts and TikToks.",
       "sourceUnreachable": "We couldn't open that link. The site may be blocking us, or the page is gone. Worth trying again in a moment.",
-      "offline": "No internet connection. Check your connection and try again."
+      "offline": "No internet connection. Check your connection and try again.",
+      "youtubeNotSupported": "From YouTube we can only import Shorts. Full-length videos are not supported — try a Short, or copy the recipe from the description and paste it into text import."
     },
     "link": {
       "title": "Recipe from a link",
