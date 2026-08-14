@@ -45,16 +45,6 @@ export function RecipeActionBar({
   const ink = theme.text?.val as string;
   const rowDirection = isRtl ? 'row-reverse' : 'row';
 
-  const firstItem = isOwner
-    ? { key: 'share', label: t('recipe.actions.share'), Icon: Share2, onPress: onShare }
-    : {
-        key: 'saveAs',
-        label: t('recipe.actions.saveAs'),
-        Icon: CopyPlus,
-        onPress: onSaveAs,
-        loading: savingAs,
-      };
-
   const items: Array<{
     key: string;
     label: string;
@@ -63,17 +53,24 @@ export function RecipeActionBar({
     loading?: boolean;
     onPress: () => void;
   }> = [
-    firstItem,
-    {
-      key: 'saveToBook',
-      label: t('recipe.actions.saveToBook'),
-      Icon: Bookmark,
-      onPress: onSaveToBook,
-    },
+    { key: 'share', label: t('recipe.actions.share'), Icon: Share2, onPress: onShare },
+    isOwner
+      ? {
+          key: 'saveToBook',
+          label: t('recipe.actions.saveToBook'),
+          Icon: Bookmark,
+          onPress: onSaveToBook,
+        }
+      : {
+          key: 'saveAs',
+          label: t('recipe.actions.saveAs'),
+          Icon: CopyPlus,
+          onPress: onSaveAs,
+          loading: savingAs,
+        },
     {
       key: 'copy',
       label: t('recipe.actions.copy'),
-      // The check *is* the confirmation — there's no toast to go with it.
       Icon: copied ? Check : Copy,
       iconColor: copied ? (theme.success?.val as string) : undefined,
       onPress: onCopy,
@@ -84,7 +81,7 @@ export function RecipeActionBar({
       Icon: Languages,
       loading: isTranslating,
       onPress: onTranslate,
-    }
+    },
   ];
 
   return (

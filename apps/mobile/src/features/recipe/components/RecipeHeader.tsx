@@ -1,5 +1,5 @@
 import type { Recipe } from '@mixer/contracts';
-import { ArrowRight, ImagePlus, Pencil, X } from 'lucide-react-native';
+import { ArrowRight, ImagePlus, Pencil, Trash2, X } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, Platform, Pressable, TextInput } from 'react-native';
@@ -17,12 +17,14 @@ interface RecipeHeaderProps {
   isFavorited: boolean;
   onToggleFavorite: () => void;
   onBack: () => void;
-  /** Whether the current user owns this recipe (shows the edit pencil). */
+  /** Whether the current user owns this recipe (shows the edit pencil and delete trash icon). */
   canEdit?: boolean;
   /** Inline edit mode — renders the title/description/cover as inputs. */
   editing?: boolean;
   onStartEdit?: () => void;
   onCancelEdit?: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
   /** Edited values (only used while `editing`). */
   editTitle?: string;
   editDescription?: string;
@@ -37,7 +39,7 @@ const COVER_HEIGHT = 240;
 
 /**
  * Cover image with an overlaid action row (back on the start side, favorite +
- * edit on the end side — flips with language), followed by the centered title,
+ * edit/delete on the end side — flips with language), followed by the centered title,
  * description and meta chips.
  *
  * In `editing` mode the exact same layout renders its fields as inputs: the
@@ -53,6 +55,8 @@ export function RecipeHeader({
   editing,
   onStartEdit,
   onCancelEdit,
+  onDelete,
+  isDeleting,
   editTitle,
   editDescription,
   editCoverImageUrl,
@@ -66,6 +70,7 @@ export function RecipeHeader({
   const isRtl = useIsRtl();
   const ink = theme.text?.val as string;
   const muted = theme.textMuted?.val as string;
+  const danger = (theme.danger?.val as string) ?? '#FF4D6D';
 
   const coverUrl = editing ? editCoverImageUrl : recipe.coverImageUrl;
 
@@ -114,20 +119,32 @@ export function RecipeHeader({
           <ArrowRight size={22} color="#FFFFFF" strokeWidth={2} />
         </CircleIconButton>
 
-        {/* Favorite + edit sit together on the end side; forced LTR so the
-            pencil is always immediately to the right of the star. */}
+        {/* Favorite + edit + delete sit together on the end side; forced LTR so the
+            buttons are always arranged predictably next to the star. */}
         <XStack alignItems="center" gap="$2" style={{ direction: 'ltr' } as never}>
           {editing ? (
-            <WhiteCircleButton onPress={onCancelEdit}>
-              <X size={20} color={ink} strokeWidth={2.4} />
-            </WhiteCircleButton>
+            <>
+              {canEdit ? (
+                <WhiteCircleButton onPress={onDelete} disabled={isDeleting}>
+                  <Trash2 size={18} color={danger} strokeWidth={2} />
+                </WhiteCircleButton>
+              ) : null}
+              <WhiteCircleButton onPress={onCancelEdit}>
+                <X size={20} color={ink} strokeWidth={2.4} />
+              </WhiteCircleButton>
+            </>
           ) : (
             <>
               <FavoriteButton isFavorited={isFavorited} onPress={onToggleFavorite} />
               {canEdit ? (
-                <WhiteCircleButton onPress={onStartEdit}>
-                  <Pencil size={18} color={ink} strokeWidth={2} />
-                </WhiteCircleButton>
+                <>
+                  <WhiteCircleButton onPress={onStartEdit}>
+                    <Pencil size={18} color={ink} strokeWidth={2} />
+                  </WhiteCircleButton>
+                  <WhiteCircleButton onPress={onDelete} disabled={isDeleting}>
+                    <Trash2 size={18} color={danger} strokeWidth={2} />
+                  </WhiteCircleButton>
+                </>
               ) : null}
             </>
           )}
@@ -239,13 +256,15 @@ function CircleIconButton({ onPress, children }: { onPress: () => void; children
  */
 function WhiteCircleButton({
   onPress,
+  disabled,
   children,
 }: {
   onPress?: () => void;
+  disabled?: boolean;
   children: ReactNode;
 }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" hitSlop={8}>
+    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" hitSlop={8}>
       <YStack
         width={38}
         height={38}
@@ -253,6 +272,7 @@ function WhiteCircleButton({
         backgroundColor="#FFFFFF"
         alignItems="center"
         justifyContent="center"
+        opacity={disabled ? 0.5 : 1}
         pressStyle={{ opacity: 0.8, scale: 0.94 }}
       >
         {children}
@@ -260,3 +280,4 @@ function WhiteCircleButton({
     </Pressable>
   );
 }
+

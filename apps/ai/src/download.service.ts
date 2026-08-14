@@ -15,46 +15,106 @@ const execAsync = promisify(exec);
 
 export const MAX_VIDEO_DURATION_SECONDS = 300; // 5 minutes — covers Reels (90s), Shorts (3min), TikToks
 
+function findCookiePath(url: string): string | undefined {
+  const lowercaseUrl = url.toLowerCase();
+  const isYouTube = /youtube\.com|youtu\.be/.test(lowercaseUrl);
+  const isInstagram = lowercaseUrl.includes('instagram.com');
+
+  const candidates = isInstagram
+    ? ['instagram-cookies.txt', 'cookies.txt']
+    : isYouTube
+    ? ['youtube-cookies.txt', 'cookies.txt']
+    : ['cookies.txt', 'instagram-cookies.txt', 'youtube-cookies.txt'];
+
+  const searchDirs = [
+    process.cwd(),
+    path.resolve(__dirname, '..'),
+    path.resolve(__dirname, '../..'),
+  ];
+
+  for (const dir of searchDirs) {
+    const file = candidates.find((f) => {
+      try {
+        fsSync.accessSync(path.join(dir, f), fsSync.constants.R_OK);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    if (file) {
+      return path.join(dir, file);
+    }
+  }
+  return undefined;
+}
+
 export const downloadService = {
   async getVideoInfo(url: string): Promise<{ duration: number; title: string; description?: string; thumbnailUrl?: string }> {
     try {
-      const searchDirs = [
-        process.cwd(),
-        path.resolve(__dirname, '..'), // if __dirname is src or dist
-        path.resolve(__dirname, '../..'),
-      ];
+      const cookiePath = findCookiePath(url);
+      const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
 
-      let cookiePath: string | undefined;
-      for (const dir of searchDirs) {
-        const file = ['instagram-cookies.txt', 'cookies.txt'].find((f) => {
-          try {
-            fsSync.accessSync(path.join(dir, f), fsSync.constants.R_OK);
-            return true;
-          } catch {
-            return false;
-          }
-        });
-        if (file) {
-          cookiePath = path.join(dir, file);
-          break;
+      const optionsList: any[] = isYouTube
+        ? [
+            {
+              dumpSingleJson: true,
+              skipDownload: true,
+              noWarnings: true,
+              noCheckCertificate: true,
+              extractorArgs: 'youtube:player_client=mweb,android,web',
+              ...(cookiePath ? { cookies: cookiePath } : {}),
+            },
+            {
+              dumpSingleJson: true,
+              skipDownload: true,
+              noWarnings: true,
+              noCheckCertificate: true,
+              extractorArgs: 'youtube:player_client=mweb,android,web',
+            },
+            {
+              dumpSingleJson: true,
+              skipDownload: true,
+              noWarnings: true,
+              noCheckCertificate: true,
+            },
+          ]
+        : [
+            {
+              dumpSingleJson: true,
+              skipDownload: true,
+              noWarnings: true,
+              noCheckCertificate: true,
+              impersonate: 'chrome',
+              ...(cookiePath ? { cookies: cookiePath } : {}),
+            },
+            {
+              dumpSingleJson: true,
+              skipDownload: true,
+              noWarnings: true,
+              noCheckCertificate: true,
+              impersonate: 'chrome',
+            },
+            {
+              dumpSingleJson: true,
+              skipDownload: true,
+              noWarnings: true,
+              noCheckCertificate: true,
+            },
+          ];
+
+      let info: any;
+      for (const opts of optionsList) {
+        try {
+          info = await ytDlp(url, opts);
+          if (info) break;
+        } catch {
+          // try next strategy
         }
       }
 
-      const options: any = {
-        dumpSingleJson: true,
-        skipDownload: true,
-        noWarnings: true,
-        noCheckCertificate: true,
-        impersonate: 'chrome',
-        userAgent:
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      };
-      
-      if (cookiePath) {
-        options.cookies = cookiePath;
+      if (!info) {
+        throw new Error('Could not fetch video info');
       }
-
-      const info = await ytDlp(url, options);
 
       const parsed = typeof info === 'string' ? JSON.parse(info) : (info as any);
       return {
@@ -114,30 +174,7 @@ export const downloadService = {
     const isInstagram = url.toLowerCase().includes('instagram.com');
     const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
 
-    // Check if a cookies.txt file exists to bypass login restrictions
-    // When running via turbo, process.cwd() is apps/ai. But let's check a few places to be safe.
-    const searchDirs = [
-      process.cwd(),
-      path.resolve(__dirname, '..'), // if __dirname is src or dist
-      path.resolve(__dirname, '../..'),
-    ];
-
-    let cookiePath: string | undefined;
-
-    for (const dir of searchDirs) {
-      const file = ['instagram-cookies.txt', 'cookies.txt'].find((f) => {
-        try {
-          fsSync.accessSync(path.join(dir, f), fsSync.constants.R_OK);
-          return true;
-        } catch {
-          return false;
-        }
-      });
-      if (file) {
-        cookiePath = path.join(dir, file);
-        break;
-      }
-    }
+    const cookiePath = findCookiePath(url);
     if (cookiePath) {
       console.log(`[download.service] Found cookie file at ${cookiePath} — passing to yt-dlp`);
     }
@@ -150,6 +187,7 @@ export const downloadService = {
             noWarnings: true,
             noCheckCertificate: true,
             extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
             output: outputPath,
@@ -157,18 +195,18 @@ export const downloadService = {
             noWarnings: true,
             noCheckCertificate: true,
             extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
           },
         ]
       : isInstagram
       ? [
-          // Instagram blocks unauthenticated bots heavily — impersonating Chrome is
-          // the most reliable cookie-free strategy.
           {
             output: outputPath,
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
             impersonate: 'chrome',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
             output: outputPath,
@@ -176,6 +214,7 @@ export const downloadService = {
             noWarnings: true,
             noCheckCertificate: true,
             impersonate: 'chrome',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
           },
         ]
       : isYouTube
@@ -185,7 +224,8 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
+            extractorArgs: 'youtube:player_client=mweb,android,web',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
             output: outputPath,
@@ -196,10 +236,16 @@ export const downloadService = {
           },
           {
             output: outputPath,
-            format: 'b/best',
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
             impersonate: 'chrome',
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
           },
         ]
       : [
@@ -210,12 +256,14 @@ export const downloadService = {
             noCheckCertificate: true,
             userAgent:
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
             output: outputPath,
             format: 'b/best',
             noWarnings: true,
             noCheckCertificate: true,
+            ...(cookiePath ? { cookies: cookiePath } : {}),
           },
         ];
 

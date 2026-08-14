@@ -132,11 +132,8 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
       return next;
     });
 
-  // Only the owner sees "share" (the server refuses to share someone else's
-  // recipe); everyone else gets "save a copy" in that slot instead. Owners still
-  // can't share an unpublished draft, so that one reason stays surfaced.
   const isOwner = recipe.ownerId === user?.id;
-  const canShare = isOwner && recipe.status !== 'draft';
+  const canShare = recipe.status !== 'draft';
   const { editing, form, dispatch } = editor;
 
   const handleShare = () => {
@@ -144,7 +141,6 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
       setShareSheetOpen(true);
       return;
     }
-    // Owner + draft — the only remaining block worth explaining.
     setShareNotice('draft');
     if (shareNoticeTimer.current) clearTimeout(shareNoticeTimer.current);
     shareNoticeTimer.current = setTimeout(() => setShareNotice(null), 3000);
@@ -198,6 +194,8 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
           editing={editing}
           onStartEdit={editor.start}
           onCancelEdit={editor.cancel}
+          onDelete={() => setDeleteOpen(true)}
+          isDeleting={deleteRecipe.isPending}
           editTitle={form.title}
           editDescription={form.description}
           editCoverImageUrl={form.coverImageUrl}
@@ -276,22 +274,6 @@ export function RecipeScreen({ recipeId }: RecipeScreenProps) {
               pressStyle={{ opacity: 0.6 }}
             >
               {t('recipe.edit.cancel')}
-            </Text>
-
-            {/* Destructive, owner-only. Kept apart from save/cancel with extra
-                space so it isn't hit by accident. */}
-            <Text
-              onPress={deleteRecipe.isPending ? undefined : () => setDeleteOpen(true)}
-              fontSize={15}
-              fontWeight="700"
-              color="$danger"
-              textAlign="center"
-              paddingVertical="$2"
-              marginTop="$3"
-              opacity={deleteRecipe.isPending ? 0.5 : 1}
-              pressStyle={{ opacity: 0.6 }}
-            >
-              {deleteRecipe.isPending ? t('recipe.delete.deleting') : t('recipe.delete.action')}
             </Text>
           </YStack>
         ) : (
