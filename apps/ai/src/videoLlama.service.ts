@@ -53,6 +53,28 @@ First determine if this is a recipe video (it must show food being prepared with
 If it IS a recipe: transcribe any spoken words, and carefully describe all visual instructions, ingredients, and measurements shown. Extract EVERY SINGLE STEP in full detail from beginning to end. DO NOT summarize.
 If it is NOT a recipe: set isRecipe to false and leave all other fields empty.`;
 
+/**
+ * Folds the post's own caption into the prompt.
+ *
+ * Reels and TikToks routinely show only the finished dish while the full recipe
+ * sits in the caption — "I didn't plan on filming, so you don't see the prep".
+ * Judging such a post on frames alone returns isRecipe:false and throws away a
+ * recipe that was there in plain text, so the caption is handed to the model as
+ * content of equal standing to the video rather than as a hint.
+ */
+function buildCaptionSection(caption?: string): string {
+  const trimmed = caption?.trim();
+  if (!trimmed) return '';
+
+  return `
+
+The post this video came from carries the caption below. Analyze it together with the video — it is part of the content, not context about it.
+"""
+${trimmed.slice(0, 6000)}
+"""
+Where the caption lists ingredients or steps, it is authoritative: prefer it over what you infer from the frames, and set "isRecipe" to true even if the video itself only shows the finished dish. Use the frames to fill in whatever the caption leaves out.`;
+}
+
 function getModel(apiKey: string) {
   return new GoogleGenerativeAI(apiKey).getGenerativeModel({
     model: 'gemini-2.5-flash',
@@ -71,7 +93,13 @@ function assertRecipe(parsed: any): any {
 
 export const videoLlamaService = {
   // For TikTok / Instagram / other platforms — download frames first, then send to Gemini
-  async extractRecipe(audioPath: string, framePaths: string[], locale?: string): Promise<any> {
+  async extractRecipe(
+    audioPath: string,
+    framePaths: string[],
+    locale?: string,
+    /** The post's caption/description, when the platform exposes one. */
+    caption?: string,
+  ): Promise<any> {
     if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
 
     const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
@@ -104,9 +132,10 @@ export const videoLlamaService = {
     }
 
     try {
-      const prompt = locale
-        ? `${RECIPE_PROMPT}\n\nIMPORTANT: All extracted text (title, description, ingredients, steps, etc.) MUST BE written in the language locale: "${locale}". Translate from the video's language if necessary. DO NOT translate the "difficulty" field; it MUST remain "easy", "medium", or "hard".`
-        : RECIPE_PROMPT;
+      const localeSection = locale
+        ? `\n\nIMPORTANT: All extracted text (title, description, ingredients, steps, etc.) MUST BE written in the language locale: "${locale}". Translate from the video's language if necessary. DO NOT translate the "difficulty" field; it MUST remain "easy", "medium", or "hard".`
+        : '';
+      const prompt = `${RECIPE_PROMPT}${buildCaptionSection(caption)}${localeSection}`;
 
       const result = await retryWithBackoff(
         () => model.generateContent([...parts, { text: prompt }]),

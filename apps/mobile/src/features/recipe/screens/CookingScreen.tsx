@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +28,11 @@ export function CookingScreen() {
   const isRtl = isRTL(language);
   const { job, clear, setWatching } = useExtractionJob();
   const [leaving, setLeaving] = useState(false);
+  // True once this screen has had a job to show. It separates "arrived with nothing
+  // to wait for" from "the job we were showing was just cleared on the way out" —
+  // the second must not trigger the redirect below, or it fights the navigation
+  // already under way.
+  const hadJob = useRef(false);
 
   // Tell the provider someone is here, so a job that finishes now navigates instead of
   // raising a banner. Cleared on unmount, including when the user walks away.
@@ -35,6 +40,19 @@ export function CookingScreen() {
     setWatching(true);
     return () => setWatching(false);
   }, [setWatching]);
+
+  useEffect(() => {
+    if (job) hadJob.current = true;
+  }, [job]);
+
+  // Landing here with no job at all — back navigation into a screen the stack still
+  // remembers, a cold deep link, a reload on web — used to render the pot and the
+  // blinking dots forever, because "no job" was indistinguishable from "running".
+  // Nothing will ever resolve, so don't pretend to be working: go home.
+  useEffect(() => {
+    if (job || hadJob.current) return;
+    router.replace('/home');
+  }, [job, router]);
 
   // Land on the recipe as soon as it exists. `leaving` guards the race where the user
   // taps "let me out" in the same tick the job resolves — their choice wins.
@@ -57,6 +75,10 @@ export function CookingScreen() {
 
   const failed = job?.status === 'failed';
 
+  // Render nothing rather than a pot that isn't cooking anything. Covers both the
+  // redirect above and the instant between `clear()` and the navigation landing.
+  if (!job) return null;
+
   return (
     <YStack
       flex={1}
@@ -77,7 +99,9 @@ export function CookingScreen() {
           {failed ? null : <BlinkingDots />}
         </Text>
         <Text fontSize={13.5} color="$textMuted" textAlign="center" maxWidth={300}>
-          {failed ? t(job?.errorKey ?? 'newRecipe.errors.extractFailed') : t('cooking.subtitle')}
+          {failed
+            ? t(job.error?.key ?? 'newRecipe.errors.extractFailed', job.error?.params)
+            : t('cooking.subtitle')}
         </Text>
       </YStack>
 
@@ -86,8 +110,11 @@ export function CookingScreen() {
           <PrimaryButton
             label={t('cooking.failed.back')}
             onPress={() => {
+              // Navigate first: clearing while still mounted is what made the
+              // screen flash back to "cooking…" on the way out.
+              if (router.canGoBack()) router.back();
+              else router.replace('/new-recipe');
               clear();
-              router.back();
             }}
           />
         </YStack>
