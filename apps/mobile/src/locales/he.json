@@ -462,7 +462,8 @@
     "units": {
       "title": "בחירת יחידה",
       "none": "ללא"
-    }
+    },
+    "openSource": "פתחו את המקור"
   },
   "share": {
     "sheet": {

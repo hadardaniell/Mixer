@@ -3,16 +3,16 @@
 
 .facebook.com	TRUE	/	TRUE	1821193211	datr	-tt9ajvGS2OWVrBiccFae3-z
 .facebook.com	TRUE	/	TRUE	1821193211	sb	-tt9aodMxAbXE_9KMlohy3TX
-.instagram.com	TRUE	/	TRUE	1821196842	csrftoken	xOc417kbaZLoTRqlayidkVa4bkigE1dU
+.instagram.com	TRUE	/	TRUE	1821268187	csrftoken	xOc417kbaZLoTRqlayidkVa4bkigE1dU
 .instagram.com	TRUE	/	TRUE	1817138392	datr	1vw_avAXpX_f3_guz2KU2G6f
 .instagram.com	TRUE	/	TRUE	1786822423	dpr	1.25
-.instagram.com	TRUE	/	TRUE	1794412842	ds_user_id	37506596498
+.instagram.com	TRUE	/	TRUE	1794484187	ds_user_id	37506596498
 .instagram.com	TRUE	/	TRUE	1814114392	ig_did	7FA36A46-B7BA-4E9A-9A0D-0E7CDA83ABBB
 .instagram.com	TRUE	/	TRUE	1815390926	ig_nrcb	1
 .instagram.com	TRUE	/	TRUE	1817138391	mid	aj_81gALAAFiMyOKGKa1oDhfI-yj
 .instagram.com	TRUE	/	TRUE	1818536158	ps_l	1
 .instagram.com	TRUE	/	TRUE	1818536158	ps_n	1
-.instagram.com	TRUE	/	TRUE	0	rur	CLN,37506596498,1818172842:01ff4eb32fd8a5054a6a0c2e9e3fcf5435c4704a78fdee306f102233d56aceb5acf5db94
+.instagram.com	TRUE	/	TRUE	0	rur	CLN,37506596498,1818244188:01ff990287a2a0cc53d7c37439e5f10f4f9b001212ab5ffa420b321a83b1ff742d1c8532
 .instagram.com	TRUE	/	TRUE	1817720891	sessionid	37506596498%3AxWa5lvDmruQurK%3A11%3AAYjEWIqiqBCICYD0SgSj7fBdM4VOBubbobUAv4yD8w
 .instagram.com	TRUE	/	TRUE	1786822423	wd	1536x695
 .tiktok.com	TRUE	/	TRUE	1802184981	tt_chain_token	E3gGeugKFw+81le7IJ6Bjg==

@@ -465,7 +465,8 @@
     "units": {
       "title": "Choose a unit",
       "none": "None"
-    }
+    },
+    "openSource": "Open the original"
   },
   "share": {
     "sheet": {

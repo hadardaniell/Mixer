@@ -170,17 +170,9 @@ async function fetchInstagramFallbackText(
         log(`[extract/url] Instagram Jina scrape succeeded (${text.length} chars)`);
         parts.push(text.slice(0, 8000));
       }
-      const response = await fetch(`https://r.jina.ai/${url}`, { headers });
-      if (response.ok) {
-        const text = await response.text();
-        if (text && text.trim().length > 50) {
-          log(`[extract/url] Instagram Jina scrape succeeded (${text.length} chars)`);
-          parts.push(text.slice(0, 8000));
-        }
-      }
-    } catch (err) {
-      log(`[extract/url] Instagram Jina scrape failed: ${err instanceof Error ? err.message : err}`);
     }
+  } catch (err) {
+    log(`[extract/url] Instagram Jina scrape failed: ${err instanceof Error ? err.message : err}`);
   }
 
   if (parts.length === 0) {
@@ -484,8 +476,6 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
           try {
             const info = await downloadService.getVideoInfo(url);
-            videoMetadataTitle = info.title;
-            videoMetadataDescription = info.description;
             app.log.info(`[extract/url] Metadata title: "${info.title}", description length: ${info.description?.length ?? 0}`);
 
             if (info.thumbnailUrl) {
