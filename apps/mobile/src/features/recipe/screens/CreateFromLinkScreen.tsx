@@ -2,7 +2,7 @@ import { Globe, Link as LinkIcon, MessageCircle, Play } from 'lucide-react-nativ
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Linking, Platform, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, ScrollView, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, XStack, YStack } from 'tamagui';
 
@@ -94,8 +94,19 @@ export function CreateFromLinkScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* The tab bar is absolutely positioned over this screen, so anything the
+          viewport can't fit is simply cut off — which is what happened to the CTA
+          on short screens and in mobile browsers with their own chrome. Scrolling
+          is the fix; `flexGrow` (not `flex`) keeps the fill-the-screen layout on
+          tall screens without letting the content compress on short ones. */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
       <YStack
-        flex={1}
+        flexGrow={1}
         width="100%"
         paddingHorizontal="$4"
         paddingTop={insets.top + 24}
@@ -192,6 +203,7 @@ export function CreateFromLinkScreen() {
           disabled={!url}
         />
       </YStack>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
