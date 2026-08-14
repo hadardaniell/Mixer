@@ -7,6 +7,7 @@ import { HomeFeedSections } from '@/features/home/components/HomeFeedSections';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { HomeSearchView } from '@/features/search/components/HomeSearchView';
+import { PwaInstallBanner } from '@/shared/ui/PwaInstallBanner';
 
 /**
  * Home screen orchestrator. The header + search bar are persistent chrome; the
@@ -21,6 +22,7 @@ export function HomeFeedScreen() {
   return (
     <YStack flex={1} backgroundColor="$bg" paddingTop={insets.top + 16}>
       <YStack paddingHorizontal="$4" gap="$3" paddingBottom="$3">
+        <PwaInstallBanner />
         <HomeHeader onNotificationsPress={() => router.push('/notifications')} />
         <HomeSearchBar
           value={query}
