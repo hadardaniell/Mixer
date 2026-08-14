@@ -175,7 +175,17 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   await collections.friendships.createIndex({ requesterId: 1, addresseeId: 1 }, { unique: true });
   await collections.friendships.createIndex({ addresseeId: 1, status: 1 });
 
-  await collections.urlExtractionCache.createIndex({ url: 1 }, { unique: true });
+  // Keyed by url AND locale, because that is how the cache is read
+  // (`findOne({ url, locale })`). A unique index on `url` alone silently allowed
+  // only the first language to ever be cached: the second locale missed the
+  // lookup, re-extracted, then lost its insert to a swallowed E11000. Same
+  // shape as `recipeTranslations` above, for the same reason.
+  try {
+    await collections.urlExtractionCache.dropIndex('url_1');
+  } catch (e: any) {
+    if (e?.code !== 27) throw e; // 27 = IndexNotFound — already gone, fine
+  }
+  await collections.urlExtractionCache.createIndex({ url: 1, locale: 1 }, { unique: true });
 
   await collections.notifications.createIndex({ userId: 1, read: 1, createdAt: -1 });
   await collections.notifications.createIndex({ userId: 1, type: 1 });

@@ -52,7 +52,7 @@ export function ExtractionReadyBanner() {
 
   const title = isFailed ? t('cooking.failed.title') : t('cooking.ready.title');
   const body = isFailed
-    ? t(job.errorKey ?? 'newRecipe.errors.extractFailed')
+    ? t(job.error?.key ?? 'newRecipe.errors.extractFailed', job.error?.params)
     : t('cooking.ready.body', { title: job.recipe?.title });
   const actionLabel = isFailed ? t('cooking.failed.retry') : t('cooking.ready.open');
 

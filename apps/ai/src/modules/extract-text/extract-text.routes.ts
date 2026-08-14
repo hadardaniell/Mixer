@@ -1,16 +1,20 @@
 import fs from 'node:fs/promises';
 import { z } from 'zod';
+import type { FastifyReply } from 'fastify';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import {
   ExtractFromTextInputSchema,
   ExtractFromTextResultSchema,
   ExtractFromUrlInputSchema,
+  ExtractFailureSchema,
   type ExtractFromUrlInput,
 } from '@mixer/contracts';
 import { extractRecipeFromText } from './extract-text.service.js';
 import { downloadService, MAX_VIDEO_DURATION_SECONDS } from '../../download.service.js';
 import { videoLlamaService } from '../../videoLlama.service.js';
 import { retryWithBackoff } from '../../utils/retry.utils.js';
+import { SourceUnreachableError } from './extract-failure.js';
+import { stripMarkdownNoise } from '../../utils/markdown.utils.js';
 
 function isVideoUrl(url: string): boolean {
   const lowercaseUrl = url.toLowerCase();
@@ -36,13 +40,21 @@ async function fetchWebpageText(url: string): Promise<string> {
       }
       const response = await fetch(`https://r.jina.ai/${url}`, { headers });
       if (!response.ok) {
-        throw new Error(`Failed to fetch webpage content from Jina Reader (${response.status} ${response.statusText})`);
+        throw new SourceUnreachableError(
+          `Failed to fetch webpage content from Jina Reader (${response.status} ${response.statusText})`,
+        );
       }
       const text = await response.text();
       if (!text || text.trim().length === 0) {
-        throw new Error('Jina Reader returned empty webpage content');
+        throw new SourceUnreachableError('Jina Reader returned empty webpage content');
       }
-      return text;
+      // Every caller feeds this straight to an LLM, so the noise is stripped
+      // here rather than at each call site.
+      const cleaned = stripMarkdownNoise(text);
+      if (cleaned.length === 0) {
+        throw new SourceUnreachableError('Jina Reader returned a page with no readable text');
+      }
+      return cleaned;
     },
     { retries: 3, initialDelayMs: 1000 },
   );
@@ -123,47 +135,48 @@ async function fetchTikTokCaption(url: string): Promise<string> {
  * For Instagram Reels, try to scrape the page text via Jina with special headers.
  * Instagram doesn't have a useful oEmbed API for captions, so Jina is our best bet.
  * The description field in Open Graph meta tags often contains the reel caption.
+ *
+ * `ytDlpCaption` is whatever yt-dlp already read off the post. It costs nothing
+ * here (the metadata call happened before the download) and covers the case
+ * where Jina is rate-limited or served a login wall.
  */
 async function fetchInstagramFallbackText(
   url: string,
-  metadataDescription: string | undefined,
-  metadataTitle: string | undefined,
+  ytDlpCaption: string | undefined,
   log: (msg: string) => void,
 ): Promise<string> {
   const parts: string[] = [];
 
-  if (metadataDescription && metadataDescription.trim().length > 10) {
-    log(`[extract/url] Instagram — found caption/description from metadata (${metadataDescription.length} chars)`);
-    parts.push(`Instagram video title/caption:\n${metadataTitle ?? ''}\n\n${metadataDescription}`);
+  if (ytDlpCaption?.trim()) {
+    log(`[extract/url] Instagram — reusing caption from video metadata (${ytDlpCaption.length} chars)`);
+    parts.push(ytDlpCaption.trim());
   }
 
-  // Jina page scrape with Accept-Language header if metadata description was missing or too short
-  if (parts.length === 0) {
-    try {
-      log(`[extract/url] Instagram — scraping page text via Jina: ${url}`);
-      const headers: Record<string, string> = {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'en-US,en;q=0.9',
-      };
-      if (process.env.JINA_API_KEY) {
-        headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
-      }
-      const response = await fetch(`https://r.jina.ai/${url}`, { headers });
-      if (response.ok) {
-        const text = await response.text();
-        if (text && text.trim().length > 50) {
-          log(`[extract/url] Instagram Jina scrape succeeded (${text.length} chars)`);
-          parts.push(text.slice(0, 8000));
-        }
-      }
-    } catch (err) {
-      log(`[extract/url] Instagram Jina scrape failed: ${err instanceof Error ? err.message : err}`);
+  // 1. Jina page scrape with Accept-Language header to get English content
+  try {
+    log(`[extract/url] Instagram — scraping page text via Jina: ${url}`);
+    const headers: Record<string, string> = {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
+    if (process.env.JINA_API_KEY) {
+      headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`;
     }
+    const response = await fetch(`https://r.jina.ai/${url}`, { headers });
+    if (response.ok) {
+      const text = await response.text();
+      if (text && text.trim().length > 50) {
+        log(`[extract/url] Instagram Jina scrape succeeded (${text.length} chars)`);
+        parts.push(text.slice(0, 8000));
+      }
+    }
+  } catch (err) {
+    log(`[extract/url] Instagram Jina scrape failed: ${err instanceof Error ? err.message : err}`);
   }
 
   if (parts.length === 0) {
-    throw new Error('All Instagram text extraction strategies failed');
+    throw new SourceUnreachableError('All Instagram text extraction strategies failed');
   }
 
   return parts.join('\n');
@@ -255,7 +268,7 @@ async function fetchYouTubeFallbackText(
   }
 
   if (parts.length === 0) {
-    throw new Error('All YouTube text extraction strategies failed');
+    throw new SourceUnreachableError('All YouTube text extraction strategies failed');
   }
 
   return { text: parts.join('\n\n'), thumbnailUrl };
@@ -313,12 +326,40 @@ async function fetchTikTokFallbackText(url: string, log: (msg: string) => void):
   }
 
   if (parts.length === 0) {
-    throw new Error('All TikTok text extraction strategies failed');
+    throw new SourceUnreachableError('All TikTok text extraction strategies failed');
   }
 
   return { text: parts.join('\n'), thumbnailUrl };
 }
 
+
+/**
+ * Turns a thrown extraction error into the 422 the app can explain, or rethrows.
+ *
+ * Only two failures are worth a distinct message: the source was read but held
+ * no recipe, and the source could not be read at all. Anything else is a bug on
+ * our side and belongs in a 500 with a stack trace, not in a reassuring
+ * sentence — so it goes back up untouched.
+ */
+function sendExtractFailure(
+  reply: FastifyReply,
+  error: unknown,
+  subject: 'page' | 'video' | 'text',
+): FastifyReply {
+  if (error instanceof SourceUnreachableError) {
+    return reply.code(422).send({
+      error: `Could not read the ${subject}: ${error.message}`,
+      code: 'source_unreachable',
+    });
+  }
+  if (error instanceof Error && error.message === 'not_a_recipe') {
+    return reply.code(422).send({
+      error: `The ${subject} does not appear to contain a recipe.`,
+      code: 'not_a_recipe',
+    });
+  }
+  throw error;
+}
 
 export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
@@ -328,7 +369,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         body: ExtractFromTextInputSchema,
         response: {
           200: ExtractFromTextResultSchema,
-          422: z.object({ error: z.string() }),
+          422: ExtractFailureSchema,
         },
         tags: ['extract'],
       },
@@ -337,11 +378,10 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
       try {
         return await extractRecipeFromText(req.body.text, req.body.locale);
       } catch (err) {
-        if (err instanceof Error && err.message === 'not_a_recipe') {
-          return reply.code(422).send({ error: 'The provided text does not appear to contain a recipe.' });
+        if (err instanceof Error && err.message !== 'not_a_recipe') {
+          console.error('[extract-text] unexpected error:', err.message);
         }
-        console.error('[extract-text] unexpected error:', err instanceof Error ? err.message : err);
-        throw err;
+        return sendExtractFailure(reply, err, 'text');
       }
     },
   );
@@ -366,6 +406,11 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             if (duration > MAX_VIDEO_DURATION_SECONDS) {
               return reply.code(422).send({
                 error: `Video is too long (${Math.round(duration / 60)} min). Only short videos up to ${MAX_VIDEO_DURATION_SECONDS / 60} minutes are supported (Shorts, Reels, TikToks).`,
+                code: 'video_too_long',
+                params: {
+                  actualMinutes: Math.round(duration / 60),
+                  maxMinutes: MAX_VIDEO_DURATION_SECONDS / 60,
+                },
               });
             }
           } catch {
@@ -381,20 +426,18 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
         return reply.send(recipe);
       } catch (error) {
-        if (error instanceof Error && error.message === 'not_a_recipe') {
-          return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
-        }
+        // Same reasoning as `/extract/url`: a video model that saw no recipe in
+        // the frames has not ruled out the caption, so this is not terminal.
         app.log.warn(`[extract/video] Video processing failed for ${url} — falling back to text scraping`);
         try {
           const text = await fetchWebpageText(url);
           const recipe = await extractRecipeFromText(text, locale);
           return reply.send(recipe);
         } catch (fallbackError) {
-          if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
-            return reply.code(422).send({ error: 'The video does not appear to contain a recipe.' });
+          if (!(fallbackError instanceof SourceUnreachableError)) {
+            app.log.error(fallbackError);
           }
-          app.log.error(fallbackError);
-          return reply.code(500).send({ error: 'Failed to process video' });
+          return sendExtractFailure(reply, fallbackError, 'video');
         }
       } finally {
         if (tempDirectory) {
@@ -413,7 +456,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
         body: ExtractFromUrlInputSchema,
         response: {
           200: ExtractFromTextResultSchema,
-          422: z.object({ error: z.string() }),
+          422: ExtractFailureSchema,
         },
         tags: ['extract'],
       },
@@ -424,18 +467,15 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
 
       if (isVideo) {
         const isYouTube = /youtube\.com|youtu\.be/.test(url);
-        const isInstagram = url.includes('instagram.com');
         let tempDirectory: string | undefined;
         let extractedThumbnailUrl: string | undefined;
-        let videoMetadataTitle: string | undefined;
-        let videoMetadataDescription: string | undefined;
+        /** The post's own caption — often the only place the recipe is written out. */
+        let videoCaption: string | undefined;
 
         try {
           app.log.info(`[extract/url] Fetching video info/duration for: ${url}`);
           try {
             const info = await downloadService.getVideoInfo(url);
-            videoMetadataTitle = info.title;
-            videoMetadataDescription = info.description;
             app.log.info(`[extract/url] Metadata title: "${info.title}", description length: ${info.description?.length ?? 0}`);
 
             if (info.thumbnailUrl) {
@@ -443,9 +483,22 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
               app.log.info(`[extract/url] Captured video thumbnail URL: ${extractedThumbnailUrl}`);
             }
 
+            const caption = [info.title, info.description]
+              .filter((part) => part && part.trim())
+              .join('\n\n');
+            if (caption) {
+              videoCaption = caption;
+              app.log.info(`[extract/url] Captured post caption (${caption.length} chars)`);
+            }
+
             if (info.duration > MAX_VIDEO_DURATION_SECONDS) {
               return reply.code(422).send({
                 error: `Video is too long (${Math.round(info.duration / 60)} min). Only short videos up to ${MAX_VIDEO_DURATION_SECONDS / 60} minutes are supported (Shorts, Reels, TikToks).`,
+                code: 'video_too_long',
+                params: {
+                  actualMinutes: Math.round(info.duration / 60),
+                  maxMinutes: MAX_VIDEO_DURATION_SECONDS / 60,
+                },
               });
             }
           } catch {
@@ -457,7 +510,7 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           tempDirectory = tempDir;
 
           app.log.info(`[extract/url] Processing video frames and audio with Video AI`);
-          const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale);
+          const recipe = await videoLlamaService.extractRecipe(audioPath, framePaths, locale, videoCaption);
 
           // For all video platforms (TikTok, Instagram, YouTube, Facebook, Pinterest, etc), 
           // override the Unsplash cover image with the actual video thumbnail
@@ -493,6 +546,11 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
 
           return recipe;
         } catch (error) {
+          // `not_a_recipe` is deliberately NOT terminal here. The video model
+          // only ever sees frames and audio, so it answers "no recipe" for the
+          // very common post that shows the finished dish and writes the recipe
+          // out in the caption. That verdict is the reason to go read the text,
+          // not a reason to stop — only the fallback below may return 422.
           app.log.warn(
             `[extract/url] Video processing failed or returned no recipe for ${url} (${error instanceof Error ? error.message : error}) — falling back to caption/text scraping`,
           );
@@ -508,8 +566,8 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
               text = result.text;
               if (result.thumbnailUrl) videoThumbnailUrlFallback = result.thumbnailUrl;
             } else if (isInstagram) {
-              app.log.info(`[extract/url] Instagram detected — extracting text from caption metadata: ${url}`);
-              text = await fetchInstagramFallbackText(url, videoMetadataDescription, videoMetadataTitle, (msg) => app.log.info(msg));
+              app.log.info(`[extract/url] Instagram detected — scraping page text via Jina: ${url}`);
+              text = await fetchInstagramFallbackText(url, videoCaption, (msg) => app.log.info(msg));
             } else if (isYouTube) {
               app.log.info(`[extract/url] YouTube detected — fetching metadata/description via yt-dlp + oEmbed: ${url}`);
               const result = await fetchYouTubeFallbackText(url, (msg) => app.log.info(msg));
@@ -538,11 +596,10 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
             return recipe;
 
           } catch (fallbackError) {
-            if (fallbackError instanceof Error && fallbackError.message === 'not_a_recipe') {
-              return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });
+            if (!(fallbackError instanceof SourceUnreachableError)) {
+              app.log.error(fallbackError);
             }
-            app.log.error(fallbackError);
-            throw new Error('Failed to process video URL');
+            return sendExtractFailure(reply, fallbackError, 'video');
           }
         } finally {
           if (tempDirectory) {
@@ -562,14 +619,17 @@ export const extractTextRoutes: FastifyPluginAsyncZod = async (app) => {
           ]);
 
           app.log.info(`[extract/url] Extracting recipe from scraped webpage text`);
-          const recipe = await extractRecipeFromText(text);
+          const recipe = await extractRecipeFromText(text, locale);
           if (!recipe.coverImageUrl && ogImageUrl) {
             recipe.coverImageUrl = ogImageUrl;
           }
           return recipe;
         } catch (error) {
           if (error instanceof Error && error.message === 'not_a_recipe') {
-            return reply.code(422).send({ error: 'The page does not appear to contain a recipe.' });
+            return sendExtractFailure(reply, error, 'page');
+          }
+          if (error instanceof SourceUnreachableError) {
+            return sendExtractFailure(reply, error, 'page');
           }
           app.log.error(error);
           throw new Error('Failed to extract recipe from webpage URL');

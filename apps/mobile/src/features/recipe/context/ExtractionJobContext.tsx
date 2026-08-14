@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { z } from 'zod';
 
 import { feedApi } from '@/features/home/api/feedApi';
+import { describeExtractionError, type ExtractionErrorMessage } from '@/features/recipe/lib/extractionError';
 import { mapExtraction } from '@/features/recipe/lib/mapExtraction';
 import { useLanguage } from '@/features/settings/hooks/useLanguage';
 import { notifyLocally } from '@/shared/lib/localNotify';
@@ -17,8 +18,8 @@ export interface ExtractionJob {
   sourceType: SourceType;
   /** Set once the recipe exists. */
   recipe?: Pick<Recipe, 'id' | 'title'>;
-  /** Translation key for what went wrong, ready to pass to `t()`. */
-  errorKey?: string;
+  /** What to tell the user — a translation key plus its interpolation values. */
+  error?: ExtractionErrorMessage;
   /**
    * Decided once, at the moment the job settled: was anyone watching the cooking
    * screen? False means the cooking screen will navigate straight to the recipe; true
@@ -36,8 +37,11 @@ interface StartArgs {
   extract: () => Promise<ExtractFromTextResult>;
   sourceType: SourceType;
   sourceUrl?: string;
-  /** Maps a thrown error to a translation key. Defaults to the generic extract failure. */
-  mapError?: (e: unknown) => string;
+  /**
+   * Overrides the message for a failure this source can explain better than the
+   * shared mapper. Return undefined to fall back to it.
+   */
+  mapError?: (e: unknown) => ExtractionErrorMessage | undefined;
 }
 
 interface ExtractionJobValue {
@@ -124,15 +128,15 @@ export function ExtractionJobProvider({ children }: { children: React.ReactNode 
           }
         } catch (e) {
           if (currentId.current !== id) return;
-          const errorKey = mapError?.(e) ?? 'newRecipe.errors.extractFailed';
+          const error = mapError?.(e) ?? describeExtractionError(e);
           // A failure has to travel exactly as far as a success does. Someone who
           // walked away from the cooking screen would otherwise never be told the
           // import died — they'd go looking for a recipe that was never created.
           const announce = !watching.current;
-          setJob({ id, status: 'failed', sourceType, errorKey, announce });
+          setJob({ id, status: 'failed', sourceType, error, announce });
 
           if (announce) {
-            void notifyLocally(t('cooking.failed.title'), t(errorKey));
+            void notifyLocally(t('cooking.failed.title'), t(error.key, error.params));
           }
         }
       })();

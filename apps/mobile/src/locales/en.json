@@ -165,7 +165,11 @@
     "errors": {
       "extractFailed": "We couldn't extract the recipe. Please try again.",
       "notSameRecipe": "These photos don't look like the same recipe. Try photos of one recipe.",
-      "uploadFailed": "We couldn't upload the photo. Please try again."
+      "uploadFailed": "We couldn't upload the photo. Please try again.",
+      "notARecipe": "We read the whole page and found no recipe on it. Check that the link points straight at the recipe, not at a category or profile page.",
+      "videoTooLong": "That video is too long ({{actualMinutes}} min). We can extract from videos up to {{maxMinutes}} minutes — Reels, Shorts and TikToks.",
+      "sourceUnreachable": "We couldn't open that link. The site may be blocking us, or the page is gone. Worth trying again in a moment.",
+      "offline": "No internet connection. Check your connection and try again."
     },
     "link": {
       "title": "Recipe from a link",
@@ -461,7 +465,8 @@
     "units": {
       "title": "Choose a unit",
       "none": "None"
-    }
+    },
+    "openSource": "Open the original"
   },
   "share": {
     "sheet": {

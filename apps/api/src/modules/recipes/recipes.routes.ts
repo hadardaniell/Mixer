@@ -7,6 +7,8 @@ import {
   ExtractFromTextInputSchema,
   ExtractFromImageInputSchema,
   ExtractFromTextResultSchema,
+  ExtractFailureSchema,
+  ExtractFailureCodeSchema,
   RecipeListQuerySchema,
   RecipesByIdsInputSchema,
   UpdateRecipeInputSchema,
@@ -857,8 +859,8 @@ app.post(
         body: z.object({ url: z.string().url(), locale: z.string().optional() }),
         response: {
           200: ExtractFromTextResultSchema,
-          422: z.object({ error: z.string() }),
-          500: z.object({ error: z.string() }),
+          422: ExtractFailureSchema,
+          500: ExtractFailureSchema.partial({ code: true }),
         },
         tags: ['recipes'],
       },
@@ -918,9 +920,21 @@ app.post(
       });
 
       if (!response.ok) {
-        const data = (await response.json()) as { error?: string };
+        const data = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          code?: string;
+          params?: Record<string, string | number>;
+        };
+        // `code` and `params` are what the app renders its message from, so they
+        // have to survive the hop. Dropping them here is why every failed import
+        // used to read "we couldn't extract the recipe", whatever went wrong.
+        // Parsed rather than forwarded: an unrecognised code would reach the app
+        // with no translation behind it, which is worse than the generic message.
+        const code = ExtractFailureCodeSchema.safeParse(data?.code);
         return reply.code(response.status === 422 ? 422 : 500).send({
           error: data?.error ?? 'AI service failed to extract recipe from URL',
+          ...(code.success ? { code: code.data } : {}),
+          ...(data?.params ? { params: data.params } : {}),
         });
       }
 

@@ -351,6 +351,38 @@ export const ExtractFromUrlInputSchema = z.object({
 });
 export type ExtractFromUrlInput = z.infer<typeof ExtractFromUrlInputSchema>;
 
+/**
+ * Why an import failed, in a form the app can act on.
+ *
+ * The `error` string that travels alongside is English prose for logs and for
+ * humans reading the API; the client must never parse it to decide what to show,
+ * because that turns a copy edit into a broken translation. The code is the
+ * contract, the prose is the comment.
+ *
+ * Deliberately short — each code earns its place by leading somewhere different
+ * for the user. A page with no recipe means "check the link", a long video means
+ * "this one can't work at all", an unreachable source means "try again later".
+ */
+export const ExtractFailureCodeSchema = z.enum([
+  /** The page or video was read fine — there was simply no recipe in it. */
+  'not_a_recipe',
+  /** Past the duration ceiling. `params` carries by how much. */
+  'video_too_long',
+  /** Never got the content at all: site blocked us, scraper down, dead link. */
+  'source_unreachable',
+]);
+export type ExtractFailureCode = z.infer<typeof ExtractFailureCodeSchema>;
+
+/** The failure body shared by every extraction route. */
+export const ExtractFailureSchema = z.object({
+  /** English prose. For logs and humans reading the API, never for display. */
+  error: z.string(),
+  code: ExtractFailureCodeSchema,
+  /** Interpolation values for the client's message, e.g. `{ maxMinutes: 5 }`. */
+  params: z.record(z.union([z.string(), z.number()])).optional(),
+});
+export type ExtractFailure = z.infer<typeof ExtractFailureSchema>;
+
 // --- embeddings ---
 export const EmbedRecipeInputSchema = z.object({
   title: z.string(),

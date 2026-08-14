@@ -153,11 +153,13 @@ export function CreateFromImageScreen() {
           language,
         ),
       sourceType: 'image',
+      // Only the one failure this screen knows better than the shared mapper;
+      // everything else (offline, unreadable source) it handles fine.
       mapError: (e) =>
         e instanceof HttpError &&
         (e.body as { message?: string } | undefined)?.message === 'images_not_same_recipe'
-          ? 'newRecipe.errors.notSameRecipe'
-          : 'newRecipe.errors.extractFailed',
+          ? { key: 'newRecipe.errors.notSameRecipe' }
+          : undefined,
     });
     router.replace('/cooking');
   };
