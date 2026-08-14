@@ -2,7 +2,6 @@ import { GoogleGenerativeAI, SchemaType, type Schema } from '@google/generative-
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import fs from 'node:fs';
 import { cleanNullValues, retryWithBackoff, sanitizeJsonResponse } from './utils/retry.utils.js';
-import { fetchExternalRecipeImage } from './services/image-search.service.js';
 
 const recipeSchema: Schema = {
   type: SchemaType.OBJECT,
@@ -120,14 +119,7 @@ export const videoLlamaService = {
 
       const rawText = sanitizeJsonResponse(result.response.text());
       const parsedRecipe = assertRecipe(cleanNullValues(JSON.parse(rawText)));
-      if (!parsedRecipe.coverImageUrl) {
-        parsedRecipe.coverImageUrl = await fetchExternalRecipeImage(
-          parsedRecipe.title,
-          parsedRecipe.cuisine,
-          parsedRecipe.tags,
-          parsedRecipe.ingredients,
-        );
-      }
+      // Cover images are the API's responsibility — see extract-text.service.ts.
       return parsedRecipe;
     } finally {
       if (audioRes) {

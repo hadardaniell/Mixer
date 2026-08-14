@@ -17,7 +17,12 @@ import type { Collections } from '../../plugins/mongo.js';
 import { toRecipe } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
-import { generateAndStoreCoverImage, getSuggestedCoverImageUrl } from './recipes.service.js';
+import {
+  generateAndStoreCoverImage,
+  getSuggestedCoverImageUrl,
+  mirrorExternalCoverImage,
+  needsGeneratedCover,
+} from './recipes.service.js';
 import { cosineSimilarity, escapeRegex, applySearchFilter } from './search.utils.js';
 import { canRead, tagMatchesCategory } from './recipes.utils.js';
 
@@ -336,23 +341,56 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
           });
 
         if (personalBook) {
-          await app.collections.recipeBooks.updateOne(
-            {
-              _id: personalBook._id,
-            },
-            {
-              $addToSet: {
-                recipeIds: doc._id,
+          try {
+            await app.collections.recipeBooks.updateOne(
+              {
+                _id: personalBook._id,
               },
-              $set: {
-                updatedAt: new Date(),
+              {
+                $addToSet: {
+                  recipeIds: doc._id,
+                },
+                $set: {
+                  updatedAt: new Date(),
+                  // Books created before `language` existed are missing it, and
+                  // the collection validator runs on updates too — so every write
+                  // to such a book fails until the field is filled in. Heal it
+                  // here rather than letting it reject recipe creation forever.
+                  ...(personalBook.language ? {} : { language: doc.language }),
+                },
               },
-            },
-          );
+            );
+          } catch (bookErr) {
+            // Filing the recipe is bookkeeping; the recipe itself is already
+            // saved. Failing the request here would return a 500 for a recipe
+            // that exists, and the client would have no id to retry with.
+            app.log.error(bookErr, 'Failed to add new recipe to personal book');
+          }
         }
-      if (!doc.coverImageUrl) {
-        generateAndStoreCoverImage(app.collections.recipes, app.firebaseBucket, doc._id, doc);
-      }  
+      // Awaited, not fire-and-forget: the cover is part of the recipe, so the
+      // response carries the finished thing rather than making the client come
+      // back for the picture. Costs this request the generation time.
+      if (needsGeneratedCover(doc.coverImageUrl)) {
+        const coverImageUrl = await generateAndStoreCoverImage(
+          app.collections.recipes,
+          app.collections.coverImages,
+          app.firebaseBucket,
+          doc._id,
+          doc,
+        );
+        if (coverImageUrl) doc.coverImageUrl = coverImageUrl;
+      } else if (doc.coverImageUrl) {
+        // The recipe came with its own picture (a video thumbnail, or one the
+        // user uploaded). Keep exactly that image — just stop depending on
+        // someone else's CDN to keep serving it.
+        const hostedUrl = await mirrorExternalCoverImage(
+          app.collections.recipes,
+          app.firebaseBucket,
+          doc._id,
+          doc.coverImageUrl,
+        );
+        if (hostedUrl) doc.coverImageUrl = hostedUrl;
+      }
       generateAndStoreEmbedding(app.collections, doc._id, doc);
       return reply.code(201).send(toRecipe(doc));
     },

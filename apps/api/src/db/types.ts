@@ -169,6 +169,32 @@ export type UrlExtractionCacheDoc = {
   extractedAt: Date;
 };
 
+/**
+ * A generated cover image, keyed by the dish it depicts rather than by recipe.
+ *
+ * Generating an image costs real money and several seconds, and many recipes are
+ * the same dish ("pasta rosa" imported by twenty people). Each generated image
+ * is filed here under a canonical English dish name, and later recipes that
+ * resolve to the same dish — by exact key, or by embedding similarity for
+ * near-misses like "tomato beef meatballs" vs "beef meatballs tomato" — reuse it
+ * instead of generating again.
+ */
+export type CoverImageDoc = {
+  _id: ObjectId;
+  /** Slugified canonical dish name, e.g. "pasta-rosa". Unique. */
+  dishKey: string;
+  /** The canonical dish name as the AI phrased it, e.g. "Pasta rosa". */
+  label: string;
+  /** Public URL of the stored image, shared by every recipe that reuses it. */
+  imageUrl: string;
+  /** Embedding of `label`, for matching dishes whose keys don't match exactly. */
+  embedding?: number[];
+  /** How many recipes have been served this image. */
+  usageCount: number;
+  createdAt: Date;
+  lastUsedAt: Date;
+};
+
 export type PushTokenDoc = {
   _id: ObjectId;
   userId: ObjectId;

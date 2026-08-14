@@ -5,7 +5,6 @@ import {
   type ExtractFromTextResult,
 } from '@mixer/contracts';
 import { cleanNullValues, retryWithBackoff, sanitizeJsonResponse } from '../../utils/retry.utils.js';
-import { fetchExternalRecipeImage } from '../../services/image-search.service.js';
 
 let groqClient: Groq | undefined;
 
@@ -136,13 +135,9 @@ export async function extractRecipeFromText(
   }
 
   const cleanedObj = cleanNullValues(parsed) as Record<string, unknown>;
-  if (!cleanedObj.coverImageUrl) {
-    const title = typeof cleanedObj.title === 'string' ? cleanedObj.title : undefined;
-    const cuisine = typeof cleanedObj.cuisine === 'string' ? cleanedObj.cuisine : undefined;
-    const tags = Array.isArray(cleanedObj.tags) ? (cleanedObj.tags as string[]) : undefined;
-    const ingredients = Array.isArray(cleanedObj.ingredients) ? (cleanedObj.ingredients as any[]) : undefined;
-    cleanedObj.coverImageUrl = await fetchExternalRecipeImage(title, cuisine, tags, ingredients);
-  }
+  // No cover is filled in here: the API owns cover images (generated at create
+  // time, stock photo for the import preview), so extraction leaves it empty
+  // unless the source itself supplied one.
 
   return ExtractFromTextResultSchema.parse(cleanedObj);
 }
