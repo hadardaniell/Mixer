@@ -91,6 +91,14 @@ export default function RootLayout() {
             document.head.appendChild(themeColor);
           }
           themeColor.setAttribute('content', APP_BACKGROUND_COLOR);
+
+          let manifestLink = document.querySelector('link[rel="manifest"]');
+          if (!manifestLink) {
+            manifestLink = document.createElement('link');
+            manifestLink.setAttribute('rel', 'manifest');
+            manifestLink.setAttribute('href', '/manifest.json');
+            document.head.appendChild(manifestLink);
+          }
           const styleId = 'app-rtl-overrides';
           let style = document.getElementById(styleId);
           if (!style) {
