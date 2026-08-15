@@ -40,6 +40,13 @@ export const authApi = {
       skipAuth: true,
     }),
 
+  checkAvailability: (body: { email: string; phoneNumber: string }) =>
+    http<{ available: true }>('/auth/check', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      skipAuth: true,
+    }),
+
   logout: (refreshToken: string) =>
     http<void>('/auth/logout', {
       method: 'POST',

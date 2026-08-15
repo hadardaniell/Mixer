@@ -97,13 +97,12 @@ export function RegisterStep1({
             style={{ borderRadius: 14 }}
             startAdornment={<Phone size={22} color={ink} />}
           />
+          {error ? (
+            <Text color="$dangerText" fontSize={13} paddingRight={24}>
+              {error}
+            </Text>
+          ) : null}
         </YStack>
-
-        {error ? (
-          <Text color="$dangerText" fontSize="$3">
-            {error}
-          </Text>
-        ) : null}
 
         {/* Google + or */}
         <YStack gap="$2">

@@ -603,6 +603,8 @@
     "save": "שמירה",
     "saving": "שומר…",
     "invalidInput": "בדוק את השדות ונסה שוב",
+    "invalidEmail": "נא להזין כתובת אימייל תקינה",
+    "invalidPhone": "נא להזין מספר טלפון תקין",
     "passwordTooShort": "הסיסמה חייבת להכיל לפחות 8 תווים",
     "networkError": "לא הצלחנו להתחבר לשרת. נסה שוב.",
     "dontHaveAccount": "אין לך חשבון?",

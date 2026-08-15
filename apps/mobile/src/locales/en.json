@@ -606,6 +606,8 @@
     "save": "Save",
     "saving": "Saving…",
     "invalidInput": "Please check the fields and try again",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPhone": "Please enter a valid phone number",
     "passwordTooShort": "Password must be at least 8 characters",
     "networkError": "Couldn't reach the server. Try again.",
     "dontHaveAccount": "Don't have an account?",

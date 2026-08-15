@@ -37,8 +37,41 @@ export function RegisterScreen() {
 
   const step1Ready = !!displayName && !!email && !!phoneNumber;
 
-  const goToStep2 = () => {
+  const goToStep2 = async () => {
     if (!step1Ready) return;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/;
+    if (!emailRegex.test(email.trim()) || email.includes('..')) {
+      setError(t('auth.invalidEmail'));
+      return;
+    }
+
+    const digitsOnly = phoneNumber.replace(/\D/g, '');
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+      setError(t('auth.invalidPhone'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await authApi.checkAvailability({ email: email.trim(), phoneNumber: phoneNumber.trim() });
+    } catch (e) {
+      if (e instanceof HttpError && e.status === 409) {
+        const code = (e.body as { error?: string } | undefined)?.error;
+        setError(
+          code === 'phone_already_registered'
+            ? t('auth.phoneAlreadyRegistered')
+            : t('auth.emailAlreadyRegistered'),
+        );
+      } else if (e instanceof HttpError && e.status === 400) {
+        setError(t('auth.invalidEmail'));
+      } else {
+        setError(t('auth.networkError'));
+      }
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
     setError(null);
     setStep(2);
   };

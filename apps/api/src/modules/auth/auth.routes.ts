@@ -1,6 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { ObjectId } from 'mongodb';
 import {
+  CheckAvailabilityInputSchema,
   GoogleCodeLoginInputSchema,
   GoogleLoginInputSchema,
   LoginInputSchema,
@@ -103,6 +104,26 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
         ipAddress: req.ip,
       });
       return reply.code(201).send(tokens);
+    },
+  );
+
+  app.post(
+    '/auth/check',
+    { schema: { body: CheckAvailabilityInputSchema, tags: ['auth'] } },
+    async (req, reply) => {
+      const email = req.body.email.toLowerCase().trim();
+      const phone = req.body.phoneNumber.trim();
+
+      const existingEmail = await app.collections.users.findOne(
+        { email },
+        { collation: { locale: 'en', strength: 2 } },
+      );
+      if (existingEmail) return reply.code(409).send({ error: 'email_already_registered' });
+
+      const existingPhone = await app.collections.users.findOne({ phoneNumber: phone });
+      if (existingPhone) return reply.code(409).send({ error: 'phone_already_registered' });
+
+      return reply.code(200).send({ available: true });
     },
   );
 

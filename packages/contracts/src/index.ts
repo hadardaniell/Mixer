@@ -116,6 +116,12 @@ export type LoginInput = z.infer<typeof LoginInputSchema>;
 export const RefreshInputSchema = z.object({ refreshToken: z.string().min(1) });
 export type RefreshInput = z.infer<typeof RefreshInputSchema>;
 
+export const CheckAvailabilityInputSchema = z.object({
+  email: z.string().email(),
+  phoneNumber: PhoneNumber,
+});
+export type CheckAvailabilityInput = z.infer<typeof CheckAvailabilityInputSchema>;
+
 export const AuthResponseSchema = z.object({
   user: PublicUserSchema,
   accessToken: z.string(),
