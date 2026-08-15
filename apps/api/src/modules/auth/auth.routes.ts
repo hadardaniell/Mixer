@@ -37,15 +37,18 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
       const email = req.body.email.toLowerCase();
       const phone = phoneNumber.trim();
 
-      // Pre-check both unique fields so we can return a specific code per cause.
+      // Pre-check all unique fields so we can return a specific code per cause.
+      const existingName = await app.collections.users.findOne(
+        { displayName },
+        { collation: { locale: 'en', strength: 2 } },
+      );
+      if (existingName) return reply.code(409).send({ error: 'displayName_already_registered' });
+
       const existingEmail = await app.collections.users.findOne(
         { email },
         { collation: { locale: 'en', strength: 2 } }
       );
       if (existingEmail) {
-        console.log('\n--- FOUND CONFLICTING USER ---');
-        console.log(JSON.stringify(existingEmail, null, 2));
-        console.log('------------------------------\n');
         req.log.warn({ existingEmail }, 'Registration blocked: Email exists in pre-check');
         return reply.code(409).send({ error: 'email_already_registered' });
       }
@@ -96,6 +99,9 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
         if (isDuplicateKeyError(e, 'phoneNumber')) {
           return reply.code(409).send({ error: 'phone_already_registered' });
         }
+        if (isDuplicateKeyError(e, 'displayName')) {
+          return reply.code(409).send({ error: 'displayName_already_registered' });
+        }
         throw e;
       }
 
@@ -113,6 +119,13 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req, reply) => {
       const email = req.body.email.toLowerCase().trim();
       const phone = req.body.phoneNumber.trim();
+      const { displayName } = req.body;
+
+      const existingName = await app.collections.users.findOne(
+        { displayName },
+        { collation: { locale: 'en', strength: 2 } },
+      );
+      if (existingName) return reply.code(409).send({ error: 'displayName_already_registered' });
 
       const existingEmail = await app.collections.users.findOne(
         { email },

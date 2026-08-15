@@ -54,14 +54,16 @@ export function RegisterScreen() {
 
     setLoading(true);
     try {
-      await authApi.checkAvailability({ email: email.trim(), phoneNumber: phoneNumber.trim() });
+      await authApi.checkAvailability({ email: email.trim(), phoneNumber: phoneNumber.trim(), displayName: displayName.trim() });
     } catch (e) {
       if (e instanceof HttpError && e.status === 409) {
         const code = (e.body as { error?: string } | undefined)?.error;
         setError(
           code === 'phone_already_registered'
             ? t('auth.phoneAlreadyRegistered')
-            : t('auth.emailAlreadyRegistered'),
+            : code === 'displayName_already_registered'
+              ? t('auth.displayNameAlreadyRegistered')
+              : t('auth.emailAlreadyRegistered'),
         );
       } else if (e instanceof HttpError && e.status === 400) {
         setError(t('auth.invalidEmail'));
