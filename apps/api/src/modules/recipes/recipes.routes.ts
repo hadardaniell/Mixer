@@ -336,39 +336,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         updatedAt: now,
       };
       await app.collections.recipes.insertOne(doc);
-        const personalBook =
-          await app.collections.recipeBooks.findOne({
-            ownerId: doc.ownerId,
-            type: 'personal',
-          });
-
-        if (personalBook) {
-          try {
-            await app.collections.recipeBooks.updateOne(
-              {
-                _id: personalBook._id,
-              },
-              {
-                $addToSet: {
-                  recipeIds: doc._id,
-                },
-                $set: {
-                  updatedAt: new Date(),
-                  // Books created before `language` existed are missing it, and
-                  // the collection validator runs on updates too — so every write
-                  // to such a book fails until the field is filled in. Heal it
-                  // here rather than letting it reject recipe creation forever.
-                  ...(personalBook.language ? {} : { language: doc.language }),
-                },
-              },
-            );
-          } catch (bookErr) {
-            // Filing the recipe is bookkeeping; the recipe itself is already
-            // saved. Failing the request here would return a 500 for a recipe
-            // that exists, and the client would have no id to retry with.
-            app.log.error(bookErr, 'Failed to add new recipe to personal book');
-          }
-        }
+      // Removed legacy logic that automatically added new recipes to the first 'personal' book found
       // Awaited, not fire-and-forget: the cover is part of the recipe, so the
       // response carries the finished thing rather than making the client come
       // back for the picture. Costs this request the generation time.
@@ -435,20 +403,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
 
         await app.collections.recipes.insertOne(doc);
 
-        const personalBook = await app.collections.recipeBooks.findOne({
-          ownerId: doc.ownerId,
-          type: 'personal',
-        });
-
-        if (personalBook) {
-          await app.collections.recipeBooks.updateOne(
-            { _id: personalBook._id },
-            {
-              $addToSet: { recipeIds: doc._id },
-              $set: { updatedAt: now },
-            },
-          );
-        }
+      // Removed legacy logic that automatically added duplicated recipes to the first 'personal' book found
 
         generateAndStoreEmbedding(app.collections, doc._id, doc);
         return reply.code(201).send(toRecipe(doc));
