@@ -135,7 +135,7 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         if (stale.length > 0) {
           await app.collections.recipeBooks.updateOne(
             { _id: book._id },
-            { $pull: { recipeIds: { $in: stale } } },
+            { $pullAll: { recipeIds: stale } },
           );
           book.recipeIds = book.recipeIds.filter((id) => existingSet.has(id.toString()));
         }
