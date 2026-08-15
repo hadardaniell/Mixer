@@ -771,7 +771,7 @@ app.post(
         return reply.code(403).send({ error: 'not the owner' });
       }
 
-      // Auto-fork for friends who have a live link (accepted share, not yet saved)
+      // Notify friends with a live link so they can choose to save a copy
       const [liveShares, owner] = await Promise.all([
         app.collections.sharedItems
           .find({ resourceId: _id, resourceType: 'recipe', status: 'accepted', savedAt: null })
@@ -782,35 +782,42 @@ app.post(
         ),
       ]);
 
-      await Promise.all(
-        liveShares.map(async (share) => {
-          const now = new Date();
-          const fork: RecipeDoc = {
-            ...existing,
-            _id: new ObjectId(),
-            ownerId: share.friendId,
-            visibility: 'private',
-            forkedFrom: existing._id,
-            forkedAt: now,
-            createdAt: now,
-            updatedAt: now,
-          };
-          await app.collections.recipes.insertOne(fork);
-          await app.collections.sharedItems.updateOne(
-            { _id: share._id },
-            { $set: { savedAt: now, savedResourceId: fork._id } },
-          );
-          await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
-            fromUserId: req.user.id,
-            fromUserName: owner?.displayName ?? '',
-            resourceType: 'recipe',
-            resourceName: existing.title,
-            savedCopyId: fork._id.toString(),
-          });
-        }),
-      );
+      if (liveShares.length > 0) {
+        const recipeSnapshot: Record<string, unknown> = {
+          title: existing.title,
+          description: existing.description,
+          coverImageUrl: existing.coverImageUrl,
+          ingredients: existing.ingredients,
+          steps: existing.steps,
+          servings: existing.servings,
+          prepTimeMinutes: existing.prepTimeMinutes,
+          cookTimeMinutes: existing.cookTimeMinutes,
+          difficulty: existing.difficulty,
+          cuisine: existing.cuisine,
+          tags: existing.tags,
+          categoryIds: existing.categoryIds?.map((id) => id.toString()) ?? [],
+          language: existing.language,
+          source: {
+            type: existing.source.type,
+            url: existing.source.url,
+            platform: existing.source.platform,
+          },
+        };
+        await Promise.all(
+          liveShares.map((share) =>
+            notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+              fromUserId: req.user.id,
+              fromUserName: owner?.displayName ?? '',
+              resourceType: 'recipe',
+              resourceName: existing.title,
+              _snapshot: recipeSnapshot,
+            }),
+          ),
+        );
+      }
 
       await app.collections.sharedItems.deleteMany({ resourceId: _id, resourceType: 'recipe' });
+      await app.collections.recipeBooks.updateMany({ recipeIds: _id }, { $pull: { recipeIds: _id } });
       await app.collections.recipes.deleteOne({ _id });
       await app.collections.recipeTranslations
         .deleteMany({ recipeId: _id })

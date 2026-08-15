@@ -30,8 +30,8 @@ const messages: Record<string, LocaleCopy> = {
     he: { title: 'השיתוף נדחה', body: '{{name}} דחה/תה את השיתוף של {{resource}}' },
   },
   OWNER_DELETED_RESOURCE: {
-    en: { title: 'Shared item removed', body: '{{name}} deleted {{resource}} — we saved you a copy' },
-    he: { title: 'פריט משותף הוסר', body: '{{name}} מחק/ה את {{resource}}, שמרנו לך עותק' },
+    en: { title: 'Shared item removed', body: '{{name}} deleted {{resource}} — do you want to save a copy?' },
+    he: { title: 'פריט משותף הוסר', body: '{{name}} מחק/ה את {{resource}} — האם תרצה/י לשמור עותק?' },
   },
   FRIEND_REQUEST: {
     en: { title: 'Friend request', body: '{{name}} sent you a friend request' },

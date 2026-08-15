@@ -16,7 +16,8 @@ import {
 export type NotificationAction =
   | { kind: 'friend'; fromUserId: string }
   | { kind: 'share'; shareId: string }
-  | { kind: 'bookInvite'; bookId: string };
+  | { kind: 'bookInvite'; bookId: string }
+  | { kind: 'pendingDeletion'; notificationId: string };
 
 export interface NotificationContent {
   Icon: LucideIcon;
@@ -82,13 +83,13 @@ export function getNotificationContent(n: Notification, t: TFunction): Notificat
     case 'OWNER_DELETED_RESOURCE':
       return {
         Icon: Bookmark,
-        color: 'danger',
+        color: 'warning',
         title: t('notifications.items.ownerDeleted.title'),
         body: t('notifications.items.ownerDeleted.body', {
           name: n.payload.fromUserName,
           resource: n.payload.resourceName,
         }),
-        route: resourceRoute(n.payload.resourceType, n.payload.savedCopyId),
+        action: { kind: 'pendingDeletion', notificationId: n.id },
       };
     case 'FRIEND_REQUEST':
       return {

@@ -517,7 +517,6 @@ export const OwnerDeletedResourcePayloadSchema = z.object({
   fromUserName: z.string(),
   resourceType: ShareResourceTypeSchema,
   resourceName: z.string(),
-  savedCopyId: ObjectIdString,
 });
 export const FriendRequestPayloadSchema = z.object({
   fromUserId: ObjectIdString,

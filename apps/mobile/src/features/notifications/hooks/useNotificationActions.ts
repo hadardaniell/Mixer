@@ -16,6 +16,9 @@ interface BookInviteActionVars {
   notificationId: string;
   bookId: string;
 }
+interface PendingDeletionVars {
+  notificationId: string;
+}
 
 /**
  * Mutations for the notifications inbox. Every action invalidates the
@@ -91,6 +94,28 @@ export function useNotificationActions() {
     onError: (err, v) => settleAction(err, v.notificationId),
   });
 
+  const acceptPendingCopy = useMutation({
+    mutationFn: (v: PendingDeletionVars) => notificationsApi.savePendingCopy(v.notificationId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      qc.invalidateQueries({ queryKey: ['feed'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+    },
+    onError: async (err, v) => {
+      // 400 = notification has no snapshot (created before this feature was deployed)
+      // 404 = notification already gone — either way, dismiss it so it doesn't linger
+      if (err instanceof HttpError && (err.status === 400 || err.status === 404)) {
+        try { await notificationsApi.remove(v.notificationId); } catch { /* best-effort */ }
+      }
+      invalidateNotifications();
+    },
+  });
+
+  const declinePendingCopy = useMutation({
+    mutationFn: (v: PendingDeletionVars) => notificationsApi.remove(v.notificationId),
+    onSuccess: invalidateNotifications,
+  });
+
   return {
     markRead,
     markAllRead,
@@ -101,5 +126,7 @@ export function useNotificationActions() {
     declineShare,
     acceptBookInvite,
     declineBookInvite,
+    acceptPendingCopy,
+    declinePendingCopy,
   };
 }

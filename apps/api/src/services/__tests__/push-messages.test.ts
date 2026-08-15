@@ -47,12 +47,12 @@ describe('getPushMessage', () => {
   describe('OWNER_DELETED_RESOURCE', () => {
     it('returns English body with both name and resource', () => {
       const result = getPushMessage('OWNER_DELETED_RESOURCE', { fromUserName: 'Dani', resourceName: 'Cholent' }, 'en');
-      expect(result?.body).toBe('Dani deleted Cholent — we saved you a copy');
+      expect(result?.body).toBe('Dani deleted Cholent — do you want to save a copy?');
     });
 
     it('returns Hebrew body', () => {
       const result = getPushMessage('OWNER_DELETED_RESOURCE', { fromUserName: 'דני', resourceName: 'חמין' }, 'he');
-      expect(result?.body).toBe('דני מחק/ה את חמין, שמרנו לך עותק');
+      expect(result?.body).toBe('דני מחק/ה את חמין — האם תרצה/י לשמור עותק?');
     });
   });
 

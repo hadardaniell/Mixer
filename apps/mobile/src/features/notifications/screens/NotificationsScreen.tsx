@@ -40,7 +40,9 @@ export function NotificationsScreen() {
     actions.acceptShare.isPending ||
     actions.declineShare.isPending ||
     actions.acceptBookInvite.isPending ||
-    actions.declineBookInvite.isPending;
+    actions.declineBookInvite.isPending ||
+    actions.acceptPendingCopy.isPending ||
+    actions.declinePendingCopy.isPending;
 
   const onOpen = (n: Notification) => {
     if (!n.read) actions.markRead.mutate(n.id);
@@ -55,6 +57,8 @@ export function NotificationsScreen() {
       actions.acceptShare.mutate({ notificationId: n.id, shareId: n.payload.shareId });
     } else if (n.type === 'BOOK_INVITE') {
       actions.acceptBookInvite.mutate({ notificationId: n.id, bookId: n.payload.bookId });
+    } else if (n.type === 'OWNER_DELETED_RESOURCE') {
+      actions.acceptPendingCopy.mutate({ notificationId: n.id });
     }
   };
 
@@ -65,6 +69,8 @@ export function NotificationsScreen() {
       actions.declineShare.mutate({ notificationId: n.id, shareId: n.payload.shareId });
     } else if (n.type === 'BOOK_INVITE') {
       actions.declineBookInvite.mutate({ notificationId: n.id, bookId: n.payload.bookId });
+    } else if (n.type === 'OWNER_DELETED_RESOURCE') {
+      actions.declinePendingCopy.mutate({ notificationId: n.id });
     }
   };
 

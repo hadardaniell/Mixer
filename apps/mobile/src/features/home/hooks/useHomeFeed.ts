@@ -25,6 +25,7 @@ export interface HomeFeed {
   isLoading: boolean;
   recentlyViewed: Array<RecipeCardData & { isFavorite: boolean }>;
   booksWithFriends: Array<BookCardData & { isFavorite: boolean }>;
+  sharedBooksWithMe: Array<BookCardData & { isFavorite: boolean }>;
   sharedWithMe: Array<RecipeCardData & { isFavorite: boolean }>;
   favorites: Array<RecipeCardData & { isFavorite: boolean }>;
 }
@@ -173,8 +174,15 @@ export function useHomeFeed(): HomeFeed {
     };
   };
 
+  // Books I own that have at least one other collaborator.
   const booksWithFriends = useMemo(
-    () => books.filter((b) => b.members.length > 1).map(buildBookCard),
+    () => books.filter((b) => b.ownerId === myId && b.members.length > 1).map(buildBookCard),
+    [books, recipeById, userById, myId],
+  );
+
+  // Books owned by someone else where I am an active member.
+  const sharedBooksWithMe = useMemo(
+    () => books.filter((b) => b.ownerId !== myId).map(buildBookCard),
     [books, recipeById, userById, myId],
   );
 
@@ -208,6 +216,7 @@ export function useHomeFeed(): HomeFeed {
       directSharedRecipesQ.isLoading,
     recentlyViewed: recentlyViewedQ.items,
     booksWithFriends,
+    sharedBooksWithMe,
     sharedWithMe,
     favorites,
   };

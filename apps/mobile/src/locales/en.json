@@ -75,7 +75,7 @@
       },
       "ownerDeleted": {
         "title": "Shared item removed",
-        "body": "{{name}} deleted {{resource}} — we saved you a copy"
+        "body": "{{name}} deleted {{resource}} — do you want to save a copy?"
       },
       "friendRequest": {
         "title": "Friend request",
