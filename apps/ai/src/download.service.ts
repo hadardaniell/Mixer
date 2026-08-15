@@ -55,6 +55,8 @@ export const downloadService = {
       const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
       const proxy = process.env.PROXY_URL;
 
+      const isInstagram = url.toLowerCase().includes('instagram.com');
+
       const optionsList: any[] = isYouTube
         ? [
             {
@@ -82,6 +84,18 @@ export const downloadService = {
               ...(proxy ? { proxy } : {}),
             },
           ]
+        // 5 identical Instagram attempts — each one hits the rotating proxy and
+        // gets a fresh residential IP, so failed attempts self-heal on retry.
+        : isInstagram
+        ? Array.from({ length: 5 }, () => ({
+            dumpSingleJson: true,
+            skipDownload: true,
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+            ...(proxy ? { proxy } : {}),
+            ...(cookiePath ? { cookies: cookiePath } : {}),
+          }))
         : [
             {
               dumpSingleJson: true,
@@ -89,6 +103,7 @@ export const downloadService = {
               noWarnings: true,
               noCheckCertificate: true,
               impersonate: 'chrome',
+              ...(proxy ? { proxy } : {}),
               ...(cookiePath ? { cookies: cookiePath } : {}),
             },
             {
@@ -97,12 +112,14 @@ export const downloadService = {
               noWarnings: true,
               noCheckCertificate: true,
               impersonate: 'chrome',
+              ...(proxy ? { proxy } : {}),
             },
             {
               dumpSingleJson: true,
               skipDownload: true,
               noWarnings: true,
               noCheckCertificate: true,
+              ...(proxy ? { proxy } : {}),
             },
           ];
 
@@ -113,7 +130,10 @@ export const downloadService = {
           info = await ytDlp(url, opts);
           if (info) break;
         } catch {
-          // try next strategy
+          if (isInstagram) {
+            console.log('[download.service] Instagram info fetch failed — waiting 2s for a fresh proxy IP before retry…');
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
         }
       }
 
@@ -221,6 +241,30 @@ export const downloadService = {
           },
           {
             output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
+          },
+          {
+            output: outputPath,
+            format: 'b[height<=480]/b/best[height<=480]/best/worst',
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
+          },
+          {
+            output: outputPath,
+            format: 'b/best',
+            noWarnings: true,
+            noCheckCertificate: true,
+            impersonate: 'chrome',
+            ...(cookiePath ? { cookies: cookiePath } : {}),
+          },
+          {
+            output: outputPath,
             format: 'b/best',
             noWarnings: true,
             noCheckCertificate: true,
@@ -308,6 +352,12 @@ export const downloadService = {
         console.warn(
           `[download.service] ytDlp strategy failed for ${url}: ${err instanceof Error ? err.message : String(err)}`,
         );
+        // For Instagram, wait 2 seconds before the next attempt so the rotating
+        // proxy assigns a fresh residential IP, dramatically improving success rate.
+        if (isInstagram) {
+          console.log('[download.service] Instagram failed — waiting 2s for a fresh proxy IP before retry…');
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
       }
     }
 
