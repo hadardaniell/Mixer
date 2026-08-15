@@ -92,6 +92,7 @@ export const downloadService = {
             skipDownload: true,
             noWarnings: true,
             noCheckCertificate: true,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ...(proxy ? { proxy } : {}),
             ...(cookiePath ? { cookies: cookiePath } : {}),
           }))
@@ -233,6 +234,7 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -240,6 +242,7 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -247,6 +250,7 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -254,6 +258,7 @@ export const downloadService = {
             format: 'b/best',
             noWarnings: true,
             noCheckCertificate: true,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -261,6 +266,7 @@ export const downloadService = {
             format: 'b/best',
             noWarnings: true,
             noCheckCertificate: true,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
         ]
