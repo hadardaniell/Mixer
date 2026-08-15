@@ -53,7 +53,7 @@ export const downloadService = {
     try {
       const cookiePath = findCookiePath(url);
       const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
-      const proxy = isYouTube ? process.env.YOUTUBE_PROXY_URL : undefined;
+      const proxy = isYouTube ? process.env.PROXY_URL : undefined;
 
       const optionsList: any[] = isYouTube
         ? [
@@ -138,7 +138,7 @@ export const downloadService = {
       console.log(`[download.service] Fetching metadata and comments for: ${url}`);
       
       const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
-      const proxy = isYouTube ? process.env.YOUTUBE_PROXY_URL : undefined;
+      const proxy = isYouTube ? process.env.PROXY_URL : undefined;
       
       const baseOptions: any = {
         dumpSingleJson: true,
@@ -187,7 +187,7 @@ export const downloadService = {
       console.log(`[download.service] Found cookie file at ${cookiePath} — passing to yt-dlp`);
     }
 
-    const proxy = isYouTube ? process.env.YOUTUBE_PROXY_URL : undefined;
+    const proxy = isYouTube ? process.env.PROXY_URL : undefined;
 
     const strategies = isTikTok
       ? [
