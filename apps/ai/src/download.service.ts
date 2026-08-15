@@ -53,7 +53,7 @@ export const downloadService = {
     try {
       const cookiePath = findCookiePath(url);
       const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
-      const proxy = isYouTube ? process.env.PROXY_URL : undefined;
+      const proxy = process.env.PROXY_URL;
 
       const optionsList: any[] = isYouTube
         ? [
@@ -107,6 +107,7 @@ export const downloadService = {
           ];
 
       let info: any;
+      if (proxy) { optionsList.forEach(opts => opts.proxy = proxy); }
       for (const opts of optionsList) {
         try {
           info = await ytDlp(url, opts);
@@ -138,7 +139,7 @@ export const downloadService = {
       console.log(`[download.service] Fetching metadata and comments for: ${url}`);
       
       const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
-      const proxy = isYouTube ? process.env.PROXY_URL : undefined;
+      const proxy = process.env.PROXY_URL;
       
       const baseOptions: any = {
         dumpSingleJson: true,
@@ -187,7 +188,7 @@ export const downloadService = {
       console.log(`[download.service] Found cookie file at ${cookiePath} — passing to yt-dlp`);
     }
 
-    const proxy = isYouTube ? process.env.PROXY_URL : undefined;
+    const proxy = process.env.PROXY_URL;
 
     const strategies = isTikTok
       ? [
@@ -280,6 +281,12 @@ export const downloadService = {
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
         ];
+
+    if (proxy) {
+      strategies.forEach(strategy => {
+        (strategy as any).proxy = proxy;
+      });
+    }
 
     // Inject cookies into all strategies if a cookie file was found
     if (cookiePath) {
