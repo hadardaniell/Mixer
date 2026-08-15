@@ -53,6 +53,7 @@ export const downloadService = {
     try {
       const cookiePath = findCookiePath(url);
       const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
+      const proxy = isYouTube ? process.env.YOUTUBE_PROXY_URL : undefined;
 
       const optionsList: any[] = isYouTube
         ? [
@@ -62,6 +63,7 @@ export const downloadService = {
               noWarnings: true,
               noCheckCertificate: true,
               extractorArgs: 'youtube:player_client=mweb,android,web',
+              ...(proxy ? { proxy } : {}),
               ...(cookiePath ? { cookies: cookiePath } : {}),
             },
             {
@@ -70,12 +72,14 @@ export const downloadService = {
               noWarnings: true,
               noCheckCertificate: true,
               extractorArgs: 'youtube:player_client=mweb,android,web',
+              ...(proxy ? { proxy } : {}),
             },
             {
               dumpSingleJson: true,
               skipDownload: true,
               noWarnings: true,
               noCheckCertificate: true,
+              ...(proxy ? { proxy } : {}),
             },
           ]
         : [
@@ -133,6 +137,9 @@ export const downloadService = {
     try {
       console.log(`[download.service] Fetching metadata and comments for: ${url}`);
       
+      const isYouTube = /youtube\.com|youtu\.be/.test(url.toLowerCase());
+      const proxy = isYouTube ? process.env.YOUTUBE_PROXY_URL : undefined;
+      
       const baseOptions: any = {
         dumpSingleJson: true,
         writeComments: true,
@@ -142,6 +149,7 @@ export const downloadService = {
         playlistEnd: 1,
         impersonate: 'chrome',
         extractorArgs: 'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
+        ...(proxy ? { proxy } : {}),
       };
 
       const info = await ytDlp(url, baseOptions);
@@ -178,6 +186,8 @@ export const downloadService = {
     if (cookiePath) {
       console.log(`[download.service] Found cookie file at ${cookiePath} — passing to yt-dlp`);
     }
+
+    const proxy = isYouTube ? process.env.YOUTUBE_PROXY_URL : undefined;
 
     const strategies = isTikTok
       ? [
@@ -225,6 +235,7 @@ export const downloadService = {
             noWarnings: true,
             noCheckCertificate: true,
             extractorArgs: 'youtube:player_client=mweb,android,web',
+            ...(proxy ? { proxy } : {}),
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -233,6 +244,7 @@ export const downloadService = {
             noWarnings: true,
             noCheckCertificate: true,
             extractorArgs: 'youtube:player_client=mweb,android,web',
+            ...(proxy ? { proxy } : {}),
           },
           {
             output: outputPath,
@@ -240,12 +252,14 @@ export const downloadService = {
             noWarnings: true,
             noCheckCertificate: true,
             impersonate: 'chrome',
+            ...(proxy ? { proxy } : {}),
           },
           {
             output: outputPath,
             format: 'b/best',
             noWarnings: true,
             noCheckCertificate: true,
+            ...(proxy ? { proxy } : {}),
           },
         ]
       : [
