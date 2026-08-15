@@ -608,6 +608,7 @@
     "invalidInput": "Please check the fields and try again",
     "invalidEmail": "Please enter a valid email address",
     "invalidPhone": "Please enter a valid phone number",
+    "displayNameAlreadyRegistered": "This name is already taken",
     "passwordTooShort": "Password must be at least 8 characters",
     "networkError": "Couldn't reach the server. Try again.",
     "dontHaveAccount": "Don't have an account?",

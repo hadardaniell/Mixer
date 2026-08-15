@@ -119,6 +119,7 @@ export type RefreshInput = z.infer<typeof RefreshInputSchema>;
 export const CheckAvailabilityInputSchema = z.object({
   email: z.string().email(),
   phoneNumber: PhoneNumber,
+  displayName: z.string().min(1).max(80),
 });
 export type CheckAvailabilityInput = z.infer<typeof CheckAvailabilityInputSchema>;
 

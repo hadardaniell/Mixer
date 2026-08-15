@@ -103,12 +103,19 @@ export async function findOrCreateGoogleUser(
     return (await collections.users.findOne({ _id: byEmail._id }))!;
   }
 
+  const baseName = profile.name ?? profile.email.split('@')[0]!;
+  let displayName = baseName;
+  let suffix = 2;
+  while (await collections.users.findOne({ displayName }, { collation: { locale: 'en', strength: 2 } })) {
+    displayName = `${baseName} ${suffix++}`;
+  }
+
   const now = new Date();
   const doc: UserDoc = {
     _id: new ObjectId(),
     email: profile.email,
     passwordHash: null,
-    displayName: profile.name ?? profile.email.split('@')[0]!,
+    displayName,
     avatarUrl: profile.picture,
     locale: 'he',
     role: 'user',

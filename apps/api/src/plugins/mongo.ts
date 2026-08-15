@@ -130,6 +130,19 @@ async function ensureIndexes(collections: Collections): Promise<void> {
     { unique: true, sparse: true },
   );
 
+  try {
+    await collections.users.createIndex(
+      { displayName: 1 },
+      { unique: true, collation: { locale: 'en', strength: 2 } },
+    );
+  } catch (e: any) {
+    if (e?.code === 11000) {
+      console.warn('[mongo] displayName unique index skipped: existing duplicate display names in DB. New registrations are still protected by the pre-check in auth.routes.ts.');
+    } else {
+      throw e;
+    }
+  }
+
   // Category slugs are stable identifiers — one doc per slug.
   await collections.categories.createIndex({ slug: 1 }, { unique: true });
   // Filtering recipes by category (GET /recipes?categoryId=).
