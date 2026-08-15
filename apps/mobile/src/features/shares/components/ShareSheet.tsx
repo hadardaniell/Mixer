@@ -102,8 +102,13 @@ export function ShareSheet({ open, onOpenChange, resourceType, resourceId }: Pro
   };
 
   const handleCopyLink = async () => {
-    const text = getShareText();
-    await Clipboard.setStringAsync(text);
+    // Copy only the original video/page URL so pasting it navigates back to the source.
+    // Fall back to the full share text if there is no source URL (e.g. manually-created recipes).
+    const link =
+      recipe?.source?.type === 'url' && recipe.source.url
+        ? recipe.source.url
+        : getShareText();
+    await Clipboard.setStringAsync(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
