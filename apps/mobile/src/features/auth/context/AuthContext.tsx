@@ -11,6 +11,8 @@ import {
 
 import { authApi } from '@/features/auth/services/authApi';
 import { tokens } from '@/features/auth/services/tokens';
+import { storage, StorageKeys } from '@/shared/config/storage';
+import { i18n, type Language } from '@/shared/lib/i18n';
 
 interface AuthContextValue {
   accessToken: string | null;
@@ -40,6 +42,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signIn = useCallback((response: AuthResponse) => {
     tokens.setSession(response.accessToken, response.refreshToken, response.user);
+
+    // Sync the user's saved language preference from the server to the local
+    // device. Without this, the app language would be stuck at whatever the
+    // login screen was displaying — ignoring the user's actual preference.
+    const serverLocale = response.user.locale as Language;
+    if (serverLocale) {
+      storage.set(StorageKeys.language, serverLocale);
+      void i18n.changeLanguage(serverLocale);
+    }
   }, []);
 
   const signOut = useCallback(async () => {
