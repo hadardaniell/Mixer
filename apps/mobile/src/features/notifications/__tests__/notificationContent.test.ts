@@ -109,7 +109,7 @@ describe('getNotificationContent', () => {
     expect(result.action).toBeUndefined();
   });
 
-  it('OWNER_DELETED_RESOURCE — Bookmark icon, danger color, route points to savedCopyId', () => {
+  it('OWNER_DELETED_RESOURCE — Bookmark icon, warning color, pendingDeletion action', () => {
     const n: Notification = {
       ...BASE,
       type: 'OWNER_DELETED_RESOURCE',
@@ -118,14 +118,13 @@ describe('getNotificationContent', () => {
         fromUserName: 'Dani',
         resourceType: 'recipe',
         resourceName: 'Cholent',
-        savedCopyId: ID.savedCopy,
       },
     };
     const result = getNotificationContent(n, t);
     expect(result.Icon).toBe('Bookmark');
-    expect(result.color).toBe('danger');
-    expect(result.route).toBe(`/recipes/${ID.savedCopy}`);
-    expect(result.action).toBeUndefined();
+    expect(result.color).toBe('warning');
+    expect(result.route).toBeUndefined();
+    expect(result.action).toEqual({ kind: 'pendingDeletion', notificationId: BASE.id });
   });
 
   it('FRIEND_REQUEST — UserPlus icon, friend action with fromUserId, avatar with url and name', () => {

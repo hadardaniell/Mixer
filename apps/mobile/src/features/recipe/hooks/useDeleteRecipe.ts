@@ -15,6 +15,7 @@ export function useDeleteRecipe() {
       qc.removeQueries({ queryKey: ['recipe', id] });
       qc.invalidateQueries({ queryKey: ['drafts'] });
       qc.invalidateQueries({ queryKey: ['feed'] });
+      qc.invalidateQueries({ queryKey: ['book'] });
     },
   });
 }

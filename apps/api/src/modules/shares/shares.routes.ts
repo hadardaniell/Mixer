@@ -302,20 +302,51 @@ export const sharesRoutes: FastifyPluginAsyncZod = async (app) => {
           ),
         ]);
         try {
-          const savedCopyId =
-            share.resourceType === 'recipe'
-              ? await forkRecipe(app.collections, share.resourceId, share.friendId)
-              : await forkBook(app.collections, share.resourceId, share.friendId);
-
+          let snapshot: Record<string, unknown> | undefined;
+          if (share.resourceType === 'recipe') {
+            const source = await app.collections.recipes.findOne({ _id: share.resourceId });
+            if (source) {
+              snapshot = {
+                title: source.title,
+                description: source.description,
+                coverImageUrl: source.coverImageUrl,
+                ingredients: source.ingredients,
+                steps: source.steps,
+                servings: source.servings,
+                prepTimeMinutes: source.prepTimeMinutes,
+                cookTimeMinutes: source.cookTimeMinutes,
+                difficulty: source.difficulty,
+                cuisine: source.cuisine,
+                tags: source.tags,
+                categoryIds: source.categoryIds?.map((id) => id.toString()) ?? [],
+                language: source.language,
+                source: { type: source.source.type, url: source.source.url, platform: source.source.platform },
+              };
+            }
+          } else {
+            const source = await app.collections.recipeBooks.findOne({ _id: share.resourceId });
+            if (source) {
+              snapshot = {
+                name: source.name,
+                description: source.description,
+                coverImageUrl: source.coverImageUrl,
+                coverKey: source.coverKey,
+                type: source.type,
+                language: source.language,
+                recipeIds: source.recipeIds.map((id) => id.toString()),
+                tags: source.tags,
+              };
+            }
+          }
           await notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
             fromUserId: req.user.id,
             fromUserName: deletingOwner?.displayName ?? '',
             resourceType: share.resourceType,
             resourceName,
-            savedCopyId: savedCopyId.toString(),
+            ...(snapshot ? { _snapshot: snapshot } : {}),
           });
         } catch {
-          // resource already gone — no fork needed, just clean up the share
+          // resource already gone — skip notification
         }
       }
 

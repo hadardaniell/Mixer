@@ -31,6 +31,7 @@ export function HomeFeedSections() {
     !feed.isLoading &&
     feed.recentlyViewed.length === 0 &&
     feed.booksWithFriends.length === 0 &&
+    feed.sharedBooksWithMe.length === 0 &&
     feed.sharedWithMe.length === 0 &&
     feed.favorites.length === 0;
   const openRecipe = (id: string) => router.push(`/recipes/${id}` as never);
@@ -75,6 +76,20 @@ export function HomeFeedSections() {
           data={feed.booksWithFriends}
           keyExtractor={(b) => b.id}
           onSeeMore={() => router.push('/books/friends' as never)}
+          renderItem={({ item }) => (
+            <BookCard
+              book={item}
+              isFavorited={item.isFavorite}
+              onToggleFavorite={() => toggleBook.mutate({ id: item.id, next: !item.isFavorite })}
+              onPress={() => openBook(item.id)}
+            />
+          )}
+        />
+
+        <FeedSection<BookCardData & { isFavorite: boolean }>
+          title={t('home.booksWithFriends')}
+          data={feed.sharedBooksWithMe}
+          keyExtractor={(b) => b.id}
           renderItem={({ item }) => (
             <BookCard
               book={item}

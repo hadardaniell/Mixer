@@ -123,15 +123,33 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         });
         if (!liveShare) return reply.code(403).send({ error: 'not a member' });
       }
+
+      // Lazily remove recipe IDs that no longer exist (e.g. deleted before the
+      // cascade-delete was in place). Keeps recipeCount accurate everywhere.
+      if (book.recipeIds.length > 0) {
+        const existingDocs = await app.collections.recipes
+          .find({ _id: { $in: book.recipeIds } }, { projection: { _id: 1 } })
+          .toArray();
+        const existingSet = new Set(existingDocs.map((d) => d._id.toString()));
+        const stale = book.recipeIds.filter((id) => !existingSet.has(id.toString()));
+        if (stale.length > 0) {
+          await app.collections.recipeBooks.updateOne(
+            { _id: book._id },
+            { $pull: { recipeIds: { $in: stale } } },
+          );
+          book.recipeIds = book.recipeIds.filter((id) => existingSet.has(id.toString()));
+        }
+      }
+
       const favSet = await favoritedIds(
         app.collections,
         req.user.id,
         'book',
         [book._id],
       );
-      
+
       return toRecipeBook(book, {
-      isFavorite: favSet.has(book._id.toString()),
+        isFavorite: favSet.has(book._id.toString()),
       });
     },
   );
@@ -190,42 +208,33 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
         ),
       ]);
 
-      // Auto-save a copy for every live-link friend and notify them
+      // Build a snapshot of the book so recipients can choose to save a copy
+      app.log.info({ bookId: _id.toString(), liveShareCount: liveShares.length, collaboratorCount: book.members.length - 1 }, '[recipe-books/delete] building snapshot');
+      const bookSnapshot: Record<string, unknown> = {
+        name: book.name,
+        description: book.description,
+        coverImageUrl: book.coverImageUrl,
+        coverKey: book.coverKey,
+        type: book.type,
+        language: book.language,
+        recipeIds: book.recipeIds.map((id) => id.toString()),
+        tags: book.tags,
+      };
+
+      // Notify live-link recipients
       await Promise.all(
-        liveShares.map(async (share) => {
-          try {
-            const now = new Date();
-            // The recipient owns and browses this copy — never hidden plumbing.
-            const { system: _system, ...bookFields } = book;
-            const forked: RecipeBookDoc = {
-              ...bookFields,
-              _id: new ObjectId(),
-              ownerId: share.friendId,
-              members: [],
-              createdAt: now,
-              updatedAt: now,
-            };
-            await app.collections.recipeBooks.insertOne(forked);
-            await Promise.all([
-              app.collections.sharedItems.updateOne(
-                { _id: share._id },
-                { $set: { savedAt: now, savedResourceId: forked._id } },
-              ),
-              notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
-                fromUserId: req.user.id,
-                fromUserName: owner?.displayName ?? '',
-                resourceType: 'book',
-                resourceName: book.name,
-                savedCopyId: forked._id.toString(),
-              }),
-            ]);
-          } catch {
-            // best-effort — don't block deletion if fork fails
-          }
-        }),
+        liveShares.map((share) =>
+          notificationService.send(share.friendId.toString(), 'OWNER_DELETED_RESOURCE', {
+            fromUserId: req.user.id,
+            fromUserName: owner?.displayName ?? '',
+            resourceType: 'book',
+            resourceName: book.name,
+            _snapshot: bookSnapshot,
+          }),
+        ),
       );
 
-      // Notify collaborative members (excluding the owner) that the book is gone
+      // Notify collaborative members (excluding the owner)
       const collaborators = book.members.filter((m) => m.userId.toString() !== req.user.id);
       await Promise.all(
         collaborators.map((m) =>
@@ -234,11 +243,12 @@ export const recipeBooksRoutes: FastifyPluginAsyncZod = async (app) => {
             fromUserName: owner?.displayName ?? '',
             resourceType: 'book',
             resourceName: book.name,
-            savedCopyId: '',
+            _snapshot: bookSnapshot,
           }),
         ),
       );
 
+      await app.collections.sharedItems.deleteMany({ resourceId: _id, resourceType: 'book' });
       await app.collections.recipeBooks.deleteOne({ _id });
       return reply.code(204).send();
     },

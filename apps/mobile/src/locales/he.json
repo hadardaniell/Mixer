@@ -75,7 +75,7 @@
       },
       "ownerDeleted": {
         "title": "פריט משותף הוסר",
-        "body": "{{name}} מחק/ה את {{resource}}, שמרנו לך עותק"
+        "body": "{{name}} מחק/ה את {{resource}} — האם תרצה/י לשמור עותק?"
       },
       "friendRequest": {
         "title": "בקשת חברות",

@@ -30,7 +30,7 @@ export type NotificationPayloadMap = {
     fromUserName: string;
     resourceType: 'recipe' | 'book';
     resourceName: string;
-    savedCopyId: string;
+    _snapshot?: Record<string, unknown>;
   };
   FRIEND_REQUEST: {
     fromUserId: string;

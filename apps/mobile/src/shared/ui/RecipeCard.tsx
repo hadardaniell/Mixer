@@ -80,6 +80,7 @@ export function RecipeCard({
 }: RecipeCardProps) {
   const { t } = useTranslation();
   const theme = useTheme();
+  const danger = (theme.danger?.val as string) ?? '#FF4D6D';
   return (
     <YStack
       onPress={onPress}
@@ -140,7 +141,7 @@ export function RecipeCard({
                 justifyContent="center"
                 pressStyle={{ opacity: 0.7 }}
               >
-                <Trash2 size={14} color="$danger" />
+                <Trash2 size={14} color={danger} strokeWidth={2} />
               </YStack>
             </View>
           ) : null}

@@ -39,4 +39,6 @@ export const notificationsApi = {
     http<unknown>(`/recipe-books/${bookId}/members/accept`, { method: 'PUT' }),
   declineBookInvite: (bookId: string) =>
     http<unknown>(`/recipe-books/${bookId}/members/decline`, { method: 'PUT' }),
+  savePendingCopy: (notificationId: string) =>
+    http<{ id: string; resourceType: string }>(`/notifications/${notificationId}/save`, { method: 'POST' }),
 };
