@@ -92,7 +92,6 @@ export const downloadService = {
             skipDownload: true,
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
             ...(proxy ? { proxy } : {}),
             ...(cookiePath ? { cookies: cookiePath } : {}),
           }))
@@ -102,7 +101,6 @@ export const downloadService = {
               skipDownload: true,
               noWarnings: true,
               noCheckCertificate: true,
-              impersonate: 'chrome',
               ...(proxy ? { proxy } : {}),
               ...(cookiePath ? { cookies: cookiePath } : {}),
             },
@@ -111,7 +109,6 @@ export const downloadService = {
               skipDownload: true,
               noWarnings: true,
               noCheckCertificate: true,
-              impersonate: 'chrome',
               ...(proxy ? { proxy } : {}),
             },
             {
@@ -236,7 +233,6 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -244,7 +240,6 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -252,7 +247,6 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -260,7 +254,6 @@ export const downloadService = {
             format: 'b/best',
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
           {
@@ -268,7 +261,6 @@ export const downloadService = {
             format: 'b/best',
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
             ...(cookiePath ? { cookies: cookiePath } : {}),
           },
         ]
@@ -296,7 +288,6 @@ export const downloadService = {
             format: 'b[height<=480]/b/best[height<=480]/best/worst',
             noWarnings: true,
             noCheckCertificate: true,
-            impersonate: 'chrome',
             ...(proxy ? { proxy } : {}),
           },
           {
