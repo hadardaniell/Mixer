@@ -52,12 +52,12 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
           data.file.pipe(writeStream)
             .on('finish', resolve)
             .on('error', (err: any) => {
-              app.log.error('Avatar Write Stream Error:', err);
+              app.log.error({ err }, 'Avatar Write Stream Error');
               reject(err);
             });
           
           data.file.on('error', (err: any) => {
-            app.log.error('Avatar File Read Error:', err);
+            app.log.error({ err }, 'Avatar File Read Error');
             reject(err);
           });
         });
@@ -78,7 +78,7 @@ export const usersRoutes: FastifyPluginAsyncZod = async (app) => {
           return reply.code(200).send(toPublicUser(updatedUser));
 
         } catch (error: any) {
-          app.log.error('Avatar Upload Error Details:', error);
+          app.log.error({ error }, 'Avatar Upload Error Details');
           return reply.code(500).send({ 
             error: 'Failed to upload profile picture to Firebase storage server',
             message: error?.message || error 
