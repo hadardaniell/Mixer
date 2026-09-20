@@ -38,6 +38,7 @@ export function useCreateBook() {
       // refresh. Invalidating the `['feed', …]` prefix refetches every list.
       qc.invalidateQueries({ queryKey: ['feed', 'my-books'] });
       qc.invalidateQueries({ queryKey: ['feed', 'favorite-books'] });
+      qc.invalidateQueries({ queryKey: ['feed', 'home'] });
     },
   });
 }

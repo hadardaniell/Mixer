@@ -24,6 +24,9 @@ export function useToggleRecipeFavorite() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed', 'favorite-recipes'] });
       qc.invalidateQueries({ queryKey: ['feed', 'my-recipes'] });
+      // The home screen's favourites row lives in the one combined payload, so
+      // the narrower keys above don't reach it.
+      qc.invalidateQueries({ queryKey: ['feed', 'home'] });
       qc.invalidateQueries({ queryKey: ['recipe'] });
     },
   });
@@ -49,6 +52,7 @@ export function useToggleBookFavorite() {
       // This list's membership changes, not just a flag on an existing row, so
       // it's the one that genuinely has to be re-read.
       qc.invalidateQueries({ queryKey: ['feed', 'favorite-books'] });
+      qc.invalidateQueries({ queryKey: ['feed', 'home'] });
     },
   });
 }

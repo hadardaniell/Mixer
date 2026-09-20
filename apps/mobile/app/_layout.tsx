@@ -1,7 +1,7 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import * as Font from 'expo-font';
 import { Stack, type ErrorBoundaryProps } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { I18nManager, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { ExtractionReadyBanner } from '@/features/recipe/components/ExtractionRe
 import { ExtractionJobProvider } from '@/features/recipe/context/ExtractionJobContext';
 import { readInitialSettings, SettingsProvider } from '@/features/settings/context/SettingsContext';
 import { queryClient } from '@/shared/lib/queryClient';
+import { persistOptions, useSessionCacheKey } from '@/shared/lib/queryPersist';
 import { initI18n, isRTL } from '@/shared/lib/i18n';
 import { SplashGate } from '@/shared/ui/SplashGate';
 import { APP_BACKGROUND_COLOR } from '@/theme/palette';
@@ -62,6 +63,10 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const [initial] = useState(readInitialSettings);
+  const sessionCacheKey = useSessionCacheKey();
+  // Memoized on the session: a fresh object every render would restart the
+  // restore/subscribe effect inside the provider on each one.
+  const persist = useMemo(() => ({ ...persistOptions, buster: sessionCacheKey }), [sessionCacheKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,7 +197,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: APP_BACKGROUND_COLOR }}>
       <SafeAreaProvider style={{ backgroundColor: APP_BACKGROUND_COLOR }}>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider client={queryClient} persistOptions={persist}>
             <SettingsProvider initial={initial}>
               <GoogleProvider>
                 <AuthProvider>
@@ -218,7 +223,7 @@ export default function RootLayout() {
                 </AuthProvider>
               </GoogleProvider>
             </SettingsProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </TamaguiProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

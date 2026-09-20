@@ -22,6 +22,16 @@ import { friendsRoutes } from './modules/friendships/friendships.routes.js';
 import { utilsRoutes } from './modules/utils/utils.routes.js';
 import { sharesRoutes } from './modules/shares/shares.routes.js';
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js';
+import { feedRoutes } from './modules/feed/feed.routes.js';
+import { invalidateFeed } from './modules/feed/feed.cache.js';
+
+/**
+ * POSTs that only read. They take a body because the id list is too long for a
+ * query string, not because they change anything — and the home screen calls
+ * them on every visit, so treating them as writes would clear the feed cache
+ * about as often as it was filled.
+ */
+const READ_ONLY_POSTS = new Set(['/recipes/by-ids', '/users/by-ids']);
 import { notificationService } from './services/notification.service.js';
 import multipart from '@fastify/multipart';
 import firebasePlugin from './plugins/firebase.js';
@@ -72,6 +82,20 @@ export async function buildApp(): Promise<FastifyInstance> {
   notificationService.init(app.collections);
   await authPlugin(app);
 
+  // Any successful write by a signed-in user can change what their home feed
+  // shows, and enumerating which routes those are is a list that would rot. One
+  // hook covers every mutation instead — including ones added later.
+  //
+  // It only clears the *acting* user. A write that changes someone else's feed
+  // (a friend adding a recipe to a shared book) is left to the cache's TTL.
+  app.addHook('onResponse', async (req, reply) => {
+    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return;
+    if (reply.statusCode >= 400) return;
+    if (READ_ONLY_POSTS.has(req.routeOptions.url ?? '')) return;
+    const userId = (req as { user?: { id?: string } }).user?.id;
+    if (userId) invalidateFeed(userId);
+  });
+
   await app.register(helloRoute);
   await app.register(authRoutes);
   await app.register(usersRoutes);
@@ -83,6 +107,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(utilsRoutes, { prefix: '/utils' });
   await app.register(sharesRoutes);
   await app.register(notificationsRoutes);
+  await app.register(feedRoutes);
 
   return app;
 }

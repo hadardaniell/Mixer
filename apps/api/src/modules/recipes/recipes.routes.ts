@@ -16,7 +16,7 @@ import {
 import { config } from '../../config.js';
 import type { RecipeDoc } from '../../db/types.js';
 import type { Collections } from '../../plugins/mongo.js';
-import { toRecipe } from './recipes.mapper.js';
+import { RECIPE_SUMMARY_PROJECTION, toRecipe, toRecipeSummary } from './recipes.mapper.js';
 import { favoritedIds } from '../favorites/favorites.service.js';
 import { notificationService } from '../../services/notification.service.js';
 import {
@@ -421,7 +421,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: { querystring: RecipeListQuerySchema, tags: ['recipes'] },
     },
     async (req) => {
-      const { owner, tag, categoryId, q, visibility, status, limit, skip } = req.query;
+      const { owner, tag, categoryId, q, visibility, status, limit, skip, summary } = req.query;
       const filter: Filter<RecipeDoc> = {};
 
       const isOwnerSelf = owner === 'me' && !!req.user?.id;
@@ -467,6 +467,7 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
         sort: { createdAt: -1 },
         limit,
         skip,
+        ...(summary ? { projection: RECIPE_SUMMARY_PROJECTION } : {}),
       });
       const [items, total] = await Promise.all([
         cursor.toArray(),
@@ -476,11 +477,12 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       const favSet = req.user
         ? await favoritedIds(app.collections, req.user.id, 'recipe', items.map((r) => r._id))
         : null;
+      const map = summary ? toRecipeSummary : toRecipe;
       return {
         items: items.map((r) =>
-        favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
-      ),
-      total,
+          favSet ? map(r, { isFavorite: favSet.has(r._id.toString()) }) : map(r),
+        ),
+        total,
       };
     },
   );
@@ -501,17 +503,23 @@ export const recipesRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: { body: RecipesByIdsInputSchema, tags: ['recipes'] },
     },
     async (req) => {
+      const { summary } = req.body;
       const oids = req.body.ids.map((id) => new ObjectId(id));
-      const docs = await app.collections.recipes.find({ _id: { $in: oids } }).toArray();
+      // `readableRecipeIds` decides access from _id/ownerId/visibility alone, all
+      // of which survive the summary projection.
+      const docs = await app.collections.recipes
+        .find({ _id: { $in: oids } }, summary ? { projection: RECIPE_SUMMARY_PROJECTION } : {})
+        .toArray();
       const readable = await readableRecipeIds(app.collections, req, docs);
       const items = docs.filter((d) => readable.has(d._id.toString()));
 
       const favSet = req.user
         ? await favoritedIds(app.collections, req.user.id, 'recipe', items.map((r) => r._id))
         : null;
+      const map = summary ? toRecipeSummary : toRecipe;
       return {
         items: items.map((r) =>
-          favSet ? toRecipe(r, { isFavorite: favSet.has(r._id.toString()) }) : toRecipe(r),
+          favSet ? map(r, { isFavorite: favSet.has(r._id.toString()) }) : map(r),
         ),
       };
     },

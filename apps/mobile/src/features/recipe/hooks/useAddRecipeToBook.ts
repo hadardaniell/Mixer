@@ -14,6 +14,7 @@ export function useAddRecipeToBook() {
         isFavorite: updated.isFavorite ?? old?.isFavorite,
       }));
       qc.invalidateQueries({ queryKey: ['feed', 'my-books'] });
+      qc.invalidateQueries({ queryKey: ['feed', 'home'] });
       qc.invalidateQueries({ queryKey: ['myBooks'] });
     },
   });

@@ -46,6 +46,9 @@ function writeBook(qc: QueryClient, updated: RecipeBook) {
         : old,
     );
   }
+  // The home screen's books arrive inside one combined payload rather than as a
+  // list of their own, so they can't be patched by the loop above.
+  qc.invalidateQueries({ queryKey: ['feed', 'home'] });
 }
 
 /** Drops a book from every cached list (deleted, or the user left it). */
@@ -56,6 +59,7 @@ function dropBook(qc: QueryClient, bookId: string) {
       old ? { ...old, items: old.items.filter((b) => b.id !== bookId) } : old,
     );
   }
+  qc.invalidateQueries({ queryKey: ['feed', 'home'] });
 }
 
 /** All mutations the book detail screen needs, keyed to one book. */
