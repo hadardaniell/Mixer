@@ -105,6 +105,37 @@ async function ensureValidators(app: FastifyInstance, db: Db): Promise<void> {
   }
 }
 
+/**
+ * Creates an index that exists purely to make a query fast, and treats a
+ * conflict with an already-present index as success.
+ *
+ * These indexes enforce nothing the application relies on, so an existing one on
+ * the same keys — even with different options or a hand-picked name — does the
+ * job. Without this the server refuses to boot over it: `createIndex` throws
+ * IndexOptionsConflict / IndexKeySpecsConflict, `ensureIndexes` is awaited during
+ * plugin setup, and every route, sign-in included, is then unreachable. A slower
+ * query is a far better failure than no API at all.
+ *
+ * Indexes that back a real invariant (unique emails, one doc per slug) are
+ * created directly, so a conflict there still surfaces.
+ */
+async function ensurePerformanceIndex(
+  collection: { createIndex: Collection['createIndex'] },
+  keys: Parameters<Collection['createIndex']>[0],
+  options: Parameters<Collection['createIndex']>[1] = {},
+): Promise<void> {
+  try {
+    await collection.createIndex(keys, options);
+  } catch (e: any) {
+    // 85 IndexOptionsConflict, 86 IndexKeySpecsConflict — same keys already
+    // indexed under different options or another name.
+    if (e?.code !== 85 && e?.code !== 86) throw e;
+    console.warn(
+      `[mongo] keeping existing index for ${JSON.stringify(keys)} (${e.codeName ?? e.code})`,
+    );
+  }
+}
+
 async function ensureIndexes(collections: Collections): Promise<void> {
   const desiredEmail = {
     key: { email: 1 } as const,
@@ -147,6 +178,28 @@ async function ensureIndexes(collections: Collections): Promise<void> {
   await collections.categories.createIndex({ slug: 1 }, { unique: true });
   // Filtering recipes by category (GET /recipes?categoryId=).
   await collections.recipes.createIndex({ categoryIds: 1 });
+  // `GET /recipes?owner=me` — the profile and drafts lists. Ordered to match the
+  // query's own shape (equality on ownerId/status, then the createdAt sort), so
+  // the sort is served by the index rather than by an in-memory pass.
+  await ensurePerformanceIndex(collections.recipes, { ownerId: 1, status: 1, createdAt: -1 });
+
+  // The home feed opens on "my books", and every other row waits on it. The two
+  // keys mirror the arms of that route's `$or` (owner, or member) — Mongo can
+  // only use an index per arm, so a single compound one would be ignored.
+  await ensurePerformanceIndex(collections.recipeBooks, { ownerId: 1, createdAt: -1 });
+  await ensurePerformanceIndex(collections.recipeBooks, { 'members.userId': 1, createdAt: -1 });
+
+  // `favoritedIds()` annotates every listing in the app with isFavorite, so this
+  // runs on nearly every read. With the projection it uses, the index covers the
+  // query outright — no document fetch at all. Unique because it is also the key
+  // `addFavorite` upserts on: one row per user + kind + target.
+  await ensurePerformanceIndex(
+    collections.favorites,
+    { userId: 1, kind: 1, targetId: 1 },
+    { unique: true },
+  );
+  // `GET /favorites?kind=` — same prefix, but sorted rather than filtered by target.
+  await ensurePerformanceIndex(collections.favorites, { userId: 1, kind: 1, createdAt: -1 });
   // Free-text recipe search (GET /recipes?q=). A collection allows only one text
   // index, so if one already exists (possibly created by hand with different
   // weights/name) we keep it — its mere existence is what $text needs. A fresh

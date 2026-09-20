@@ -13,6 +13,8 @@ import { authApi } from '@/features/auth/services/authApi';
 import { tokens } from '@/features/auth/services/tokens';
 import { storage, StorageKeys } from '@/shared/config/storage';
 import { i18n, type Language } from '@/shared/lib/i18n';
+import { queryClient } from '@/shared/lib/queryClient';
+import { queryPersister } from '@/shared/lib/queryPersist';
 
 interface AuthContextValue {
   accessToken: string | null;
@@ -56,6 +58,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = useCallback(async () => {
     const refreshToken = tokens.getRefreshToken();
     tokens.clear();
+    // Both copies, or the next account starts on the previous one's feed: the
+    // in-memory cache outlives the session, and part of it is now on disk too.
+    queryClient.clear();
+    void queryPersister.removeClient();
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken);

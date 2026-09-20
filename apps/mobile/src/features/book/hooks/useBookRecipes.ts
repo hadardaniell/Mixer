@@ -17,7 +17,7 @@ export function useBookRecipes(recipeIds: string[]) {
 
   const q = useQuery({
     queryKey: ['book-recipes', key],
-    queryFn: () => feedApi.recipesByIds(recipeIds),
+    queryFn: () => feedApi.recipeSummariesByIds(recipeIds),
     enabled: recipeIds.length > 0,
   });
 

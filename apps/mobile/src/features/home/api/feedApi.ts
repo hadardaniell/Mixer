@@ -4,10 +4,11 @@ import type {
   CreateRecipeInput,
   ExtractFromImageInput,
   ExtractFromTextResult,
+  HomeFeedResponse,
   PublicUser,
   Recipe,
   RecipeBook,
-  SharedItem,
+  RecipeSummary,
 } from '@mixer/contracts';
 
 import { http } from '@/shared/lib/httpClient';
@@ -21,7 +22,37 @@ interface ListResponse<T> {
 /** Must stay <= the `RecipesByIdsInputSchema` cap the API validates against. */
 const RECIPE_BATCH_SIZE = 200;
 
+/**
+ * Hydrates a batch of recipe ids in one round-trip. Prefer this over mapping
+ * `recipeById` over a list — that pattern is what made the home feed slow.
+ * Unreadable or deleted ids come back missing rather than as errors.
+ */
+async function recipeBatch<T>(ids: string[], summary: boolean): Promise<T[]> {
+  if (ids.length === 0) return [];
+  // The endpoint caps a batch at 200 ids; a long list goes as a few parallel
+  // requests rather than one per id.
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += RECIPE_BATCH_SIZE) {
+    chunks.push(ids.slice(i, i + RECIPE_BATCH_SIZE));
+  }
+  const responses = await Promise.all(
+    chunks.map((chunk) =>
+      http<ListResponse<T>>('/recipes/by-ids', {
+        method: 'POST',
+        body: JSON.stringify({ ids: chunk, summary }),
+      }),
+    ),
+  );
+  return responses.flatMap((r) => r.items);
+}
+
 export const feedApi = {
+  /**
+   * The whole home screen in one request. Replaces the five calls it used to take,
+   * two of which could not start until the books call had returned.
+   */
+  homeFeed: () => http<HomeFeedResponse>('/feed/home'),
+
   myRecipes: (limit = 10) =>
     http<ListResponse<Recipe>>(`/recipes?owner=me&limit=${limit}`),
 
@@ -45,32 +76,10 @@ export const feedApi = {
   recipeById: (id: string) => http<Recipe>(`/recipes/${id}`),
 
   /**
-   * Hydrates a batch of recipe ids in one round-trip. Prefer this over mapping
-   * `recipeById` over a list — that pattern is what made the home feed slow.
-   * Unreadable or deleted ids come back missing rather than as errors.
+   * Hydrates recipe ids into cards in one round-trip, minus `ingredients` and
+   * `steps` — the two unbounded fields, and the bulk of a recipe's payload.
    */
-  recipesByIds: async (ids: string[]): Promise<Recipe[]> => {
-    if (ids.length === 0) return [];
-    // The endpoint caps a batch at 200 ids; a long list goes as a few parallel
-    // requests rather than one per id.
-    const chunks: string[][] = [];
-    for (let i = 0; i < ids.length; i += RECIPE_BATCH_SIZE) {
-      chunks.push(ids.slice(i, i + RECIPE_BATCH_SIZE));
-    }
-    const responses = await Promise.all(
-      chunks.map((chunk) =>
-        http<ListResponse<Recipe>>('/recipes/by-ids', {
-          method: 'POST',
-          body: JSON.stringify({ ids: chunk }),
-        }),
-      ),
-    );
-    return responses.flatMap((r) => r.items);
-  },
-
-  /** Inbox of things friends shared directly with me (as opposed to via a shared book). */
-  receivedShares: (limit = 50) =>
-    http<ListResponse<SharedItem>>(`/shares/received?status=accepted&limit=${limit}`),
+  recipeSummariesByIds: (ids: string[]) => recipeBatch<RecipeSummary>(ids, true),
 
   recipesByCategory: (categoryId: string, limit = 100) =>
     http<ListResponse<Recipe>>(`/recipes?categoryId=${categoryId}&limit=${limit}`),

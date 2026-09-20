@@ -87,7 +87,7 @@ export function HomeFeedSections() {
         />
 
         <FeedSection<BookCardData & { isFavorite: boolean }>
-          title={t('home.booksWithFriends')}
+          title={t('home.sharedBooksWithMe')}
           data={feed.sharedBooksWithMe}
           keyExtractor={(b) => b.id}
           renderItem={({ item }) => (

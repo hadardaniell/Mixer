@@ -186,6 +186,15 @@ export const RecipeSchema = z.object({
 });
 export type Recipe = z.infer<typeof RecipeSchema>;
 
+/**
+ * A recipe without its two unbounded fields. Cards show a title, a cover and a
+ * duration; `ingredients` and `steps` are the bulk of a recipe document and no
+ * list view reads them, so listings that opt in ship this instead. `Recipe`
+ * still satisfies this type, so a card renderer accepts either.
+ */
+export const RecipeSummarySchema = RecipeSchema.omit({ ingredients: true, steps: true });
+export type RecipeSummary = z.infer<typeof RecipeSummarySchema>;
+
 export const CreateRecipeInputSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(5000).optional(),
@@ -218,6 +227,12 @@ export const RecipeListQuerySchema = z.object({
   status: RecipeStatusSchema.optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   skip: z.coerce.number().int().nonnegative().default(0),
+  // Spelled as a literal rather than coerced: `z.coerce.boolean()` reads the
+  // string "false" as true, which would silently make every caller a summary one.
+  summary: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 export type RecipeListQuery = z.infer<typeof RecipeListQuerySchema>;
 
@@ -228,6 +243,8 @@ export type RecipeListQuery = z.infer<typeof RecipeListQuerySchema>;
 // so one deleted recipe can't empty a whole row.
 export const RecipesByIdsInputSchema = z.object({
   ids: z.array(ObjectIdString).min(1).max(200),
+  /** Return `RecipeSummary` rows instead of full recipes — see `RecipeSummarySchema`. */
+  summary: z.boolean().default(false),
 });
 export type RecipesByIdsInput = z.infer<typeof RecipesByIdsInputSchema>;
 
@@ -577,6 +594,25 @@ export const NotificationListQuerySchema = z.object({
   skip: z.coerce.number().int().nonnegative().default(0),
 });
 export type NotificationListQuery = z.infer<typeof NotificationListQuerySchema>;
+
+// --- home feed ---
+// Everything the home screen renders, in one payload. It exists because the
+// client used to assemble this from five endpoints where two of them could not
+// even be sent until the books call came back — the ids they needed were in its
+// response. Composing it here collapses that round-trip chain into one request,
+// and lets the server do the id-gathering next to the data.
+export const HomeFeedResponseSchema = z.object({
+  /** Books I own or am an active member of, newest first. */
+  books: z.array(RecipeBookSchema),
+  /** Recipes behind the book cover grids, for the client to match up by id. */
+  coverRecipes: z.array(RecipeSummarySchema),
+  /** Members across those books, for the avatar previews. */
+  members: z.array(PublicUserSchema),
+  favorites: z.array(RecipeSummarySchema),
+  /** Recipes others shared with me, via a shared book or directly. Deduped. */
+  sharedWithMe: z.array(RecipeSummarySchema),
+});
+export type HomeFeedResponse = z.infer<typeof HomeFeedResponseSchema>;
 
 // --- friends ---
 export * from './friends.js';

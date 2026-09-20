@@ -40,7 +40,7 @@ export function useRecentlyViewed(limit = MAX_HOME_PREVIEW): {
     // every visit to home, so the round-trips added up. Resilient by
     // construction: a deleted or now-inaccessible recipe is simply absent from
     // the response instead of failing the whole row.
-    queryFn: () => feedApi.recipesByIds(ids),
+    queryFn: () => feedApi.recipeSummariesByIds(ids),
   });
 
   const items = useMemo(() => {
